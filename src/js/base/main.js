@@ -1,19 +1,19 @@
 import * as THREE from "three";
-import { AppState } from "@/js/base/appState.js";
-import { switchEventCategory } from "@/js/feature/events.js";
+import { appState } from "@/js/base/appState.js";
+import { events } from "@/js/feature/events.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
 import { SettingsController } from "@/js/base/settings.js";
 import { setupEventListeners } from "@/js/events/event.js";
 import { Navigation } from "@/js/events/navigation.js";
-import { fetchDirectoryData, initDirectory } from "@/js/feature/directory.js";
+import { directory } from "@/js/feature/directory.js";
 import { Floor } from "@/js/floor/floor.js";
 import { applyThemeToScene } from "@/js/floor/modelParser.js";
 import { Icon } from "@/js/marker/icon.js";
 import { Marker } from "@/js/marker/marker.js"; 
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 import { QRMarker } from "@/js/marker/qrmarker.js";
-import { startAnimationLoop, animateCameraTo } from "@/js/ui_ux/animate.js";
-import { hideBottomSheet, setupUI, setUISheetData } from "@/js/ui_ux/ui.js";
+import { startAnimationLoop } from "@/js/ui_ux/animate.js";
+import * as UI from "@/js/ui_ux/ui.js";
 
 const { scene, camera, renderer, controls } = setupScene();
 
@@ -48,37 +48,52 @@ Object.entries(childModelDefs).forEach(([id, config]) => {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-const appState = new AppState(  );
 appState.scene = scene;
 appState.camera = camera;
 appState.renderer = renderer;
 appState.controls = controls;
 appState.raycaster = raycaster;
 appState.mouse = mouse;
+appState.directory = directory;
+appState.events = events;
+appState.navigation = Navigation;
+
+// Bind UI functions and Floor registry to appState to reduce imports in other modules
+appState.floors = Floor.floors;
+appState.ui = {
+  hideSheet: UI.hideBottomSheet,
+  showSheet: UI.showBottomSheet,
+  setSheetData: UI.setUISheetData,
+  clearStoredSheet: UI.clearStoredBottomSheet,
+  updateFloor: UI.updateFloorUI,
+  showToast: UI.showToast,
+  hideToast: UI.hideToast,
+};
 
 Marker.appState = appState;
 Floor.appState = appState;
 
-Navigation.init(appState);
+appState.navigation.init(appState);
 
 setupEventListeners(appState);
 
 // Initializing the application
 async function initApp() {
   // 1. Fetch raw data
-  const rawData = await fetchDirectoryData();
+  const rawData = await directory.fetchDirectoryData();
 
   // Register the fetched directory data with the UI module
-  setUISheetData(rawData);
+  appState.ui.setSheetData(rawData);
 
   // No pre-loading — floors are fetched on-demand in Navigation.switchFloor()
   // 2. Set up UI
-  setupUI(Floor.floors, appState);
+  UI.setupUI(Floor.floors, appState);
 
   // 3. Make raw data accessible globally for parsing later (handled via switchFloor param injection down the line)
   appState.rawData = rawData;
   
-  initDirectory(appState);
+  appState.directory.init();
+  appState.events.init();
 
   // Initialize modular Settings menu
   SettingsController.init('settings-content-area');
@@ -170,7 +185,12 @@ async function initApp() {
         // Lerp camera to front of the model when locked
         if (isLocked && appState.currentFloor && appState.currentFloor.cameraConfig) {
           const config = appState.currentFloor.cameraConfig;
-          animateCameraTo(appState, config.initialPosition, config.target, true);
+          // Use consolidated navigation focus to ensure cardinal snapping
+          appState.navigation.focusAt(config.target, {
+            distance: config.initialPosition.distanceTo(config.target),
+            heightOffset: config.initialPosition.y - config.target.y,
+            isSystem: true
+          });
         }
       },
       appState.rotationLocked
@@ -217,11 +237,11 @@ const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
 const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
 const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
 
-ccaToggleBtn.addEventListener('click', () => switchEventCategory('cca'));
-dunklistToggleBtn.addEventListener('click', () => switchEventCategory('dunklist'));
-pabuskingToggleBtn.addEventListener('click', () => switchEventCategory('pabusking'));
+ccaToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('cca'));
+dunklistToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('dunklist'));
+pabuskingToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('pabusking'));
 
-window.switchEventCategory = switchEventCategory
+window.switchEventCategory = (cat) => appState.events.switchEventCategory(cat);
 
 // Clear Directory Marker Button Logic
 const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');
@@ -241,7 +261,7 @@ if (clearDirMarkerBtn) {
       clearDirMarkerBtn.style.display = 'none';
 
       // Also close the bottom sheet if it happens to be open
-      hideBottomSheet();
+      appState.ui.hideSheet();
 
       window.setClearDirectoryMarkerVisible(false);
   });

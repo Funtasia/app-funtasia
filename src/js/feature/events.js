@@ -1,4 +1,4 @@
-import { focusOnBooth } from "@/js/feature/directory.js";
+import { appState } from "@/js/base/appState.js";
 
 const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
 const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
@@ -14,7 +14,8 @@ const eventCategories = {
     pabusking: pabuskingToggleBtn
 };
 
-function parseTimeToMinutes(timeInput) {
+class Events {
+  parseTimeToMinutes(timeInput) {
     if (!timeInput) return 0;
     const timeStr = String(timeInput);
 
@@ -28,7 +29,7 @@ function parseTimeToMinutes(timeInput) {
     return 0;
 }
 
-function formatTime(timeInput) {
+  formatTime(timeInput) {
     if (!timeInput) return "";
     const timeStr = String(timeInput);
     // Format 4-digit 24h string (e.g., "1330") to 12h string (e.g., "1:30 PM")
@@ -43,7 +44,7 @@ function formatTime(timeInput) {
     return timeStr;
 }
 
-export async function switchEventCategory(category) {
+  async switchEventCategory(category) {
     // Update Buttons
     Object.entries(eventCategories).forEach(([key, btn]) => {
         if (key === category) {
@@ -104,15 +105,15 @@ export async function switchEventCategory(category) {
             let isAllPast = true;
 
             data.events.forEach((ev, ev_no) => {
-                const evMins = parseTimeToMinutes(ev.time);
+                const evMins = this.parseTimeToMinutes(ev.time);
                 let nextEvMins = Infinity;
                 
                 if (ev.endTime) {
-                    nextEvMins = parseTimeToMinutes(ev.endTime);
+                    nextEvMins = this.parseTimeToMinutes(ev.endTime);
                 } else {
                     for (let i = ev_no + 1; i < data.events.length; i++) {
                         if (data.events[i].time) {
-                            nextEvMins = parseTimeToMinutes(data.events[i].time);
+                            nextEvMins = this.parseTimeToMinutes(data.events[i].time);
                             break;
                         }
                     }
@@ -164,7 +165,7 @@ export async function switchEventCategory(category) {
                         <div class="${nodeColor} events-item-dots"></div>
                     
                         <div class="flex flex-col gap-1 mb-3">
-                            <span class="${timeColor} events-item-time">${formatTime(ev.time)}</span>
+                            <span class="${timeColor} events-item-time">${this.formatTime(ev.time)}</span>
                             <div class="flex flex-row">
                                 <h3 class="${titleColor} events-item-title">${ev.title}</h3>
                                 ${linkHtml}
@@ -206,7 +207,7 @@ export async function switchEventCategory(category) {
             
             for (let i = index + 1; i < data_arr.length; i++) {
                 if (data_arr[i].events && data_arr[i].events.length > 0 && data_arr[i].events[0].time) {
-                    nextEvMins = parseTimeToMinutes(data_arr[i].events[0].time);
+                    nextEvMins = this.parseTimeToMinutes(data_arr[i].events[0].time);
                     break;
                 }
             }
@@ -246,13 +247,15 @@ export async function switchEventCategory(category) {
         console.log(locationTag);
         if (locationTag && locationTag.dataset.boothId) {
             const boothId = locationTag.dataset.boothId.trim();
-            if (boothId && boothId !== "-") focusOnBooth(boothId);
+            if (boothId && boothId !== "-") appState.directory.focusOnBooth(boothId);
         }
     });
 }
 
 // Setup Back to Top scroll listener
-if (eventsContentArea && eventsBackToTopBtn) {
+  init() { // New init method for Events class
+   // Setup Back to Top scroll listener
+   if (eventsContentArea && eventsBackToTopBtn) { 
     let lastScrollTop = 0;
     let upScrollAccumulator = 0;
     let downScrollAccumulator = 0;
@@ -318,3 +321,8 @@ if (eventsContentArea && eventsBackToTopBtn) {
         eventsContentArea.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
+}
+
+}
+
+export const events = new Events();
