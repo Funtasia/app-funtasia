@@ -102,7 +102,7 @@ async function initApp() {
         localStorage.setItem('funtasia-show-icons', state);
         Icon.state(state); 
       },
-      Icon.iconsVisible
+      Icon.visibleState
     );
     SettingsController.addToggle(
       mapElements,
@@ -112,7 +112,7 @@ async function initApp() {
         localStorage.setItem('funtasia-show-text-markers', state);
         TextMarker.state(state);
       },
-      TextMarker.textMarkersVisible
+      TextMarker.visibleState
     );
     SettingsController.addToggle(
       mapElements,
@@ -122,7 +122,7 @@ async function initApp() {
         localStorage.setItem('funtasia-show-booth-markers', state);
         BoothIDMarker.state(state);
       },
-      BoothIDMarker.boothIDsVisible
+      BoothIDMarker.visibleState
     );
     SettingsController.addToggle(
       visualsSection,

@@ -75,14 +75,6 @@ let skybox = null;
 let maxRadius = 0;
 
 export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = floorId) {
-  const roledict = {
-    "ATOILET": "atoilet",
-    "MTOILET": "mtoilet",
-    "FTOILET": "ftoilet",
-    "LIFT": "lift",
-    "STAIRCASE": "staircase",
-    "DOOR": "door"
-  };
   const model = gltf.scene;
   model.visible = false;
   scene.add(model);
@@ -197,9 +189,9 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
         QRMarker.allMarkers[markerId] = { pos, floorId };
       }
 
-      // Collect Icons
-      if (Object.keys(roledict).includes(role)) {
-        let normalisedRole = roledict[role];
+      // Collect Icons by checking against Managed Icon ROLEs
+      let normalisedRole = CONFIG.MODELS.ROLE_MAP[role];
+      if (normalisedRole) {
         if (normalisedRole === "staircase") {
           switch (child.userData?.STAIRCASEDIRECTION) {
             case "U":

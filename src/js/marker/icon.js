@@ -1,38 +1,13 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
-import { Marker } from "./marker.js";
+import { ManagedMarker } from "@/js/marker/managedmarker.js";
 
-export class Icon extends Marker {
-  // Class attribute dictionary matching icontype to file path
-  // The path points to a folder in assets called icon
-  static iconPaths = {
-    'lift': `${ASSETS_BASE_URL}/icons/lift.png`,
-    'stair-u': `${ASSETS_BASE_URL}/icons/stair-u.png`,
-    'stair-d': `${ASSETS_BASE_URL}/icons/stair-d.png`,
-    'stair-ud': `${ASSETS_BASE_URL}/icons/stair-ud.png`,
-    'mtoilet': `${ASSETS_BASE_URL}/icons/mtoilet.png`,
-    'ftoilet': `${ASSETS_BASE_URL}/icons/ftoilet.png`,
-    'atoilet': `${ASSETS_BASE_URL}/icons/atoilet.png`,
-    'door': `${ASSETS_BASE_URL}/icons/door.png`
-  };
-
-  // State flag for all icons visibility
-  static iconsVisible = true;
-  
-  // Track active level to only show icons for the current level
-  static activeLevel = null;
-
-  // Track all icon instances for global updates
-  static allIcons = [];
-
-  // Track icons mapped by their level
-  static iconsByLevel = {};
-
+export class Icon extends ManagedMarker {
   constructor(parent, type, position, level) {
     super(parent, position, level);
     
     this.icontype = type;
-    this.iconPath = Icon.iconPaths[this.icontype]; 
+    this.iconPath = `${ASSETS_BASE_URL}/icons/${this.icontype}.png`;
 
     // Use TextureLoader to load high quality PNGs
     const textureLoader = new THREE.TextureLoader();
@@ -57,6 +32,7 @@ export class Icon extends Marker {
       transparent: true,
       depthTest: true 
     });
+    this._materials = [this.material];
 
     this.indicator = new THREE.Sprite(this.material);
     this.baseScale = 0.4;
@@ -68,36 +44,17 @@ export class Icon extends Marker {
     this.indicator.position.y = 0.5; 
 
     this.group.add(this.indicator);
-
-    // Apply the current global visibility state
-    this.group.visible = Icon.iconsVisible && this.level === Icon.activeLevel;
-
-    Icon.allIcons.push(this);
-
-    // Track this instance by its level
-    if (!Icon.iconsByLevel[this.level]) {
-      Icon.iconsByLevel[this.level] = [];
-    }
-    Icon.iconsByLevel[this.level].push(this);
+    this.updateVisibilityAndOpacity(); // Apply initial visibility
   }
 
-  // Class method to control visibility state of all icons
-  static state(isVisible) {
-    Icon.iconsVisible = isVisible;
-    Icon.allIcons.forEach(icon => icon.updateVisibilityAndOpacity());
-  }
-
-  // Method to set active level
-  static setLevel(levelId) {
-    Icon.activeLevel = levelId;
-    Icon.allIcons.forEach(icon => icon.updateVisibilityAndOpacity());
+  static get iconsByLevel() {
+    return ManagedMarker.managedMarkersByLevel;
   }
 
   // Helper method to sync visibility across instances, optimized for levels
   updateVisibilityAndOpacity() {
-    const isVisibleLocal = Icon.iconsVisible && this.level === Icon.activeLevel;
-    this.group.visible = isVisibleLocal;
-    this.updateSyncState(); // Apply parent floor's opacity and final visibility
+    const isVisibleLocal = Icon.visibleState && this.level === Icon.activeLevel;
+    this.updateSyncState(isVisibleLocal); // Apply parent floor's opacity and final visibility
   }
 
   // Animate method to handle dynamic scaling
@@ -123,17 +80,8 @@ export class Icon extends Marker {
   clear() {
     super.clear(); // handles removing group from scene
 
-    if (this.material) {
-      if (this.material.map) this.material.map.dispose();
-      this.material.dispose();
-    }
-
-    // Remove from the static tracking dictionary
-    if (Icon.iconsByLevel[this.level]) {
-      const index = Icon.iconsByLevel[this.level].indexOf(this);
-      if (index > -1) {
-        Icon.iconsByLevel[this.level].splice(index, 1);
-      }
-    }
+    // Dispose of specific Three.js resources
+    if (this.material?.map) this.material.map.dispose();
+    if (this.material) this.material.dispose();
   }
 }

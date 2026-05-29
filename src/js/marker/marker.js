@@ -44,12 +44,13 @@ export class Marker {
   /**
    * Synchronizes the marker's visibility and opacity with its parent floor.
    * This is modular and can be called by any subclass (TextMarker, Icon, etc.)
+   * @param {boolean} isVisible - Optional local visibility override from subclass
    */
-  updateSyncState() {
+  updateSyncState(isVisible = true) {
     if (!this.group || !this.parent || this.parent.type === 'Scene') return;
 
     const targetOpacity = this.parent.userData.currentOpacity ?? 1.0;
-    this.group.visible = targetOpacity > 0.01;
+    this.group.visible = isVisible && targetOpacity > 0.01;
     
     // Only apply opacity if the group is currently visible (either by its own rules or parent's)
     if (this.group.visible) {

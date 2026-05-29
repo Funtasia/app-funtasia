@@ -5,7 +5,7 @@ Function: animate() -> Main animation loop
 import { CONFIG } from "@/js/base/config.js";
 import { Icon } from "@/js/marker/icon.js";
 import { Floor } from "@/js/floor/floor.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
+import { ManagedMarker } from "@/js/marker/managedmarker.js";
 import { Navigation } from "@/js/events/navigation.js";
 
 export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = 0.05) {
@@ -85,11 +85,9 @@ export function startAnimationLoop(appState) {
     /*
     Animate icons
     */
-    const activeLevel = appState.currentFloor?.id;
-    if (activeLevel) {
-        Icon.iconsByLevel[activeLevel]?.forEach(icon => icon.animate(time, appState.camera));
-        TextMarker.textMarkersByLevel[activeLevel]?.forEach(marker => marker.animate(time, appState.camera));
-        BoothIDMarker.boothMarkersByLevel[activeLevel]?.forEach(marker => marker.animate(time, appState.camera));
+    // Animate all managed markers (Icons, TextMarkers, BoothIDMarkers)
+    if (ManagedMarker.allManagedMarkers) {
+      ManagedMarker.allManagedMarkers.forEach(marker => marker.animate(time, appState.camera));
     }
 
     appState.renderer.render(appState.scene, appState.camera);

@@ -75,11 +75,10 @@ class Directory {
   /** Collect every unique tag from the full dataset */
   collectAllTags(funtasiaData) {
   const tags = new Set();
-  const levels = Object.keys(funtasiaData); //
-  levels.forEach(level => {
-    if (typeof funtasiaData[level] !== 'object' || funtasiaData[level] === null) return;
-    Object.values(funtasiaData[level]).forEach(item => {
-      this.parseTags(item["tags"] || item["Tags"]).forEach(t => tags.add(t));
+  Object.values(funtasiaData).forEach(levelData => {
+    if (typeof levelData !== 'object' || levelData === null) return;
+    Object.values(levelData).forEach(item => {
+      this.parseTags(item.tags || item.Tags).forEach(t => tags.add(t));
     });
   });
   return [...tags].sort();
@@ -105,60 +104,39 @@ class Directory {
    */
   getFilteredData(funtasiaData) {
   const results = [];
+  const search = this.filterState.search.toLowerCase().trim();
+  const tokens = search ? search.split(/\s+/) : [];
+  const zoneFilter = this.filterState.zone?.toLowerCase();
+
   const levelsToSearch = this.filterState.level
     ? [this.filterState.level]
     : Object.keys(funtasiaData);
 
   levelsToSearch.forEach(level => {
-    if (typeof funtasiaData[level] !== 'object' || funtasiaData[level] === null) return;
-    Object.entries(funtasiaData[level]).forEach(([boothId, item]) => {
-      // Zone filter
-      if (this.filterState.zone) {
-        const itemZone = (item["zone"] || item["Zone"] || "").trim();
-        if (itemZone.toLowerCase() !== this.filterState.zone.toLowerCase()) return;
+    const levelData = funtasiaData[level];
+    if (!levelData || typeof levelData !== 'object') return;
+    
+    const levelStr = String(level || "");
+    const humanLevel = `level ${levelStr.replace(/[^0-9]/g, "")}`;
+
+    Object.entries(levelData).forEach(([boothId, item]) => {
+      if (zoneFilter) {
+        const itemZone = (item.zone || item.Zone || "").trim().toLowerCase();
+        if (itemZone !== zoneFilter) return;
       }
 
-      // Tag filter (OR: item must have at least one selected tag)
-      if (this.filterState.tags.size > 0) {
-        const itemTags = this.parseTags(item["tags"] || item["Tags"]);
-        const hasMatch = itemTags.some(t => this.filterState.tags.has(t));
-        if (!hasMatch) return;
+      const itemTags = this.parseTags(item.tags || item.Tags);
+      if (this.filterState.tags.size > 0 && !itemTags.some(t => this.filterState.tags.has(t))) return;
+
+      if (tokens.length > 0) {
+        const tStr = Array.isArray(item.tags || item.Tags) ? (item.tags || item.Tags).join(" ") : String(item.tags || item.Tags || "");
+        const iStr = Array.isArray(item.invis_tags) ? item.invis_tags.join(" ") : String(item.invis_tags || "");
+        const kStr = Array.isArray(item.Keywords) ? item.Keywords.join(" ") : String(item.Keywords || "");
+
+        const haystack = `${item.booth_name || ""} ${item.booth_oneline_description || ""} ${item.booth_description || ""} ${tStr} ${iStr} ${kStr} ${item.parent_model || ""} ${boothId} ${levelStr} ${humanLevel}`.toLowerCase();
+        if (!tokens.every(token => haystack.includes(token))) return;
       }
 
-      // Search filter (Tokenized for multi-word support) //
-      if (this.filterState.search) { //
-        const tokens = this.filterState.search.toLowerCase().trim().split(/\s+/); //
-        
-        const itemTagsRaw = item["tags"] || ""; //
-        const itemTagsStr = Array.isArray(itemTagsRaw) ? itemTagsRaw.join(" ") : String(itemTagsRaw); //
-        
-        const invisibleTags = item["invis_tags"] || ""; //
-        const invisibleTagsStr = Array.isArray(invisibleTags) ? invisibleTags.join(" ") : String(invisibleTags); //
-
-        const keywords = item["Keywords"] || ""; //
-        const keywordsStr = Array.isArray(keywords) ? keywords.join(" ") : String(keywords); //
-
-        const levelStr = String(level || ""); //
-        const humanLevel = `level ${levelStr.replace(/[^0-9]/g, "")}`; //
-
-        const haystack = [
-          item["booth_name"] || "",
-          item["booth_oneline_description"] || "",
-          item["booth_description"] || "",
-          itemTagsStr,
-          invisibleTagsStr,
-          keywordsStr,
-          item["parent_model"] || "",
-          boothId || "",
-          levelStr,
-          humanLevel
-        ].join(" ").toLowerCase();
-
-        const allMatch = tokens.every(token => haystack.includes(token));
-        if (!allMatch) return;
-      }
-
-      // We inject Booth ID here for rendering later
       results.push({ item: { ...item, "Booth ID": boothId }, level });
     });
   });
@@ -201,18 +179,13 @@ class Directory {
   // 1. Navigation Logic
   let targetFloorId = level;
   const children = appState.floors[level]?.constructor.childModels[level] || {};
-  
-  // Try exact match first (e.g. if booth name is "Canteen")
-  if (children[boothName]) {
-    targetFloorId = children[boothName];
-  } else {
-    // Check if booth ID starts with child ID (ish -> ISH1) or node name prefix (C -> Canteen)
+
+  if (children[boothName]) targetFloorId = children[boothName];
+  else {
     for (const [nodeName, childId] of Object.entries(children)) {
-        if (boothNum.toLowerCase().startsWith(childId.toLowerCase()) || 
-            (nodeName.length > 0 && boothNum.toLowerCase().startsWith(nodeName[0].toLowerCase()))) {
-          targetFloorId = childId;
-          break;
-        }
+      if (boothNum.toLowerCase().startsWith(childId.toLowerCase()) || (nodeName[0] && boothNum.toLowerCase().startsWith(nodeName[0].toLowerCase()))) {
+        targetFloorId = childId; break;
+      }
     }
   }
 
@@ -340,11 +313,12 @@ class Directory {
 
         // Build tag pills HTML
         const tagPillsHTML = itemTags.map(tag => {
-          const color = CONFIG.DIRECTORY.TAG_COLORS[tag] || CONFIG.DIRECTORY.FALLBACK_TAG_COLOR;
-          return `<span class="tag-pill" style="--pill-color: ${color};">${tag}</span>`;
+          const raw = CONFIG.DIRECTORY.TAG_COLORS[tag] || CONFIG.DIRECTORY.FALLBACK_TAG_COLOR;
+          const cssVal = raw.startsWith('--') ? `var(${raw})` : raw;
+          return `<span class="tag-pill" style="--pill-color: ${cssVal};">${tag}</span>`;
         }).join("");
 
-        itemEl.onclick = () => this.focusOnBooth(boothNum, level);
+        itemEl.addEventListener('click', () => this.focusOnBooth(boothNum, level));
 
         itemEl.innerHTML = `
           <div class="modal-item-icon-wrapper ${zoneColors.bg} ${zoneColors.text}">
@@ -381,19 +355,22 @@ class Directory {
   const style = document.createElement("style");
   style.id = "choices-tag-colors";
 
-  const rules = Object.entries(CONFIG.DIRECTORY.TAG_COLORS).map(([tag, color]) => `
-    .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected {
-      color: ${color};
-    }
-    .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected::after {
-      color: ${color};
-    }
-    #selected-tags-container .tag-pill[data-value="${tag}"] {
-      border-color: ${color};
-      background: color-mix(in srgb, ${color} 15%, transparent);
-      color: ${color};
-    }
-  `);
+  const rules = Object.entries(CONFIG.DIRECTORY.TAG_COLORS).map(([tag, color]) => {
+    const cssVal = color.startsWith('--') ? `var(${color})` : color;
+    return `
+      .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected {
+        color: ${cssVal};
+      }
+      .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected::after {
+        color: ${cssVal};
+      }
+      #selected-tags-container .tag-pill[data-value="${tag}"] {
+        border-color: ${cssVal};
+        background: color-mix(in srgb, ${cssVal} 15%, transparent);
+        color: ${cssVal};
+      }
+    `;
+  });
 
   style.textContent = rules.join("");
   document.head.appendChild(style);

@@ -1,15 +1,15 @@
 import * as THREE from "three";
 import { Marker, FONT_URL } from "@/js/marker/marker.js";
 import { Text } from "troika-three-text";
+import { ManagedMarker } from "@/js/marker/managedmarker.js";
 
 /**
  * BaseTextMarker: Provides common functionality for text-based markers.
  * Handles text mesh creation, background, and billboarding.
  */
-export class BaseTextMarker extends Marker {
+export class BaseTextMarker extends ManagedMarker {
   constructor(parent, position, text, level, options) {
     super(parent, position, level);
-    this.scene = parent || Marker.scene || (this.appState ? this.appState.scene : null);
     this.text = text;
 
     // Default options, overridden by provided options
@@ -47,8 +47,12 @@ export class BaseTextMarker extends Marker {
     bgMesh.position.z = this.options.bgZOffset;
 
     // Sync the text and update background scale based on actual text width
+    this._textMesh = textMesh;
+    this._materials = [bgMaterial];
+
     textMesh.sync(() => {
-      if (textMesh.geometry && textMesh.geometry.boundingBox) {
+      // Safety check: ensure marker hasn't been cleared during async sync
+      if (this.group && textMesh.geometry && textMesh.geometry.boundingBox) {
         const width = textMesh.geometry.boundingBox.max.x - textMesh.geometry.boundingBox.min.x;
         bgMesh.scale.x = width + this.options.bgPadding;
       }
@@ -58,10 +62,6 @@ export class BaseTextMarker extends Marker {
     this._labelGroup.add(textMesh);
     this._labelGroup.position.y = this.options.markerHeight;
     this.group.add(this._labelGroup);
-
-    if (this.scene) {
-      this.scene.add(this.group);
-    }
   }
 
   /**
@@ -80,42 +80,15 @@ export class BaseTextMarker extends Marker {
   }
 
   clear() {
-    if (this.group) {
-      if (this.scene) this.scene.remove(this.group);
-      this.group.traverse((child) => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) child.material.dispose();
-      });
-      this.group = null;
-    }
-    // Subclasses are responsible for removing themselves from static tracking
+    this.group?.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+    super.clear();
   }
 }
 
 export class TextMarker extends BaseTextMarker {
-  static allTextMarkers = []; // Track all instances of TextMarker
-  static activeLevel = null;
-  static textMarkersByLevel = {};
-  static textMarkersVisible = true;
-
-  static state(isVisible) {
-    TextMarker.textMarkersVisible = isVisible;
-    TextMarker.allTextMarkers.forEach(marker => marker.updateVisibilityAndOpacity());
-  }
-
-  // New instance method to update visibility and opacity
-  updateVisibilityAndOpacity() {
-    const isVisibleLocal = TextMarker.textMarkersVisible && this.level === TextMarker.activeLevel;
-    this.updateSyncState(); // Apply parent floor's opacity and final visibility
-    if (!isVisibleLocal) this.group.visible = false;
-  }
-
-  /**
-   * @param {THREE.Scene} scene - Scene to add the marker to.
-   * @param {THREE.Vector3} position - World position of the marker.
-   * @param {string} name - The text to render.
-   * @param {string} level - The level/floor ID this marker belongs to.
-   */
   constructor(parent, position, text, level) {
     super(parent, position, text, level, {
       markerHeight: 0.5,
@@ -127,23 +100,7 @@ export class TextMarker extends BaseTextMarker {
       bgPadding: 0.1,
       bgZOffset: -0.01,
     });
-
-    // Track this instance by its level
-    if (!TextMarker.textMarkersByLevel[this.level]) {
-      TextMarker.textMarkersByLevel[this.level] = [];
-    }
-    TextMarker.textMarkersByLevel[this.level].push(this);
-
-    TextMarker.allTextMarkers.push(this);
-
-    // Set initial visibility and opacity
-    this.updateVisibilityAndOpacity();
-  }
-
-  // Method to set active level
-  static setLevel(levelId) {
-    TextMarker.activeLevel = levelId;
-    TextMarker.allTextMarkers.forEach(marker => marker.updateVisibilityAndOpacity());
+    this.updateVisibilityAndOpacity(); // Apply initial visibility
   }
 
   /**
@@ -152,24 +109,19 @@ export class TextMarker extends BaseTextMarker {
    * @param {THREE.Camera} camera - The active camera.
    */
   animate(time, camera) {
+    this.updateVisibilityAndOpacity(); // Ensure visibility is updated before base animate
     super.animate(time, camera); // Call base class animate for billboarding and opacity sync
+  }
+
+  // New instance method to update visibility and opacity
+  updateVisibilityAndOpacity() {
+    if (!this.group) return;
+    const isVisibleLocal = TextMarker.visibleState && this.level === TextMarker.activeLevel;
+    this.updateSyncState(isVisibleLocal); // Apply parent floor's opacity and final visibility
   }
 
   clear() {
     super.clear(); // Clear Three.js resources via BaseTextMarker
-
-    // Remove from the static tracking dictionary
-    if (TextMarker.textMarkersByLevel[this.level]) {
-      const index = TextMarker.textMarkersByLevel[this.level].indexOf(this);
-      if (index > -1) {
-        TextMarker.textMarkersByLevel[this.level].splice(index, 1);
-      }
-    }
-
-    const index = TextMarker.allTextMarkers.indexOf(this);
-    if (index > -1) {
-      TextMarker.allTextMarkers.splice(index, 1);
-    }
   }
 }
 
@@ -178,21 +130,12 @@ export class TextMarker extends BaseTextMarker {
  * Styled with brand colors (Mauve) to distinguish from Location TextMarkers.
  */
 export class BoothIDMarker extends BaseTextMarker {
-  static allBoothMarkers = []; // Track all instances of BoothIDMarker
-  static activeLevel = null; 
-  static boothMarkersByLevel = {};
-  static boothIDsVisible = true;
-
-  static state(isVisible) {
-    BoothIDMarker.boothIDsVisible = isVisible;
-    BoothIDMarker.allBoothMarkers.forEach(marker => marker.updateVisibilityAndOpacity());
-  }
-
   // New instance method to update visibility and opacity
-  updateVisibilityAndOpacity(camera) {
-    const isVisibleLocal = BoothIDMarker.boothIDsVisible && this.level === BoothIDMarker.activeLevel && (this.distance < this.zoomThreshold);
-    this.updateSyncState(); // Apply parent floor's opacity and final visibility
-    if (!isVisibleLocal) this.group.visible = false;
+  updateVisibilityAndOpacity() {
+    if (!this.group) return;
+    const isWithinZoom = this.distance !== undefined ? this.distance < this.zoomThreshold : true;
+    const isVisibleLocal = BoothIDMarker.visibleState && this.level === BoothIDMarker.activeLevel && isWithinZoom;
+    this.updateSyncState(isVisibleLocal); 
   }
   constructor(parent, position, text, level, customOptions = {}) {
     // Default Brand-colored background (Mauve) and text (Base)
@@ -210,17 +153,6 @@ export class BoothIDMarker extends BaseTextMarker {
       bgZOffset: -0.005,
       ...customOptions // Merge custom options, overriding defaults
     });
-
-    if (!BoothIDMarker.boothMarkersByLevel[this.level]) {
-      BoothIDMarker.boothMarkersByLevel[this.level] = [];
-    }
-    BoothIDMarker.boothMarkersByLevel[this.level].push(this);
-    BoothIDMarker.allBoothMarkers.push(this);
-  }
-
-  static setLevel(levelId) {
-    BoothIDMarker.activeLevel = levelId;
-    BoothIDMarker.allBoothMarkers.forEach(marker => marker.updateVisibilityAndOpacity(null)); // Pass null for camera as it's not available here
   }
 
   animate(time, camera) {
@@ -232,19 +164,12 @@ export class BoothIDMarker extends BaseTextMarker {
     this.distance = camera.position.distanceTo(worldPos);
     this.zoomThreshold = 7.6; 
 
-    this.updateVisibilityAndOpacity(camera); // Update visibility and opacity based on zoom and parent state
+    this.updateVisibilityAndOpacity(); // Update visibility and opacity based on zoom and parent state
 
     if (this.group.visible) super.animate(time, camera); // Call base class animate for billboarding
   }
 
   clear() {
-    super.clear(); // Clear Three.js resources via BaseTextMarker
-
-    if (BoothIDMarker.boothMarkersByLevel[this.level]) {
-      const index = BoothIDMarker.boothMarkersByLevel[this.level].indexOf(this);
-      if (index > -1) BoothIDMarker.boothMarkersByLevel[this.level].splice(index, 1);
-    }
-    const index = BoothIDMarker.allBoothMarkers.indexOf(this);
-    if (index > -1) BoothIDMarker.allBoothMarkers.splice(index, 1);
+    super.clear(); // Clear Three.js resources via ManagedMarker
   }
 }

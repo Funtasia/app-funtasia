@@ -17,10 +17,18 @@ export const CONFIG = {
       b3: `models/${VERSION}/njc-b3-${VERSION}.glb`,
     },
     CHILDREN: {
-      canteen:   { floorId: "l1", nodeName: "Canteen",   path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb` },
-      sanctuary: { floorId: "l1", nodeName: "Sanctuary", path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
-      hall:      { floorId: "l2", nodeName: "CCA Booths @ Hall", path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb` },
-      ish:       { floorId: "b3", nodeName: "ISH",       path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb` },
+      canteen:   { floorId: "l1", nodeName: "Canteen",           path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb`   },
+      sanctuary: { floorId: "l1", nodeName: "Sanctuary",         path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
+      hall:      { floorId: "l2", nodeName: "CCA Booths @ Hall", path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb`      },
+      ish:       { floorId: "b3", nodeName: "ISH",               path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb`       },
+    },
+    ROLE_MAP: {
+      "ATOILET": "atoilet",
+      "MTOILET": "mtoilet",
+      "FTOILET": "ftoilet",
+      "LIFT": "lift",
+      "STAIRCASE": "staircase",
+      "DOOR": "door"
     }
   },
 
@@ -55,7 +63,7 @@ export const CONFIG = {
   // UI & Directory
   DIRECTORY: {
     FALLBACK_TAG_COLOR: "#6b7280",
-    ZONE_COLORS: {
+    ZONE_COLORS: { //CSS variables to check, value of variables changes on theme change
       blue:   { bg: "bg-ctp-blue-50",   text: "text-ctp-blue",   bar: "bg-ctp-blue-500"  },
       green:  { bg: "bg-ctp-green-50",  text: "text-ctp-green",  bar: "bg-ctp-green-500" },
       orange: { bg: "bg-orange-50",     text: "text-orange-600", bar: "bg-orange-500"    },
@@ -65,19 +73,19 @@ export const CONFIG = {
       brown:  { bg: "bg-amber-50",      text: "text-amber-800",  bar: "bg-amber-600"     },
     },
     TAG_COLORS: {
-      Game:        "var(--color-ctp-blue)",
-      Performance: "var(--color-ctp-mauve)",
-      Academic:    "var(--color-ctp-teal)",
-      Food:        "var(--color-ctp-maroon)",
-      Drinks:      "var(--color-ctp-sky)",
-      Merch:       "var(--color-ctp-peach)",
-      Photos:      "var(--color-ctp-pink)",
-      Info:        "var(--color-ctp-sapphire)",
-      Tickets:     "var(--color-ctp-flamingo)",
-      Services:    "var(--color-ctp-green)",
-      CCA:         "var(--color-ctp-lavender)",
-      "First Aid": "var(--color-ctp-red)",
-      "Glam Up":   "var(--color-ctp-rosewater)"
+      Game:        "--color-ctp-blue",
+      Performance: "--color-ctp-mauve",
+      Academic:    "--color-ctp-teal",
+      Food:        "--color-ctp-maroon",
+      Drinks:      "--color-ctp-sky",
+      Merch:       "--color-ctp-peach",
+      Photos:      "--color-ctp-pink",
+      Info:        "--color-ctp-sapphire",
+      Tickets:     "--color-ctp-flamingo",
+      Services:    "--color-ctp-green",
+      CCA:         "--color-ctp-lavender",
+      "First Aid": "--color-ctp-red",
+      "Glam Up":   "--color-ctp-rosewater"
     }
   },
 
@@ -105,10 +113,29 @@ export const CONFIG = {
       "BROWN":  '--color-ctp-flamingo-900',
     },
     TEXT_MARKER_MAP: {
-      l1: { "Canteen": "Canteen", "Amphi": "Amphitheatre", "Atrium": "Atrium", "NJCLOGO": "Plaza" },
-      l2: { "Hall": "Hall", "LT5": "LT5", "LT1": "LT1", "Amphitheatre": "Amphitheatre", "NJCLOGO":"Plaza", "Pasar Malam Food Street": "Pasar Malam Food Street" },
-      b2: { "Gym": "Gymnasium" },
-      b3: { "Field": "Field", "ISH": "ISH", "njcentrance": "Funtasia Entrance", "njcexit":"Funtasia Exit" }
+      l1: { 
+        "Canteen": "Canteen", 
+        "Amphi": "Amphitheatre", 
+        "Atrium": "Atrium", 
+        "NJCLOGO": "Plaza" 
+      },
+      l2: { 
+        "Hall": "Hall", 
+        "LT5": "LT5", 
+        "LT1": "LT1", 
+        "Amphitheatre": "Amphitheatre", 
+        "NJCLOGO":"Plaza", 
+        "Pasar Malam Food Street": "Pasar Malam Food Street" 
+      },
+      b2: { 
+        "Gym": "Gymnasium" 
+      },
+      b3: { 
+        "Field": "Field", 
+        "ISH": "ISH", 
+        "njcentrance": "Funtasia Entrance", 
+        "njcexit":"Funtasia Exit" 
+      }
     }
   }
 };
