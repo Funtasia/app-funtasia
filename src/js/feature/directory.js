@@ -1,39 +1,7 @@
 import * as THREE from "three";
 import { DirectoryMarker } from '@/js/marker/directorymarker.js';
-import { appState } from "@/js/base/appState.js"; //
-
-/* ── Color Maps ──────────────────────────────────────────── */ //
-
-
-/** Zone → accent colors for icon bg, text, bar */
-const zoneColorMap = {
-  blue:   { bg: "bg-ctp-blue-50",   text: "text-ctp-blue",   bar: "bg-ctp-blue-500"  },
-  green:  { bg: "bg-ctp-green-50",  text: "text-ctp-green",  bar: "bg-ctp-green-500" },
-  orange: { bg: "bg-orange-50",     text: "text-orange-600", bar: "bg-orange-500"    },
-  purple: { bg: "bg-ctp-mauve-50",  text: "text-ctp-mauve",  bar: "bg-ctp-mauve-500" },
-  red:    { bg: "bg-ctp-red-50",    text: "text-ctp-red",    bar: "bg-ctp-red-500"   },
-  yellow: { bg: "bg-yellow-50",     text: "text-yellow-600", bar: "bg-yellow-500"    },
-  brown:  { bg: "bg-amber-50",      text: "text-amber-800",  bar: "bg-amber-600"     },
-};
-
-/** Tag → pill/chip hex color */
-const tagColorMap = {
-  Game:        "var(--color-ctp-blue)",
-  Performance: "var(--color-ctp-mauve)", 
-  Academic:    "var(--color-ctp-teal)",
-  Food:        "var(--color-ctp-maroon)", 
-  Drinks:      "var(--color-ctp-sky)",
-  Merch:       "var(--color-ctp-peach)", 
-  Photos:      "var(--color-ctp-pink)",
-  Info:        "var(--color-ctp-sapphire)",
-  Tickets:     "var(--color-ctp-flamingo)",
-  Services:    "var(--color-ctp-green)",
-  CCA:         "var(--color-ctp-lavender)",
-  "First Aid": "var(--color-ctp-red)",
-  "Glam Up":   "var(--color-ctp-rosewater)"
-};
-
-const fallbackTagColor = "#6b7280"; // gray-500
+import { appState } from "@/js/base/appState.js"; 
+import { CONFIG } from "@/js/base/config.js"
 
 /* ── Filter State ────────────────────────────────────────── */
 
@@ -122,7 +90,7 @@ class Directory {
   getZoneColors(zoneName) {
   if (!zoneName) return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "bg-ctp-surface0" };
   const lower = zoneName.toLowerCase();
-  for (const [key, colors] of Object.entries(zoneColorMap)) {
+  for (const [key, colors] of Object.entries(CONFIG.DIRECTORY.ZONE_COLORS)) {
     if (lower.includes(key)) return colors;
   }
   return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "color-ctp-mauve" };
@@ -291,18 +259,16 @@ class Directory {
   window.parent.postMessage({ type: 'selectPOI', id: boothNum, floor: level }, '*');
 
   // 5. UI Cleanup/Update
-
-  // Update the global state so showFabButtons knows the marker UI is active
-  if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-    window.setClearDirectoryMarkerVisible(true);
+  if (appState.ui.setClearDirectoryMarkerVisible) {
+    appState.ui.setClearDirectoryMarkerVisible(true);
   }
 
   document.querySelectorAll(".modal-wrapper").forEach(mod_wrapp => {
     mod_wrapp.style.display = 'none';
   });
 
-  if (typeof window.showFabButtons === 'function') {
-    window.showFabButtons();
+  if (appState.ui.showFabButtons) {
+    appState.ui.showFabButtons();
   }
 
   appState.ui.showSheet(boothNum, null, boothDesc, boothName);
@@ -374,7 +340,7 @@ class Directory {
 
         // Build tag pills HTML
         const tagPillsHTML = itemTags.map(tag => {
-          const color = tagColorMap[tag] || fallbackTagColor;
+          const color = CONFIG.DIRECTORY.TAG_COLORS[tag] || CONFIG.DIRECTORY.FALLBACK_TAG_COLOR;
           return `<span class="tag-pill" style="--pill-color: ${color};">${tag}</span>`;
         }).join("");
 
@@ -415,7 +381,7 @@ class Directory {
   const style = document.createElement("style");
   style.id = "choices-tag-colors";
 
-  const rules = Object.entries(tagColorMap).map(([tag, color]) => `
+  const rules = Object.entries(CONFIG.DIRECTORY.TAG_COLORS).map(([tag, color]) => `
     .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected {
       color: ${color};
     }

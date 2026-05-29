@@ -17,9 +17,6 @@ export class Floor {
   // Static reference to the currently active floor instance
   static currentFloor = null;
 
-  // Dictionary of all markers across all floors { id: { pos, floorId } }
-  static allMarkers = {};
-
   // Adds floor object to Floor class attribute: dictionary 'floors'
   static registerFloor(floor) {
     Floor.floors[floor.id] = floor;
@@ -100,7 +97,7 @@ export class Floor {
       // console.log(`[Floor] Applying camera config for ${this.id}:`, this.cameraConfig);
 
       const isMainLevelTransition = !this.parentFloorId && Floor.currentFloor && !Floor.currentFloor.parentFloorId;
-      const shouldPreserveRotation = window.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;
+      const shouldPreserveRotation = Floor.appState.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;
 
       if (shouldPreserveRotation) {
         // Calculate current vector from target to camera to preserve orientation and zoom

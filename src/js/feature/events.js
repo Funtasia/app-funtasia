@@ -16,16 +16,12 @@ const eventCategories = {
 
 class Events {
   parseTimeToMinutes(timeInput) {
-    if (!timeInput) return 0;
-    const timeStr = String(timeInput);
-
-    // Strictly handle 24h 4-digit string format (e.g. "1330" or "0930")
+    const timeStr = String(timeInput || "");
     if (/^\d{4}$/.test(timeStr)) {
-        const hours = Number(timeStr.slice(0, 2));
-        const minutes = Number(timeStr.slice(2, 4));
+        const hours = parseInt(timeStr.slice(0, 2), 10);
+        const minutes = parseInt(timeStr.slice(2, 4), 10);
         return hours * 60 + minutes;
     }
-
     return 0;
 }
 

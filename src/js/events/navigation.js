@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { DirectoryMarker } from '@/js/marker/directorymarker.js';
 import { focusOnObject, focusOnFloor, focusAt as focusAtUtil } from "@/js/ui_ux/cameraUtils.js";
 import { Icon } from "@/js/marker/icon.js";
@@ -6,27 +7,17 @@ import { QRMarker } from "@/js/marker/qrmarker.js";
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 import { setFloorOpacity } from "@/js/helper/util.js";
 
-export const floorOrder = ['b3', 'b2', 'b1', 'l1', 'l2'];
-const GHOST_SPACING = 1.234567; // Tighter spacing for better visual stacking
-
 export class Navigation {
   static appState = null;
 
   static init(appState) {
     Navigation.appState = appState;
-    window.updateFloorVisibilities = () => {
-      if (Navigation.appState && Navigation.appState.currentFloor) {
-        Navigation.applyGhostLayers(Navigation.appState.currentFloor.id);
-      }
+    // Attached to appState.ui for internal coordination instead of window
+    appState.ui.updateFloorVisibilities = () => {
+        if (appState.currentFloor) {
+            Navigation.applyGhostLayers(appState.currentFloor.id);
+        }
     };
-    
-    // Sync preloaded status from localStorage
-    try {
-      const preloaded = JSON.parse(localStorage.getItem('funtasia_preloaded_assets') || '[]');
-      preloaded.forEach(url => appState.loadedAssets.add(url));
-    } catch(e) {
-      console.warn("Failed to parse preloaded assets from localStorage", e);
-    }
   }
 
   static clearActiveMarkers() {
@@ -47,7 +38,7 @@ export class Navigation {
     const appState = Navigation.appState;
     if (appState.lastScannedInfo && appState.lastScannedInfo.floorId === floorId) {
       const startTime = appState.lastScannedInfo.startTime;
-      const greyDelay = 5 * 60000;
+      const greyDelay = CONFIG.NAVIGATION.MARKER_GREY_DELAY;
       const now = performance.now();
       
       if (now - startTime < greyDelay) {
@@ -85,9 +76,9 @@ export class Navigation {
     const referenceFloorId = (activeFloor && activeFloor.parentFloorId) ? activeFloor.parentFloorId : activeFloorId;
     const isViewingChild = !!activeFloor?.parentFloorId;
     
-    const targetIdx = floorOrder.indexOf(referenceFloorId);
+    const targetIdx = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(referenceFloorId);
 
-    floorOrder.forEach((id, index) => {
+    CONFIG.NAVIGATION.FLOOR_ORDER.forEach((id, index) => {
       const floor = appState.floors[id];
       if (!floor) return;
 
@@ -101,7 +92,7 @@ export class Navigation {
           floor.currentOpacity = 1.0;
           setFloorOpacity(floor.sceneModel, 1.0);
         }
-      } else if (!isViewingChild && index < targetIdx && window.ghostLayersEnabled) {
+      } else if (!isViewingChild && index < targetIdx && appState.ghostLayersEnabled) {
         // Case 2: Lower Floors (Translucent "Ghost" stack beneath current)
         if (!floor.isLoaded()) {
           if (!floor._loading) {
@@ -112,7 +103,7 @@ export class Navigation {
           }
         } else if (floor.sceneModel) {
           const depth = targetIdx - index;
-          floor.targetY = -depth * GHOST_SPACING;
+          floor.targetY = -depth * CONFIG.NAVIGATION.GHOST_SPACING;
 
           floor.sceneModel.visible = true;
           floor.sceneModel.renderOrder = index; // Lower floors render first
@@ -126,7 +117,7 @@ export class Navigation {
         // Case 3: Upper Floors (Fly out to top) or hide ghosts if child is active
         if (floor.sceneModel) {
           const depthAbove = index - targetIdx;
-          floor.targetY = depthAbove * GHOST_SPACING;
+          floor.targetY = depthAbove * CONFIG.NAVIGATION.GHOST_SPACING;
           
           // Fade out as it flies away
           floor.currentOpacity = 0;
@@ -164,9 +155,8 @@ export class Navigation {
     const isSameFloor = appState.currentFloor && appState.currentFloor.id === floorId;
 
     if (!isSameFloor) {
-      // Update UI level selector (B3, B2, L1, L2) using the parent floor if it's a child model
-      const uiFloorId = targetFloor.parentFloorId || floorId;
-      appState.ui.updateFloor(uiFloorId); 
+      // Redundant UI update removed: Handled by appState.currentFloor setter
+      
       // Store the active selected object to enable deep-back resuming
       const savedSelection = appState.selected;
 
@@ -187,7 +177,7 @@ export class Navigation {
       }
 
       const isChildFloor = !!targetFloor.parentFloorId;
-      window.isChildFloor = isChildFloor;
+      appState.isChildFloor = isChildFloor;
       if (appState.currentFloor && !appState.currentFloor.parentFloorId) {
         appState.previousMainFloorId = appState.currentFloor.id;
         appState.previousSelectedObject = savedSelection;
@@ -240,11 +230,11 @@ export class Navigation {
         
         try {
           await targetFloor.load(appState, appState.rawData);
-          appState.loadedAssets.add(targetFloor.modelPath);
+          appState.recordAssetLoaded(targetFloor.modelPath);
           
           // Initialize at top for "fly in from up" effect
           if (targetFloor.sceneModel) {
-            targetFloor.sceneModel.position.y = GHOST_SPACING;
+            targetFloor.sceneModel.position.y = CONFIG.NAVIGATION.GHOST_SPACING;
           }
           
           // Once all main floors are loaded (or as they load), cache the data
@@ -273,94 +263,82 @@ export class Navigation {
       console.log(`Switched to floor: ${floorId}`);
     }
 
-    // Always handle markers (clear previous and potentially restore current)
     Navigation.clearActiveMarkers();
     Navigation.restoreLastMarker(floorId);
-    
-    // Restore directory marker if it belongs to this floor
-    // Directory Marker Bidirectional Transition Logic
-    if (appState.activeDirectoryBoothId && appState.activeDirectoryLevel) {
-      const funtasiaData = appState.directory.getDirectoryData();
-      let targetMarkerLocation = null;
-      let targetMarkerFloorId = null;
+    Navigation._syncDirectoryMarker(floorId);
+  }
 
-      // Case 1: Returning to the booth's exact floor (the actual model it is in)
-      if (floorId === appState.activeDirectoryActualFloor) {
-        if (funtasiaData && funtasiaData[appState.activeDirectoryLevel] && funtasiaData[appState.activeDirectoryLevel][appState.activeDirectoryBoothId]) {
-          targetMarkerLocation = funtasiaData[appState.activeDirectoryLevel][appState.activeDirectoryBoothId].Location || funtasiaData[appState.activeDirectoryLevel][appState.activeDirectoryBoothId].location;
-          targetMarkerFloorId = floorId;
-        }
-      } 
-      // Case 2: Moving to a parent floor
-      else if (targetFloor.constructor.childModels[floorId]) {
-        let parentNodeName = null;
-        for (const [nodeName, childId] of Object.entries(targetFloor.constructor.childModels[floorId])) {
-          // Compare against the actual model floor ID
-          if (appState.activeDirectoryActualFloor === childId) {
-            parentNodeName = nodeName;
-            break;
-          }
-        }
-
-        if (parentNodeName) {
-          // Find the mesh object in the new floor
-          const parentObj = appState.interactiveObjects.find(obj => obj.name === parentNodeName || obj.userData.boothId === parentNodeName);
-          if (parentObj) {
-            targetMarkerLocation = parentObj.getWorldPosition(new THREE.Vector3());
-            targetMarkerFloorId = floorId;
-          }
-        }
-      }
-
-      if (targetMarkerLocation && targetMarkerFloorId) {
-        // Clear existing marker if it exists and level mismatches
-        if (appState.activeDirectoryMarker) {
-          appState.activeDirectoryMarker.clear();
-          appState.activeMarkers = appState.activeMarkers.filter(m => m !== appState.activeDirectoryMarker);
-        }
-        
-        // Re-create the marker for the appropriate level/location
-        appState.activeDirectoryMarker = new DirectoryMarker(targetMarkerLocation, targetMarkerFloorId);
-        appState.activeMarkers.push(appState.activeDirectoryMarker);
-        
-        if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-          window.setClearDirectoryMarkerVisible(true);
-        }
-      } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group && appState.scene) {
-        // Fallback: hide if it belongs to a different floor
-        if (appState.activeDirectoryMarker.level !== floorId) {
-           appState.scene.remove(appState.activeDirectoryMarker.group);
-           if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-             window.setClearDirectoryMarkerVisible(false);
-           }
-        } else {
-           if (!appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
-             appState.activeMarkers.push(appState.activeDirectoryMarker);
-           }
-           appState.scene.add(appState.activeDirectoryMarker.group);
-           if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-             window.setClearDirectoryMarkerVisible(true);
-           }
-        }
-      }
-    } else if (appState.activeDirectoryMarker) {
-      // Legacy handling if state variables are somehow missing
-      if (appState.activeDirectoryMarker.level === floorId) {
-        if (!appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
-          appState.activeMarkers.push(appState.activeDirectoryMarker);
+  /**
+   * Handles Directory Marker Bidirectional Transition Logic during floor switches.
+   * @private
+   */
+  static _syncDirectoryMarker(floorId) {
+    const appState = Navigation.appState;
+    if (!appState.activeDirectoryBoothId || !appState.activeDirectoryLevel) {
+      // Fallback for legacy marker handling
+      if (appState.activeDirectoryMarker) {
+        const isMatch = appState.activeDirectoryMarker.level === floorId;
+        if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
+            appState.activeMarkers.push(appState.activeDirectoryMarker);
         }
         if (appState.scene && appState.activeDirectoryMarker.group) {
-          appState.scene.add(appState.activeDirectoryMarker.group);
-          if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-            window.setClearDirectoryMarkerVisible(true);
-          }
-        }
-      } else if (appState.scene && appState.activeDirectoryMarker.group) {
-        appState.scene.remove(appState.activeDirectoryMarker.group);
-        if (typeof window.setClearDirectoryMarkerVisible === 'function') {
-          window.setClearDirectoryMarkerVisible(false);
+            isMatch ? appState.scene.add(appState.activeDirectoryMarker.group) : appState.scene.remove(appState.activeDirectoryMarker.group);
+            if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
         }
       }
+      return;
+    }
+
+    const funtasiaData = appState.directory.getDirectoryData();
+    const targetFloor = appState.floors[floorId];
+    let targetMarkerLocation = null;
+    let targetMarkerFloorId = null;
+
+    // Case 1: Returning to the booth's exact floor
+    if (floorId === appState.activeDirectoryActualFloor) {
+      const item = funtasiaData?.[appState.activeDirectoryLevel]?.[appState.activeDirectoryBoothId];
+      if (item) {
+        targetMarkerLocation = item.Location || item.location;
+        targetMarkerFloorId = floorId;
+      }
+    } 
+    // Case 2: Moving to a parent floor
+    else if (targetFloor.constructor.childModels[floorId]) {
+      let parentNodeName = null;
+      for (const [nodeName, childId] of Object.entries(targetFloor.constructor.childModels[floorId])) {
+        if (appState.activeDirectoryActualFloor === childId) {
+          parentNodeName = nodeName;
+          break;
+        }
+      }
+
+      if (parentNodeName) {
+        const parentObj = appState.interactiveObjects.find(obj => obj.name === parentNodeName || obj.userData.boothId === parentNodeName);
+        if (parentObj) {
+          targetMarkerLocation = parentObj.getWorldPosition(new THREE.Vector3());
+          targetMarkerFloorId = floorId;
+        }
+      }
+    }
+
+    if (targetMarkerLocation && targetMarkerFloorId) {
+      if (appState.activeDirectoryMarker) {
+        appState.activeDirectoryMarker.clear();
+        appState.activeMarkers = appState.activeMarkers.filter(m => m !== appState.activeDirectoryMarker);
+      }
+      
+      appState.activeDirectoryMarker = new DirectoryMarker(targetMarkerLocation, targetMarkerFloorId);
+      appState.activeMarkers.push(appState.activeDirectoryMarker);
+      if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(true);
+    } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group && appState.scene) {
+      const isMatch = appState.activeDirectoryMarker.level === floorId;
+      if (isMatch) {
+          if (!appState.activeMarkers.includes(appState.activeDirectoryMarker)) appState.activeMarkers.push(appState.activeDirectoryMarker);
+          appState.scene.add(appState.activeDirectoryMarker.group);
+      } else {
+          appState.scene.remove(appState.activeDirectoryMarker.group);
+      }
+      if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
     }
   }
 

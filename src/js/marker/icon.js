@@ -1,21 +1,19 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { Marker } from "./marker.js";
-import { floorOrder } from "@/js/events/navigation.js";
-
-const BASE = ASSETS_BASE_URL;
 
 export class Icon extends Marker {
   // Class attribute dictionary matching icontype to file path
   // The path points to a folder in assets called icon
   static iconPaths = {
-    'lift': `${BASE}/icons/lift.png`,
-    'stair-u': `${BASE}/icons/stair-u.png`,
-    'stair-d': `${BASE}/icons/stair-d.png`,
-    'stair-ud': `${BASE}/icons/stair-ud.png`,
-    'mtoilet': `${BASE}/icons/mtoilet.png`,
-    'ftoilet': `${BASE}/icons/ftoilet.png`,
-    'atoilet': `${BASE}/icons/atoilet.png`,
-    'door': `${BASE}/icons/door.png`
+    'lift': `${ASSETS_BASE_URL}/icons/lift.png`,
+    'stair-u': `${ASSETS_BASE_URL}/icons/stair-u.png`,
+    'stair-d': `${ASSETS_BASE_URL}/icons/stair-d.png`,
+    'stair-ud': `${ASSETS_BASE_URL}/icons/stair-ud.png`,
+    'mtoilet': `${ASSETS_BASE_URL}/icons/mtoilet.png`,
+    'ftoilet': `${ASSETS_BASE_URL}/icons/ftoilet.png`,
+    'atoilet': `${ASSETS_BASE_URL}/icons/atoilet.png`,
+    'door': `${ASSETS_BASE_URL}/icons/door.png`
   };
 
   // State flag for all icons visibility

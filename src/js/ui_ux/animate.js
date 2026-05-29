@@ -2,10 +2,11 @@
 Function: animate() -> Main animation loop
 */
 
+import { CONFIG } from "@/js/base/config.js";
 import { Icon } from "@/js/marker/icon.js";
 import { Floor } from "@/js/floor/floor.js";
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-import { Navigation, floorOrder } from "@/js/events/navigation.js";
+import { Navigation } from "@/js/events/navigation.js";
 
 export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = 0.05) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
@@ -64,8 +65,8 @@ export function startAnimationLoop(appState) {
           floor.sceneModel.position.y += dist * 0.1;
         } else {
           // Hide floors that are ABOVE the current active floor once they finish flying out
-          const floorIdx = floorOrder.indexOf(floor.id);
-          const targetIdx = floorOrder.indexOf(activeFloorId);
+          const floorIdx = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(floor.id);
+          const targetIdx = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(activeFloorId);
           if (floorIdx > targetIdx && floorIdx !== -1 && targetIdx !== -1) {
             floor.sceneModel.visible = false;
           }
@@ -84,19 +85,12 @@ export function startAnimationLoop(appState) {
     /*
     Animate icons
     */
-    Object.values(Icon.iconsByLevel).forEach(levelIcons => {
-      levelIcons.forEach(icon => icon.animate(time, appState.camera));
-    });
-
-    // Animate text markers
-    Object.values(TextMarker.textMarkersByLevel).forEach(levelMarkers => {
-      levelMarkers.forEach(marker => marker.animate(time, appState.camera));
-    });
-
-    // Animate booth ID markers
-    Object.values(BoothIDMarker.boothMarkersByLevel).forEach(levelMarkers => {
-      levelMarkers.forEach(marker => marker.animate(time, appState.camera));
-    });
+    const activeLevel = appState.currentFloor?.id;
+    if (activeLevel) {
+        Icon.iconsByLevel[activeLevel]?.forEach(icon => icon.animate(time, appState.camera));
+        TextMarker.textMarkersByLevel[activeLevel]?.forEach(marker => marker.animate(time, appState.camera));
+        BoothIDMarker.boothMarkersByLevel[activeLevel]?.forEach(marker => marker.animate(time, appState.camera));
+    }
 
     appState.renderer.render(appState.scene, appState.camera);
   }

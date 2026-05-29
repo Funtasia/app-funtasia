@@ -36,6 +36,11 @@ export function setUISheetData(data) {
   });
 }
 
+/**
+ * Resolves human-readable title and description for a given object name using the location database.
+ * @param {string} objectName - The raw name or ID of the 3D object.
+ * @returns {{title: string, description: string}}
+ */
 function getLocationInfo(objectName) {
   if (locationData[objectName]) {
     return locationData[objectName];
@@ -54,101 +59,102 @@ function getLocationInfo(objectName) {
 let currentAppState = null;
 let storedBottomSheetState = null;
 
+/**
+ * @typedef {Object} ActionContext
+ * @property {string} objectName - The unique ID or name of the interactive object.
+ * @property {string|null} childFloorId - The ID of the floor to enter, if the object is a portal.
+ * @property {Object} locationInfo - The resolved title and description metadata.
+ */
+
+/**
+ * Defines modular actions for buttons in the bottom sheet.
+ * Each entry maps a DOM ID to a visibility condition and a click handler.
+ * @type {Array<{id: string, condition: (ctx: ActionContext) => boolean, onClick: (ctx: ActionContext) => void, displayStyle?: string}>}
+ */
+const BOTTOM_SHEET_ACTIONS = [
+  {
+    id: "enter-child-btn",
+    condition: (ctx) => !!ctx.childFloorId,
+    onClick: async (ctx) => {
+      const { Navigation } = await import("@/js/events/navigation.js");
+      Navigation.switchFloor(ctx.childFloorId);
+      hideBottomSheet();
+    }
+  },
+  {
+    id: "lt5-event-btn",
+    condition: (ctx) => ctx.objectName === "CCA Performances @ LT5",
+    onClick: () => {
+      if (window.openEventsModal) window.openEventsModal("cca");
+      hideBottomSheet();
+    }
+  },
+  {
+    id: "o2-event-btn",
+    condition: (ctx) => ctx.objectName === "Busking @ Linkway",
+    onClick: () => {
+      if (window.openEventsModal) window.openEventsModal("pabusking");
+      hideBottomSheet();
+    }
+  },
+  {
+    id: "amphi-event-btn",
+    condition: (ctx) => ctx.objectName === "Water Dunk Tank",
+    onClick: () => {
+      if (window.openEventsModal) window.openEventsModal("dunklist");
+      hideBottomSheet();
+    }
+  },
+  {
+    id: "makers-redirect-btn",
+    condition: (ctx) => ctx.locationInfo.title === "Makers",
+    onClick: () => window.open("https://makers.njcfuntasia.com", "_blank")
+  },
+  {
+    id: "escaperoom-redirect-btn",
+    condition: (ctx) => ctx.locationInfo.title.toLowerCase().includes("escape room"),
+    displayStyle: "flex",
+    onClick: () => window.open("https://escape-room.njcfuntasia.com", "_blank")
+  }
+];
+
+/**
+ * Displays the bottom sheet UI with information and contextual actions.
+ * @param {string} objectName - The ID or Name of the selected 3D object.
+ * @param {string|null} [childFloorId=null] - The ID of a sub-floor if the object is an entrance.
+ * @param {string|null} [description=null] - Manual override for the description text.
+ * @param {string|null} [title=null] - Manual override for the title text.
+ */
 export function showBottomSheet(objectName, childFloorId = null, description = null, title = null) {
   // Store the current state so it can be restored later
   storedBottomSheetState = { objectName, childFloorId, description, title };
   const locationInfo = getLocationInfo(objectName);
   sheetTitle.textContent = title || locationInfo.title;
   sheetDesc.textContent = description ? description : locationInfo.description;
-  
-  const enterBtn = document.getElementById("enter-child-btn");
-  const lt5Btn = document.getElementById("lt5-event-btn");
-  const o2Btn = document.getElementById("o2-event-btn");
-  const amphiBtn = document.getElementById("amphi-event-btn");
-  const makersBtn = document.getElementById("makers-redirect-btn");
-  const escapeRoomBtn = document.getElementById("escaperoom-redirect-btn");
-  
-  if (enterBtn) {
-    if (childFloorId) {
-      enterBtn.style.display = "block";
-      enterBtn.onclick = async () => {
-        const { Navigation } = await import("@/js/events/navigation.js");
-        Navigation.switchFloor(childFloorId);
-        hideBottomSheet();
-      };
-    } else {
-      enterBtn.style.display = "none";
-      enterBtn.onclick = null;
-    }
-  }
 
-  if (lt5Btn) {
-    if (objectName === "CCA Performances @ LT5") {
-      lt5Btn.style.display = "block";
-      lt5Btn.onclick = () => {
-        if (window.openEventsModal) window.openEventsModal("cca");
-        hideBottomSheet();
-      };
-    } else {
-      lt5Btn.style.display = "none";
-      lt5Btn.onclick = null;
-    }
-  }
+  // Process modular action buttons
+  const btnContext = { objectName, childFloorId, locationInfo };
+  BOTTOM_SHEET_ACTIONS.forEach(config => {
+    const btn = document.getElementById(config.id);
+    if (!btn) return;
 
-  if (o2Btn) {
-    if (objectName === "Busking @ Linkway") {
-      o2Btn.style.display = "block";
-      o2Btn.onclick = () => {
-        if (window.openEventsModal) window.openEventsModal("pabusking");
-        hideBottomSheet();
-      };
+    if (config.condition(btnContext)) {
+      btn.style.display = config.displayStyle || "block";
+      btn.onclick = () => config.onClick(btnContext);
     } else {
-      o2Btn.style.display = "none";
-      o2Btn.onclick = null;
+      btn.style.display = "none";
+      btn.onclick = null;
     }
-  }
-
-  if (amphiBtn) {
-    if (objectName === "Water Dunk Tank") {
-      amphiBtn.style.display = 'block';
-      amphiBtn.onclick = () => {
-        if (window.openEventsModal) window.openEventsModal('dunklist');
-        hideBottomSheet();
-      };
-    } else {
-      amphiBtn.style.display = 'none';
-      amphiBtn.onclick = null;
-    }
-  }
-
-  if (makersBtn) {
-    if (locationInfo.title === "Makers") {
-      makersBtn.style.display = "block";
-      makersBtn.onclick = () => {
-        window.open("https://makers.njcfuntasia.com", "_blank");
-      };
-    } else {
-      makersBtn.style.display = "none";
-      makersBtn.onclick = null;
-    }
-  }
-
-  if (escapeRoomBtn) {
-    if (locationInfo.title.toLowerCase().includes("escape room")) {
-      escapeRoomBtn.style.display = "flex";
-      escapeRoomBtn.onclick = () => {
-        window.open("https://escape-room.njcfuntasia.com", "_blank");
-      };
-    } else {
-      escapeRoomBtn.style.display = "none";
-      escapeRoomBtn.onclick = null;
-    }
-  }
+  });
 
   sheet.classList.add("show");
   if (currentAppState) currentAppState.isBottomSheetOpen = true;
 }
 
+/**
+ * Hides the bottom sheet and optionally clears the stored navigation state.
+ * @param {boolean} [clearState=true] - Whether to clear the reference to the last selected object.
+ */
 export function hideBottomSheet(clearState = true) {
   sheet.classList.remove("show");
   if (currentAppState) {
@@ -160,6 +166,10 @@ export function hideBottomSheet(clearState = true) {
   window.dispatchEvent(new Event('bottomsheetclose'));
 }
 
+/**
+ * Hides the bottom sheet while preserving its state.
+ * Used during transitions where the sheet should reappear after an action.
+ */
 export function storeAndHideBottomSheet() {
   if (currentAppState && currentAppState.isBottomSheetOpen) {
     // Hide without clearing the stored state
@@ -170,6 +180,9 @@ export function storeAndHideBottomSheet() {
   }
 }
 
+/**
+ * Re-displays the bottom sheet using the last saved state.
+ */
 export function reopenStoredBottomSheet() {
   if (storedBottomSheetState) {
     const { objectName, childFloorId, description, title } = storedBottomSheetState;
@@ -181,6 +194,10 @@ export function clearStoredBottomSheet() {
   storedBottomSheetState = null;
 }
 
+/**
+ * Triggers the removal of the currently visible toast notification.
+ * Cleans up any pending hide timeouts.
+ */
 export function hideToast() {
   const toast = document.getElementById("toast-popup");
   if (!toast) return;
@@ -191,6 +208,11 @@ export function hideToast() {
   }
 }
 
+/**
+ * Displays a temporary toast notification at the top of the screen.
+ * @param {string} message - The message to display.
+ * @param {number} [duration=3000] - How long to show the toast in milliseconds.
+ */
 export function showToast(message, duration = 3000) {
   const toast = document.getElementById("toast-popup");
   const toastMsg = document.getElementById("toast-message");
@@ -212,6 +234,10 @@ let floorThumb = null;
 let floorBtns = [];
 let activeIndex = -1;
 
+/**
+ * Updates the floor selector UI to reflect the current floor level.
+ * @param {string} floorId - The ID of the floor (e.g., 'l1', 'b2').
+ */
 export function updateFloorUI(floorId) {
   if (!floorThumb || floorBtns.length === 0) {
     // Retry finding elements if they aren't captured yet
@@ -241,6 +267,11 @@ export function updateFloorUI(floorId) {
   floorThumb.style.opacity = "1";
 }
 
+/**
+ * Initializes the UI event listeners, including floor selection and swipe gestures.
+ * @param {Object.<string, import("@/js/floor/floor.js").Floor>} floors - Registry of loaded floors.
+ * @param {Object} appState - The global application state.
+ */
 export function setupUI(floors, appState) {
   currentAppState = appState;
   

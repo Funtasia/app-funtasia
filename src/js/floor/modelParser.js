@@ -1,66 +1,15 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { Floor } from "@/js/floor/floor.js";
 import { Icon } from "@/js/marker/icon.js";
 import { QRMarker } from "@/js/marker/qrmarker.js";
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-
-export const textMarkerMap = {
-  l1: {
-    "Canteen": "Canteen",
-    "Amphi": "Amphitheatre",
-    "Atrium": "Atrium",
-    "NJCLOGO": "Plaza"
-  },
-  l2: {
-    "Hall": "Hall",
-    "LT5": "LT5",
-    "LT1": "LT1",
-    "Amphitheatre": "Amphitheatre",
-    "NJCLOGO":"Plaza",
-    "Pasar Malam Food Street": "Pasar Malam Food Street"
-  },
-  b2: {
-    "Gym": "Gymnasium"
-  },
-  b3: {
-    "Field": "Field",
-    "ISH": "ISH",
-    "njcentrance": "Funtasia Entrance",
-    "njcexit":"Funtasia Exit"
-  },
-  hall:{
-    "Stage":"Stage"
-  }
-};
 
 function getColor(colorName) {
   const documentStyle = getComputedStyle(document.documentElement);
   let colorString = documentStyle.getPropertyValue(colorName);
   return Number("0x" + colorString.slice(1))
 }
-
-const miscSchema = {
-  "BASE":      '--color-ctp-surface0',
-  "DRIVE":     '--color-ctp-surface2',
-  "FOOT":      '--color-ctp-flamingo',
-  "GRASS":     '--color-ctp-green-900',
-  "NONOBJECT": '--color-ctp-flamingo-950',
-  "FTOILET":   '--color-ctp-pink',
-  "MTOILET":   '--color-ctp-lavender',
-  "ATOILET":   '--color-ctp-sky',
-  "LIFT":      '--color-ctp-overlay1',
-};
-
-const zoneSchema = {
-  "NONE":   '--color-ctp-overlay2',
-  "GREEN":  '--color-ctp-green-300',
-  "BLUE":   '--color-ctp-blue-600',
-  "ORANGE": '--color-ctp-peach-400',
-  "PURPLE": '--color-ctp-mauve',
-  "YELLOW": '--color-ctp-yellow',
-  "RED":    '--color-ctp-red',
-  "BROWN":  '--color-ctp-flamingo-900',
-};
 
 // Maps for runtime color lookup, initialized with static colors.
 export const miscColours = { "MARKER": 0xffffff, "STAIRCASE": 0xffffff };
@@ -75,8 +24,8 @@ function refreshPalette(target, schema) {
 
 // Re-reads CSS variables and updates the color dictionaries.
 export function updateThemeColors() {
-  refreshPalette(miscColours, miscSchema);
-  refreshPalette(zoneColours, zoneSchema);
+  refreshPalette(miscColours, CONFIG.THEME.MISC_SCHEMA);
+  refreshPalette(zoneColours, CONFIG.THEME.ZONE_SCHEMA);
 }
 
 // Update theme colors immediately on module load
@@ -163,11 +112,11 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     skybox = new THREE.Mesh(skyGeo, skyMat);
     scene.add(skybox);
   }
-  const radiusfixed = 20;
+  const radiusfixed = CONFIG.CAMERA.PARSER_DEFAULTS.radiusFixed;
   const cameraConfig = isChildModel
     ? {
         // Child models: wider, higher angle to fill viewport
-        initialPosition: new THREE.Vector3(0, radius * 1.4, radius * 2.0),
+        initialPosition: new THREE.Vector3(0, radius * CONFIG.CAMERA.PARSER_DEFAULTS.childInitialYFactor, radius * CONFIG.CAMERA.PARSER_DEFAULTS.childInitialZFactor),
         target: new THREE.Vector3(0, 0, 0),
         minDistance: radius * 0.1,
         maxDistance: radius * 5.0,
@@ -221,11 +170,11 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     }
 
     // 3. Add TextMarker if the logical node's name appears in textMarkerMap
-    if (child.isMesh && textMarkerMap[floorKey] && logicalNode.name in textMarkerMap[floorKey]) {
+    if (child.isMesh && CONFIG.THEME.TEXT_MARKER_MAP[floorKey] && logicalNode.name in CONFIG.THEME.TEXT_MARKER_MAP[floorKey]) {
       if (!markerNames.has(logicalNode.name)) {
         const pos = child.getWorldPosition(new THREE.Vector3());
         pos.y = 0;
-        const tm = new TextMarker(model, pos, textMarkerMap[floorKey][logicalNode.name], floorId);
+        const tm = new TextMarker(model, pos, CONFIG.THEME.TEXT_MARKER_MAP[floorKey][logicalNode.name], floorId);
         if (tm.group) tm.group.visible = false;
         textMarkers.push(tm);
         markerNames.add(logicalNode.name);
@@ -245,9 +194,7 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
       if (role === "MARKER") {
         const markerId = String(child.userData.MARKERID);
         const pos = child.getWorldPosition(new THREE.Vector3());
-        const entry = { pos, floorId };
-        Floor.allMarkers[markerId] = entry;
-        QRMarker.allMarkers[markerId] = entry;
+        QRMarker.allMarkers[markerId] = { pos, floorId };
       }
 
       // Collect Icons

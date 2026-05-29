@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { animateCameraTo } from "@/js/ui_ux/animate.js";
 import { zoneColours } from "@/js/floor/modelParser.js";
 
@@ -57,11 +58,11 @@ export function focusOnFloor(appState, preserveView = false) {
  */
 export function focusAt(appState, pos, options = {}) {
   const { 
-    distance = 8, 
-    heightOffset = 6, 
+    distance = CONFIG.CAMERA.DEFAULTS.distance, 
+    heightOffset = CONFIG.CAMERA.DEFAULTS.heightOffset, 
     isSystem = false, 
-    lookAtOffset = new THREE.Vector3(0, 1, 0),
-    lerpFactor = 0.05 
+    lookAtOffset = new THREE.Vector3(CONFIG.CAMERA.DEFAULTS.lookAtOffset.x, CONFIG.CAMERA.DEFAULTS.lookAtOffset.y, CONFIG.CAMERA.DEFAULTS.lookAtOffset.z),
+    lerpFactor = CONFIG.CAMERA.DEFAULTS.lerpFactor 
   } = options;
 
   const target = pos.clone().add(lookAtOffset);
@@ -99,12 +100,12 @@ export function focusOnObject(targetObject, appState) {
     const objectSize = box.getSize(new THREE.Vector3());
 
     const baseScale = Math.max(objectSize.length(), 2);
-    const distance = baseScale * (appState.cameraAnim.viewDistanceFactor || 1.2);
-    const heightOffset = baseScale * (appState.cameraAnim.viewHeightFactor || 0.8);
+    const distFactor = appState.cameraAnim.viewDistanceFactor;
+    const heightFactor = appState.cameraAnim.viewHeightFactor;
 
     focusAt(appState, objectCenter, {
-      distance,
-      heightOffset,
+      distance: baseScale * distFactor,
+      heightOffset: baseScale * heightFactor,
       lookAtOffset: new THREE.Vector3(0, 1, 0)
     });
   }

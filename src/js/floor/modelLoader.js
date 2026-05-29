@@ -1,7 +1,5 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const BASE = ASSETS_BASE_URL;
-
 const loader = new GLTFLoader();
 
 /**
@@ -11,9 +9,8 @@ const loader = new GLTFLoader();
  * @returns {Promise<import("three/examples/jsm/loaders/GLTFLoader").GLTF>}
  */
 export function loadModel(relativePath) {
-
-
-  const url = `${BASE}/${relativePath}`;
+  // Using Vite-injected ASSETS_BASE_URL global
+  const url = `${ASSETS_BASE_URL}/${relativePath}`;
   console.log(`[modelLoader] Fetching: ${url}`);
 
   return new Promise((resolve, reject) => {

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { appState } from "@/js/base/appState.js";
+import { CONFIG } from "@/js/base/config.js";
 import { events } from "@/js/feature/events.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
 import { SettingsController } from "@/js/base/settings.js";
@@ -17,26 +18,9 @@ import * as UI from "@/js/ui_ux/ui.js";
 
 const { scene, camera, renderer, controls } = setupScene();
 
-// Register all floors with their relative CDN paths (no static imports needed).
-// Models are fetched lazily from jsDelivr on first switchFloor() call.
-const floorDefs = {
-  l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
-  l1: `models/${VERSION}/njc-l1-${VERSION}.glb`,
-  b1: `models/${VERSION}/njc-b1-${VERSION}.glb`,
-  b2: `models/${VERSION}/njc-b2-${VERSION}.glb`,
-  b3: `models/${VERSION}/njc-b3-${VERSION}.glb`,
-};
-
-const childModelDefs = {
-  canteen:   { floorId: "l1", nodeName: "Canteen",   path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb` },
-  sanctuary: { floorId: "l1", nodeName: "Sanctuary", path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
-  hall:      { floorId: "l2", nodeName: "CCA Booths @ Hall",      path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb` },
-  ish:       { floorId: "b3", nodeName: "ISH",       path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb` },
-};
-
 // Instantiate Floor objects — they self-register into Floor.floors
-Object.entries(floorDefs).forEach(([id, path]) => new Floor(id, path));
-Object.entries(childModelDefs).forEach(([id, config]) => {
+Object.entries(CONFIG.MODELS.FLOORS).forEach(([id, path]) => new Floor(id, path));
+Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
   const floor = new Floor(id, config.path);
   floor.parentFloorId = config.floorId;
   
@@ -68,6 +52,10 @@ appState.ui = {
   updateFloor: UI.updateFloorUI,
   showToast: UI.showToast,
   hideToast: UI.hideToast,
+  setClearDirectoryMarkerVisible: (visible) => {
+    const btn = document.getElementById('clear-directory-marker-btn');
+    if (btn) btn.style.display = visible ? 'flex' : 'none';
+  }
 };
 
 Marker.appState = appState;
@@ -101,10 +89,6 @@ async function initApp() {
   const visualsSection = SettingsController.addSection('Visual Preferences');
   const mapElements = SettingsController.addSection('Map elements');
   
-  // Initialize settings from local storage
-  window.ghostLayersEnabled = localStorage.getItem('funtasia-ghost-layers') !== 'false';  // default true
-  appState.rotationLocked = localStorage.getItem('funtasia-rotation-lock') !== 'false';   // default true
-  appState.autoFocusEnabled = localStorage.getItem('funtasia-autofocus') !== 'false';     // default true
   Icon.state(localStorage.getItem('funtasia-show-icons') !== 'false'); // default true
   TextMarker.state(localStorage.getItem('funtasia-show-text-markers') !== 'false'); // default true
   BoothIDMarker.state(localStorage.getItem('funtasia-show-booth-markers') !== 'false'); // default true
@@ -144,12 +128,8 @@ async function initApp() {
       visualsSection,
       'Ghost Layers',
       'View lower levels as translucent layers',
-      (state) => {
-          localStorage.setItem('funtasia-ghost-layers', state);
-          window.ghostLayersEnabled = state;
-          if (window.updateFloorVisibilities) window.updateFloorVisibilities();
-      },
-      window.ghostLayersEnabled
+      (state) => appState.ghostLayersEnabled = state,
+      appState.ghostLayersEnabled
     );
     SettingsController.addToggle(
       visualsSection,
@@ -177,10 +157,7 @@ async function initApp() {
       'Rotation Lock',
       'Lock the rotation of the 3D model',
       (isLocked) => {
-        localStorage.setItem('funtasia-rotation-lock', isLocked);
         appState.rotationLocked = isLocked;
-        controls.enableRotate = !isLocked;
-        controls.touches.TWO = isLocked ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
         
         // Lerp camera to front of the model when locked
         if (isLocked && appState.currentFloor && appState.currentFloor.cameraConfig) {
@@ -200,10 +177,7 @@ async function initApp() {
       controlsSection,
       'Camera Auto-Focus',
       'Smoothly animate the camera when selecting a location',
-      (enabled) => {
-        localStorage.setItem('funtasia-autofocus', enabled)
-        appState.autoFocusEnabled = enabled;
-      },
+      (enabled) => appState.autoFocusEnabled = enabled,
       appState.autoFocusEnabled
     );
   }
@@ -222,15 +196,6 @@ async function initApp() {
 }
 
 initApp();
-// Optional Console func
-window.printCurrentFloorInfo = function () {
-  const currentFloorId = appState.currentFloor ? appState.currentFloor.id : "None";
-  console.log(`=== Info for Current Floor: ${currentFloorId} ===`);
-};
-
-window.printAllMarkers = function () {
-  console.log(QRMarker.allMarkers);
-};
 
 // Events toggle buttons logic
 const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
@@ -258,11 +223,10 @@ if (clearDirMarkerBtn) {
           appState.activeDirectoryLevel = null;
           appState.activeMarkers = appState.activeMarkers.filter(m => m !== null);
       }
-      clearDirMarkerBtn.style.display = 'none';
 
       // Also close the bottom sheet if it happens to be open
       appState.ui.hideSheet();
 
-      window.setClearDirectoryMarkerVisible(false);
+      appState.ui.setClearDirectoryMarkerVisible(false);
   });
 }
