@@ -461,7 +461,7 @@ class Directory {
   if (tagTrigger && tagMenu) {
     const allTags = this.collectAllTags(funtasiaData);
     tagMenu.innerHTML = allTags.map(tag => `
-      <div class="custom-dropdown-item" data-filter="tags" data-value="${tag}" onclick="appState.directory.toggleTagSelection('${tag.replace(/'/g, "\\'")}');">
+      <div class="custom-dropdown-item" data-filter="tags" data-value="${tag}" onclick="toggleTagSelection('${tag.replace(/'/g, "\\'")}');">
         ${tag}
       </div>
     `).join("");
@@ -479,7 +479,7 @@ class Directory {
   if (levelTrigger && levelMenu) {
     const levels = ["", "b3", "b2", "b1", "l1", "l2"];
     levelMenu.innerHTML = levels.map(l => `
-      <div class="custom-dropdown-item" data-filter="level" data-value="${l}" onclick="appState.directory.setLevelFilter('${l}');">
+      <div class="custom-dropdown-item" data-filter="level" data-value="${l}" onclick="setLevelFilter('${l}');">
         ${l ? l.toUpperCase() : "All Levels"}
       </div>
     `).join("");
@@ -497,7 +497,7 @@ class Directory {
   if (zoneTrigger && zoneMenu) {
     const zones = ["", "Yellow", "Green", "Blue", "Red", "Purple", "Orange", "Brown"];
     zoneMenu.innerHTML = zones.map(z => `
-      <div class="custom-dropdown-item" data-filter="zone" data-value="${z}" onclick="appState.directory.setZoneFilter('${z}');">
+      <div class="custom-dropdown-item" data-filter="zone" data-value="${z}" onclick="setZoneFilter('${z}');">
         ${z || "All Zones"}
       </div>
     `).join("");

@@ -52,10 +52,11 @@ appState.ui = {
   updateFloor: UI.updateFloorUI,
   showToast: UI.showToast,
   hideToast: UI.hideToast,
-  setClearDirectoryMarkerVisible: (visible) => {
-    const btn = document.getElementById('clear-directory-marker-btn');
-    if (btn) btn.style.display = visible ? 'flex' : 'none';
-  }
+  // Delegate to global UI handlers defined in index.html
+  showFabButtons: () => window.showFabButtons && window.showFabButtons(),
+  hideFabButtons: () => window.hideFabButtons && window.hideFabButtons(),
+  setClearDirectoryMarkerVisible: (visible) => 
+    window.setClearDirectoryMarkerVisible && window.setClearDirectoryMarkerVisible(visible)
 };
 
 Marker.appState = appState;
