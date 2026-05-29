@@ -29,7 +29,7 @@ export default defineConfig({
   assetsInclude: ['**/*.glb'],
   server: {
     port:5317,
-    allowedHosts: ["chunky-toaster.seagull-hippocampus.ts.net","broken-toaster.seagull-hippocampus.ts.net"],
+    allowedHosts: ["chunky-toaster.seagull-hippocampus.ts.net","broken-toaster.seagull-hippocampus.ts.net"], // for dev testing, raw IP addresses work
     host:true,
   },
   build: {
