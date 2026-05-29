@@ -22,9 +22,6 @@ class Directory {
     try {
       const response = await fetch(`${ASSETS_BASE_URL}/json_data/funtasia_data.json`);
       const rawData = await response.json();
-      // const localData = await import("@/assets/funtasia_data.json");
-      // const rawData = localData.default;
-      // console.log(rawData);
       
       // Normalize data: convert array format to object format keyed by "Booth ID"
       // This ensures compatibility whether the CDN serves the old array or new object format.

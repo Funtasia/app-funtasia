@@ -57,15 +57,9 @@ class Events {
     eventsListContainer.style.position = 'relative';
     eventsListContainer.style.zIndex = '0';
     try {
-        // --- LOCAL TESTING MODE ---
-        // To use local data, uncomment the import lines and comment out the fetch lines.
         const response = await fetch(`${ASSETS_BASE_URL}/json_data/events/${category}_events.json`);
         if (!response.ok) throw new Error('Failed to load events for ' + category);
         const data_arr = await response.json();
-
-        // const localModule = await import(`@/assets/${category}_events.json`);
-        // const data_arr = localModule.default;
-        // --------------------------
 
         let html = '';
         let currentEventID = null;
