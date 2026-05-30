@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { 
   isPointerOverUI, 
   getInteractionTarget, 
@@ -12,7 +13,7 @@ export function setupEventListeners(appState) {
   // --- Configure OrbitControls for Google Maps behavior ---
   if (appState.controls) {
     appState.controls.enableDamping = true;
-    appState.controls.dampingFactor = 0.08;
+    appState.controls.dampingFactor = CONFIG.CAMERA.CONTROLS.dampingFactor;
     
     // Remap: 1 finger = Pan, 2 fingers = Zoom + Rotate
     appState.controls.touches.ONE = THREE.TOUCH.PAN;
@@ -65,7 +66,7 @@ export function setupEventListeners(appState) {
     
     // Only trigger selection if the touch was a quick "tap" (less than 250ms)
     const duration = Date.now() - appState.pointerStartTime;
-    if (duration < 250) {
+    if (duration < CONFIG.INTERACTION.TAP_THRESHOLD) {
       const target = getInteractionTarget(event, appState);
       if (target) {
         focusOnObject(target, appState);

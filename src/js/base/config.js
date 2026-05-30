@@ -1,13 +1,9 @@
 /**
  * Funtasia Central Configuration
+ * 
  * Consolidates all static constants, theme schemas, and model-specific defaults.
  */
-
 export const CONFIG = {
-  // Using Vite-injected globals directly
-  VERSION: VERSION,
-  ASSETS_BASE_URL: ASSETS_BASE_URL,
-
   MODELS: {
     FLOORS: {
       l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
@@ -35,9 +31,22 @@ export const CONFIG = {
   // Navigation & Floor Stack
   NAVIGATION: {
     FLOOR_ORDER: ['b3', 'b2', 'b1', 'l1', 'l2'],
-    GHOST_SPACING: 1.234567,
+    // Vertical spacing between ghost models
+    GHOST_SPACING: 1.234567, // Arbitrary, adjust until looks good
+    // Minumum time for QR Location marker to turn grey
     MARKER_GREY_DELAY: 5 * 60000, // 5 minutes
+    // Floor shown when loading in
     DEFAULT_FLOOR: 'l1'
+  },
+
+  INTERACTION: {
+    TAP_THRESHOLD: 250,      // Max duration for a "tap" vs "drag"
+    FLOOR_READY_DELAY: 50    // Delay after floor switch before QR snapping
+  },
+
+  UI: {
+    TOAST_DURATION: 3000,
+    LOAD_TOAST_DURATION: 15000
   },
 
   // Camera Behaviors
@@ -48,6 +57,17 @@ export const CONFIG = {
       lerpFactor: 0.05,
       lookAtOffset: { x: 0, y: 1, z: 0 }
     },
+    PROJECTION: {
+      fov: 60,
+      near: 0.1,
+      far: 2000
+    },
+    CONTROLS: {
+      minDistance: 10,
+      maxDistance: 200,
+      maxPolarAngle: Math.PI / 2.3, // ~1.36 rad
+      dampingFactor: 0.08
+    },
     ANIMATION: {
       viewDistanceFactor: 1.2,
       viewHeightFactor: 0.8,
@@ -57,6 +77,33 @@ export const CONFIG = {
       radiusFixed: 20,
       childInitialYFactor: 1.4,
       childInitialZFactor: 2.0
+    }
+  },
+
+  MARKERS: {
+    URLS: {
+      GOOGLE_MAP_ICON: `${ASSETS_BASE_URL}/icons/google-map-icon.glb`,
+      FONT: "https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/ttf/JetBrainsMono-Regular.ttf"
+    },
+    PHYSICS: {
+      bobSpeed: 0.003,
+      bobFreq: 0.5,
+      bobAmp: 0.05
+    },
+    LOCATION: {
+      height: 0.8,
+      textOffset: 0.4
+    },
+    BOOTH: {
+      zoomThreshold: 7.6,
+      fontSize: 0.0267,
+      height: 0.2
+    },
+    ICON: {
+      baseScale: 0.4,
+      scaleFactor: 0.08,
+      minScaleRatio: 4.5, // Hide if smaller than baseScale / 4.5
+      height: 0.5
     }
   },
 

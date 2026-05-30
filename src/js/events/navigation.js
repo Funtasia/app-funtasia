@@ -189,7 +189,7 @@ export class Navigation {
           exitBtn.style.display = "flex";
           exitBtn.onclick = async () => {
              // Priority: 1. Parent of the child floor we are in, 2. Floor we came from
-             const exitTargetId = targetFloor.parentFloorId || appState.previousMainFloorId || "l1";
+             const exitTargetId = targetFloor.parentFloorId || appState.previousMainFloorId || CONFIG.NAVIGATION.DEFAULT_FLOOR;
              await Navigation.switchFloor(exitTargetId);
              
              // Attempt to re-select the parent object
@@ -226,7 +226,7 @@ export class Navigation {
       // Lazy load
       if (!targetFloor.isLoaded()) {
         const isPreloaded = appState.loadedAssets.has(targetFloor.modelPath);
-        if (!isPreloaded) appState.ui.showToast(`Loading ${floorId.toUpperCase()}…`, 15000);
+        if (!isPreloaded) appState.ui.showToast(`Loading ${floorId.toUpperCase()}…`, CONFIG.UI.LOAD_TOAST_DURATION);
         
         try {
           await targetFloor.load(appState, appState.rawData);
@@ -390,7 +390,7 @@ export class Navigation {
             if (await Navigation.handleQRID(qrID)) {
               window.removeEventListener("floorReady", onFloorReady);
             }
-          }, 50);
+          }, CONFIG.INTERACTION.FLOOR_READY_DELAY);
         };
         window.addEventListener("floorReady", onFloorReady);
 
@@ -402,7 +402,6 @@ export class Navigation {
       return;
     }
     
-    const defaultFloorId = "l1";
-    Navigation.switchFloor(defaultFloorId);
+    Navigation.switchFloor(CONFIG.NAVIGATION.DEFAULT_FLOOR);
   }
 }

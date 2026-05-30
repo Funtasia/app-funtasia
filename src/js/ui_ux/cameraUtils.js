@@ -20,8 +20,8 @@ export function applySelection(target, appState) {
   if (appState.selected) {
     const baseColor = new THREE.Color(zoneColours[appState.selected.userData.ZONE]);
 
-    const wallHighlightColor = baseColor.clone().multiplyScalar(1.4); // Slightly brighter for walls
-    const topHighlightColor = baseColor.clone().multiplyScalar(1.6);  // More pronounced for tops
+    const wallHighlightColor = baseColor.clone().multiplyScalar(1.4); // Values here are twiddled until they look good
+    const topHighlightColor = baseColor.clone().multiplyScalar(1.6);  // Both are multiplied based on same base color, so walls need to be dimmer than top
 
     const wallHighlightMaterial = new THREE.MeshBasicMaterial({color: wallHighlightColor,});
     const topHighlightMaterial = new THREE.MeshBasicMaterial({color: topHighlightColor,});

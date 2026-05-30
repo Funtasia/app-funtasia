@@ -35,13 +35,13 @@ export class Icon extends ManagedMarker {
     this._materials = [this.material];
 
     this.indicator = new THREE.Sprite(this.material);
-    this.baseScale = 0.4;
+    this.baseScale = CONFIG.MARKERS.ICON.baseScale;
     this.aspect = 1.0;
 
     this.indicator.scale.set(this.baseScale, this.baseScale, 1);
     
     // Elevate icon slightly above floor level
-    this.indicator.position.y = 0.5; 
+    this.indicator.position.y = CONFIG.MARKERS.ICON.height; 
 
     this.group.add(this.indicator);
     this.updateVisibilityAndOpacity(); // Apply initial visibility
@@ -67,11 +67,10 @@ export class Icon extends ManagedMarker {
     this.indicator.getWorldPosition(worldPos);
     const distance = camera.position.distanceTo(worldPos);
     
-    const factor = 0.08; 
-    const targetScale = distance * factor;
+    const targetScale = distance * CONFIG.MARKERS.ICON.scaleFactor;
     
     const finalScale = Math.min(this.baseScale, targetScale); // Cap at original size
-    if (this.group.visible && finalScale >= (this.baseScale / 4.5)) { // Hide if too small
+    if (this.group.visible && finalScale >= (this.baseScale / CONFIG.MARKERS.ICON.minScaleRatio)) { 
       this.indicator.scale.set(finalScale * this.aspect, finalScale, 1);
     }
   }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { Marker, FONT_URL } from "@/js/marker/marker.js";
 import { Text } from "troika-three-text";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
@@ -143,8 +144,8 @@ export class BoothIDMarker extends BaseTextMarker {
     const textColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-base') || "#1e1e2e";
     
     super(parent, position, text, level, {
-      markerHeight: 0.2, // Placed very close to the booth surface
-      fontSize: 0.0267, // Smaller than location labels
+      markerHeight: CONFIG.MARKERS.BOOTH.height, 
+      fontSize: CONFIG.MARKERS.BOOTH.fontSize, 
       textColor: Number("0x" + textColor.slice(1)), // Use brand base color
       bgColor: Number("0x" + bgColor.slice(1)), // Default mauve background
       bgOpacity: 0.85,
@@ -162,7 +163,7 @@ export class BoothIDMarker extends BaseTextMarker {
     const worldPos = new THREE.Vector3();
     this.group.getWorldPosition(worldPos);
     this.distance = camera.position.distanceTo(worldPos);
-    this.zoomThreshold = 7.6; 
+    this.zoomThreshold = CONFIG.MARKERS.BOOTH.zoomThreshold; 
 
     this.updateVisibilityAndOpacity(); // Update visibility and opacity based on zoom and parent state
 

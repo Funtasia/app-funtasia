@@ -8,7 +8,7 @@ import { Floor } from "@/js/floor/floor.js";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
 import { Navigation } from "@/js/events/navigation.js";
 
-export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = 0.05) {
+export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = CONFIG.CAMERA.DEFAULTS.lerpFactor) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
   appState.cameraAnim.cameraTarget.copy(cameraTarget);
   appState.cameraAnim.isSystemAction = isSystemAction;
@@ -35,7 +35,7 @@ export function startAnimationLoop(appState) {
         return;
       }
 
-      const lerpFactor = appState.cameraAnim.lerpFactor || 0.05;
+      const lerpFactor = appState.cameraAnim.lerpFactor || CONFIG.CAMERA.DEFAULTS.lerpFactor;
       
       appState.camera.position.lerp(appState.cameraAnim.cameraTarget, lerpFactor);
       appState.controls.target.lerp(appState.cameraAnim.controlsTarget, lerpFactor);

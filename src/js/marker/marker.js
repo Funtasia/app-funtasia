@@ -1,11 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { Text, preloadFont } from "troika-three-text";
+import { CONFIG } from "@/js/base/config.js";
 
-const BASE = ASSETS_BASE_URL;
-const googleMapIconUrl = `${BASE}/icons/google-map-icon.glb`;
-
-export const FONT_URL = "https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/ttf/JetBrainsMono-Regular.ttf";
+export const FONT_URL = CONFIG.MARKERS.URLS.FONT;
 preloadFont({ font: FONT_URL }, () => {});
 
 export class Marker {
@@ -90,7 +88,7 @@ export class LocationMarker extends Marker {
     
     // Use the existing group created by super()
     this.scene = this.parent;
-    this.markerHeight = 0.8;
+    this.markerHeight = CONFIG.MARKERS.LOCATION.height;
 
     // ----- materials -----
     const activeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true });
@@ -116,7 +114,7 @@ export class LocationMarker extends Marker {
     // Stored on the instance so animate() can reference it after the async load
     this._markerModel = null;
     const loader = new GLTFLoader();
-    loader.load(googleMapIconUrl, (gltf) => {
+    loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
       this._markerModel = gltf.scene;
 
       this._markerModel.traverse((child) => {
@@ -169,7 +167,7 @@ export class LocationMarker extends Marker {
 
       this._textLabelGroup.add(textBgMesh);
       this._textLabelGroup.add(textMesh);
-      this._textLabelGroup.position.y = this.markerHeight + 0.4;
+      this._textLabelGroup.position.y = this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset;
       this.group.add(this._textLabelGroup);
     }
   }
@@ -186,9 +184,9 @@ export class LocationMarker extends Marker {
     // Modular sync: No Floor import needed!
     this.updateSyncState();
 
-    const t = time * 0.003;
+    const t = time * CONFIG.MARKERS.PHYSICS.bobSpeed;
     // Calculate shared bobbing offset for cohesive animation
-    const bobOffset = Math.sin(t * 0.5) * 0.05;
+    const bobOffset = Math.sin(t * CONFIG.MARKERS.PHYSICS.bobFreq) * CONFIG.MARKERS.PHYSICS.bobAmp;
 
     // Floating bob + horizontal look-at on the GLB model
     if (this._markerModel) {
@@ -207,7 +205,7 @@ export class LocationMarker extends Marker {
     // Billboarding — keep the text label facing the camera + apply bobbing
     if (this._textLabelGroup && camera) {
       this._textLabelGroup.quaternion.copy(camera.quaternion);
-      this._textLabelGroup.position.y = (this.markerHeight + 0.4) + bobOffset;
+      this._textLabelGroup.position.y = (this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset) + bobOffset;
     }
   }
 }

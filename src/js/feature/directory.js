@@ -271,9 +271,8 @@ class Directory {
     grouped[level][zone].push(item);
   });
 
-  const levelOrder = ["b3", "b2", "b1", "l1", "l2", "l3"];
   const sortedLevels = Object.keys(grouped).sort(
-    (a, b) => levelOrder.indexOf(a) - levelOrder.indexOf(b)
+    (a, b) => CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(a) - CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(b)
   );
 
   sortedLevels.forEach(level => {
@@ -477,7 +476,7 @@ class Directory {
   const levelTrigger = document.getElementById("filter-level-trigger");
   const levelMenu = document.getElementById("filter-level-menu");
   if (levelTrigger && levelMenu) {
-    const levels = ["", "b3", "b2", "b1", "l1", "l2"];
+    const levels = [""].concat(CONFIG.NAVIGATION.FLOOR_ORDER);
     levelMenu.innerHTML = levels.map(l => `
       <div class="custom-dropdown-item" data-filter="level" data-value="${l}" onclick="setLevelFilter('${l}');">
         ${l ? l.toUpperCase() : "All Levels"}

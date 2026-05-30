@@ -1,4 +1,5 @@
 import { focusOnFloor } from "@/js/ui_ux/cameraUtils.js";
+import { CONFIG } from "@/js/base/config.js";
 
 const sheet = document.getElementById("bottom-sheet");
 const sheetTitle = document.getElementById("sheet-title");
@@ -213,7 +214,7 @@ export function hideToast() {
  * @param {string} message - The message to display.
  * @param {number} [duration=3000] - How long to show the toast in milliseconds.
  */
-export function showToast(message, duration = 3000) {
+export function showToast(message, duration = CONFIG.UI.TOAST_DURATION) {
   const toast = document.getElementById("toast-popup");
   const toastMsg = document.getElementById("toast-message");
   if (!toast || !toastMsg) return;
@@ -456,8 +457,6 @@ export function setupUI(floors, appState) {
     });
   }
 }
-
-
 
 export function showInfo() {
   console.log("Info button clicked - function placeholder");
