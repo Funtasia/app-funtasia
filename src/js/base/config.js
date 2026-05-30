@@ -3,8 +3,11 @@
  * 
  * Consolidates all static constants, theme schemas, and model-specific defaults.
  */
+
+// Note that idk what some constants do
 export const CONFIG = {
   MODELS: {
+    // Path of the model files relative to ASSETS_BASE_URL
     FLOORS: {
       l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
       l1: `models/${VERSION}/njc-l1-${VERSION}.glb`,
@@ -12,12 +15,14 @@ export const CONFIG = {
       b2: `models/${VERSION}/njc-b2-${VERSION}.glb`,
       b3: `models/${VERSION}/njc-b3-${VERSION}.glb`,
     },
+    // Same as above, but for child models
     CHILDREN: {
       canteen:   { floorId: "l1", nodeName: "Canteen",           path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb`   },
       sanctuary: { floorId: "l1", nodeName: "Sanctuary",         path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
       hall:      { floorId: "l2", nodeName: "CCA Booths @ Hall", path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb`      },
       ish:       { floorId: "b3", nodeName: "ISH",               path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb`       },
     },
+    // uh idk man
     ROLE_MAP: {
       "ATOILET": "atoilet",
       "MTOILET": "mtoilet",
@@ -31,17 +36,20 @@ export const CONFIG = {
   // Navigation & Floor Stack
   NAVIGATION: {
     FLOOR_ORDER: ['b3', 'b2', 'b1', 'l1', 'l2'],
+
     // Vertical spacing between ghost models
     GHOST_SPACING: 1.234567, // Arbitrary, adjust until looks good
+
     // Minumum time for QR Location marker to turn grey
     MARKER_GREY_DELAY: 5 * 60000, // 5 minutes
+
     // Floor shown when loading in
     DEFAULT_FLOOR: 'l1'
   },
 
   INTERACTION: {
-    TAP_THRESHOLD: 250,      // Max duration for a "tap" vs "drag"
-    FLOOR_READY_DELAY: 50    // Delay after floor switch before QR snapping
+    TAP_THRESHOLD: 250,      // Max duration for a "tap" vs "drag" in ms
+    FLOOR_READY_DELAY: 50    // Delay after floor switch before QR snapping when `?qrID=` in url params
   },
 
   UI: {
@@ -54,7 +62,6 @@ export const CONFIG = {
     DEFAULTS: {
       distance: 8,
       heightOffset: 6,
-      lerpFactor: 0.05,
       lookAtOffset: { x: 0, y: 1, z: 0 }
     },
     PROJECTION: {
@@ -94,11 +101,14 @@ export const CONFIG = {
       height: 0.8,
       textOffset: 0.4
     },
+    // For text markers for each booth
     BOOTH: {
-      zoomThreshold: 7.6,
+      zoomThreshold: 7.6,  // When to start showing the markers
       fontSize: 0.0267,
-      height: 0.2
+      height: 0.2,         // Vertical offset of marker from base
+      bgPlaneHeight: 0.08  // Height of the text box
     },
+    // For icons on map
     ICON: {
       baseScale: 0.4,
       scaleFactor: 0.08,
@@ -110,7 +120,10 @@ export const CONFIG = {
   // UI & Directory
   DIRECTORY: {
     FALLBACK_TAG_COLOR: "#6b7280",
-    ZONE_COLORS: { //CSS variables to check, value of variables changes on theme change
+    // Mapping of zone to colors (as CSS variables) of each directory entry
+    // look idk why some have -- and some don't, that's how it was and too lazy to change now
+    // u can change it if u want
+    ZONE_COLORS: {
       blue:   { bg: "bg-ctp-blue-50",   text: "text-ctp-blue",   bar: "bg-ctp-blue-500"  },
       green:  { bg: "bg-ctp-green-50",  text: "text-ctp-green",  bar: "bg-ctp-green-500" },
       orange: { bg: "bg-orange-50",     text: "text-orange-600", bar: "bg-orange-500"    },
@@ -157,8 +170,9 @@ export const CONFIG = {
       "PURPLE": '--color-ctp-mauve',
       "YELLOW": '--color-ctp-yellow',
       "RED":    '--color-ctp-red',
-      "BROWN":  '--color-ctp-flamingo-900',
+      "BROWN":  '--color-ctp-flamingo-900', // ts legit took me a while to find a brown color that looks good in latte and mocha
     },
+    // Mapping for ID to the generic location labels on map, arranged by level
     TEXT_MARKER_MAP: {
       l1: { 
         "Canteen": "Canteen", 

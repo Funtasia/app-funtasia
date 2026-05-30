@@ -62,7 +62,7 @@ export function focusAt(appState, pos, options = {}) {
     heightOffset = CONFIG.CAMERA.DEFAULTS.heightOffset, 
     isSystem = false, 
     lookAtOffset = new THREE.Vector3(CONFIG.CAMERA.DEFAULTS.lookAtOffset.x, CONFIG.CAMERA.DEFAULTS.lookAtOffset.y, CONFIG.CAMERA.DEFAULTS.lookAtOffset.z),
-    lerpFactor = CONFIG.CAMERA.DEFAULTS.lerpFactor 
+    lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor 
   } = options;
 
   const target = pos.clone().add(lookAtOffset);

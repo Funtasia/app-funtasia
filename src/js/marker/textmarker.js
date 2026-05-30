@@ -149,7 +149,7 @@ export class BoothIDMarker extends BaseTextMarker {
       textColor: Number("0x" + textColor.slice(1)), // Use brand base color
       bgColor: Number("0x" + bgColor.slice(1)), // Default mauve background
       bgOpacity: 0.85,
-      bgPlaneHeight: 0.08,
+      bgPlaneHeight: CONFIG.MARKERS.BOOTH.bgPlaneHeight,
       bgPadding: 0.06,
       bgZOffset: -0.005,
       ...customOptions // Merge custom options, overriding defaults
