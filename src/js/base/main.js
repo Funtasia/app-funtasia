@@ -1,12 +1,8 @@
 import * as THREE from "three";
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";
-import { events } from "@/js/feature/events.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
-import { SettingsController } from "@/js/base/settings.js";
 import { setupEventListeners } from "@/js/events/event.js";
-import { Navigation } from "@/js/events/navigation.js";
-import { directory } from "@/js/feature/directory.js";
 import { Floor } from "@/js/floor/floor.js";
 import { applyThemeToScene } from "@/js/floor/modelParser.js";
 import { Icon } from "@/js/marker/icon.js";
@@ -38,9 +34,6 @@ appState.renderer = renderer;
 appState.controls = controls;
 appState.raycaster = raycaster;
 appState.mouse = mouse;
-appState.directory = directory;
-appState.events = events;
-appState.navigation = Navigation;
 
 // Bind UI functions and Floor registry to appState to reduce imports in other modules
 appState.floors = Floor.floors;
@@ -62,12 +55,29 @@ appState.ui = {
 Marker.appState = appState;
 Floor.appState = appState;
 
-appState.navigation.init(appState);
-
-setupEventListeners(appState);
-
 // Initializing the application
 async function initApp() {
+  // Dynamically import heavy feature modules to improve TBT (Total Blocking Time)
+  const [
+    { Navigation },
+    { SettingsController },
+    { directory },
+    { events }
+  ] = await Promise.all([
+    import("@/js/events/navigation.js"),
+    import("@/js/base/settings.js"),
+    import("@/js/feature/directory.js"),
+    import("@/js/feature/events.js")
+  ]);
+
+  appState.directory = directory;
+  appState.events = events;
+  appState.navigation = Navigation;
+
+  // Initialize systems that depend on the dynamic modules
+  appState.navigation.init(appState);
+  setupEventListeners(appState);
+
   // 1. Fetch raw data
   const rawData = await directory.fetchDirectoryData();
 
@@ -194,40 +204,34 @@ async function initApp() {
   handleURLQR();
 
   startAnimationLoop(appState);
+
+  // Events toggle buttons logic - Moved inside initApp to ensure appState.events exists
+  const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
+  const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
+  const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
+
+  ccaToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('cca'));
+  dunklistToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('dunklist'));
+  pabuskingToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('pabusking'));
+
+  window.switchEventCategory = (cat) => appState.events.switchEventCategory(cat);
+
+  // Clear Directory Marker Button Logic
+  const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');
+  if (clearDirMarkerBtn) {
+    clearDirMarkerBtn.addEventListener('click', async () => {
+        if (appState.activeDirectoryMarker) {
+            appState.activeDirectoryMarker.clear();
+            appState.activeDirectoryMarker = null;
+            appState.activeDirectoryBoothId = null;
+            appState.activeDirectoryLevel = null;
+            appState.activeMarkers = appState.activeMarkers.filter(m => m !== null);
+        }
+
+        appState.ui.hideSheet();
+        appState.ui.setClearDirectoryMarkerVisible(false);
+    });
+  }
 }
 
 initApp();
-
-// Events toggle buttons logic
-const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
-const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
-const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
-
-ccaToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('cca'));
-dunklistToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('dunklist'));
-pabuskingToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('pabusking'));
-
-window.switchEventCategory = (cat) => appState.events.switchEventCategory(cat);
-
-// Clear Directory Marker Button Logic
-const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');
-if (clearDirMarkerBtn) {
-  clearDirMarkerBtn.addEventListener('click', async () => {
-      // We need to clear the active directory marker from the global app state
-      // Since appState isn't globally exposed on window, we can dispatch an event or import it
-      // Let's import the global appState reference or just find the module
-      const appState = Navigation.appState;
-      if (appState && appState.activeDirectoryMarker) {
-          appState.activeDirectoryMarker.clear();
-          appState.activeDirectoryMarker = null;
-          appState.activeDirectoryBoothId = null;
-          appState.activeDirectoryLevel = null;
-          appState.activeMarkers = appState.activeMarkers.filter(m => m !== null);
-      }
-
-      // Also close the bottom sheet if it happens to be open
-      appState.ui.hideSheet();
-
-      appState.ui.setClearDirectoryMarkerVisible(false);
-  });
-}

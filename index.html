@@ -555,7 +555,6 @@
 
     <script type="module">
       import { startScanner, stopScanner, toggleTorch } from '/src/js/helper/qrScanner.js';
-      import { Navigation } from '/src/js/events/navigation.js';
       import { QRMarker } from '/src/js/marker/qrmarker.js';
       import { showToast, storeAndHideBottomSheet, reopenStoredBottomSheet, clearStoredBottomSheet } from '/src/js/ui_ux/ui.js';
       const closeWelcomeBtn = document.getElementById('close-welcome-btn');
@@ -670,7 +669,7 @@
         inputs.forEach(input => input.value = '');
       }
 
-      function handleQRSuccess(decodedText) {
+      async function handleQRSuccess(decodedText) {
           try {
               const url = new URL(decodedText);
               const qrID = url.searchParams.get('qrID');
@@ -684,6 +683,7 @@
                   
                   // Trigger navigation
                   clearStoredBottomSheet();
+                  const { Navigation } = await import('/src/js/events/navigation.js');
                   Navigation.handleQRID(qrID);
                   
                   // Close modal
@@ -804,6 +804,7 @@
         }
 
         clearStoredBottomSheet();
+        const { Navigation } = await import('/src/js/events/navigation.js');
         const success = await Navigation.handleQRID(qrID);
         if (success) {
           qrModal.style.removeProperty('display');

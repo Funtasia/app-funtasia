@@ -6,7 +6,6 @@ import { CONFIG } from "@/js/base/config.js";
 import { Icon } from "@/js/marker/icon.js";
 import { Floor } from "@/js/floor/floor.js";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
-import { Navigation } from "@/js/events/navigation.js";
 
 export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
@@ -57,7 +56,7 @@ export function startAnimationLoop(appState) {
     /*
     Animate floor transitions (Ghost Layers sliding)
     */
-    const activeFloorId = Navigation.appState?.currentFloor?.id;
+    const activeFloorId = appState.currentFloor?.id;
     Object.values(Floor.floors).forEach((floor) => {
       if (floor.sceneModel && floor.sceneModel.visible) {
         const dist = floor.targetY - floor.sceneModel.position.y;
