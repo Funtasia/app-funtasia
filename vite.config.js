@@ -35,6 +35,7 @@ export default defineConfig({
   },
   build: {
     minify: "terser",
+    sourcemap: 'hidden',
     terserOptions: {
       toplevel: true,
     },
