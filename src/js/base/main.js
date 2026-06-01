@@ -5,10 +5,6 @@ import { setupScene } from "@/js/base/sceneSetup.js";
 import { setupEventListeners } from "@/js/events/event.js";
 import { Floor } from "@/js/floor/floor.js";
 import { applyThemeToScene } from "@/js/floor/modelParser.js";
-import { Icon } from "@/js/marker/icon.js";
-import { Marker } from "@/js/marker/marker.js"; 
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-import { QRMarker } from "@/js/marker/qrmarker.js";
 import { startAnimationLoop } from "@/js/ui_ux/animate.js";
 import * as UI from "@/js/ui_ux/ui.js";
 
@@ -52,7 +48,7 @@ appState.ui = {
     window.setClearDirectoryMarkerVisible && window.setClearDirectoryMarkerVisible(visible)
 };
 
-Marker.appState = appState;
+// Marker and Floor appState binding moved inside initApp to support dynamic marker imports
 Floor.appState = appState;
 
 // Initializing the application
@@ -62,17 +58,29 @@ async function initApp() {
     { Navigation },
     { SettingsController },
     { directory },
-    { events }
+    { events },
+    { Marker },
+    { ManagedMarker },
+    { Icon },
+    { TextMarker, BoothIDMarker }
   ] = await Promise.all([
     import("@/js/events/navigation.js"),
     import("@/js/base/settings.js"),
     import("@/js/feature/directory.js"),
-    import("@/js/feature/events.js")
+    import("@/js/feature/events.js"),
+    import("@/js/marker/marker.js"),
+    import("@/js/marker/managedmarker.js"),
+    import("@/js/marker/icon.js"),
+    import("@/js/marker/textmarker.js")
   ]);
 
   appState.directory = directory;
   appState.events = events;
   appState.navigation = Navigation;
+  appState.ManagedMarker = ManagedMarker;
+  
+  // Bind appState to markers now that they are loaded
+  Marker.appState = appState;
 
   // Initialize systems that depend on the dynamic modules
   appState.navigation.init(appState);

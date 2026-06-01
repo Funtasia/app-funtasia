@@ -49,6 +49,8 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('three')) {
               return 'vendor-three';
+            } else if (id.includes('html5-qrcode')) {
+              return 'vendor-html5-qrcode';
             }
             return 'vendor';
           }

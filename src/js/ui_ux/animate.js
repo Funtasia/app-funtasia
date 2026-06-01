@@ -3,9 +3,7 @@ Function: animate() -> Main animation loop
 */
 
 import { CONFIG } from "@/js/base/config.js";
-import { Icon } from "@/js/marker/icon.js";
 import { Floor } from "@/js/floor/floor.js";
-import { ManagedMarker } from "@/js/marker/managedmarker.js";
 
 export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
@@ -85,8 +83,8 @@ export function startAnimationLoop(appState) {
     Animate icons
     */
     // Animate all managed markers (Icons, TextMarkers, BoothIDMarkers)
-    if (ManagedMarker.allManagedMarkers) {
-      ManagedMarker.allManagedMarkers.forEach(marker => marker.animate(time, appState.camera));
+    if (appState.ManagedMarker?.allManagedMarkers) {
+      appState.ManagedMarker.allManagedMarkers.forEach(marker => marker.animate(time, appState.camera));
     }
 
     appState.renderer.render(appState.scene, appState.camera);
