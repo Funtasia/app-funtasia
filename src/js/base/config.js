@@ -4,9 +4,18 @@
  * Consolidates all static constants, theme schemas, and model-specific defaults.
  */
 
+// Define functional roles that don't necessarily have a 1:1 color mapping in MISC_SCHEMA
+// Basically roles that have a special behavior
+// Refer to README.MD under Special Role Behaviors
+const FUNCTIONAL_ROLES = ["OBJECT", "MARKER", "GREY"];
+
 // Note that idk what some constants do
 export const CONFIG = {
   MODELS: {
+    // Dynamically generated from THEME schemas + functional roles
+    get ROLES() { return [...FUNCTIONAL_ROLES, ...Object.keys(CONFIG.THEME.MISC_SCHEMA)]; },
+    get ZONES() { return Object.keys(CONFIG.THEME.ZONE_SCHEMA); },
+
     // Path of the model files relative to ASSETS_BASE_URL
     FLOORS: {
       l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
@@ -24,13 +33,15 @@ export const CONFIG = {
     },
     // uh idk man
     ROLE_MAP: {
-      "ATOILET": "atoilet",
-      "MTOILET": "mtoilet",
-      "FTOILET": "ftoilet",
-      "LIFT": "lift",
-      "STAIRCASE": "staircase",
-      "DOOR": "door"
-    }
+      ATOILET: "atoilet",
+      MTOILET: "mtoilet",
+      FTOILET: "ftoilet",
+      LIFT: "lift",
+      STAIRCASE: "staircase",
+      DOOR: "door"
+    },
+    // Roles that are flat and should be offset to avoid clashing with floor
+    DECORATIVE_ROLES: ["FOOT", "GRASS", "DRIVE"]
   },
 
   // Navigation & Floor Stack
@@ -156,7 +167,7 @@ export const CONFIG = {
       "DRIVE":     '--color-ctp-surface2',
       "FOOT":      '--color-ctp-flamingo',
       "GRASS":     '--color-ctp-green-900',
-      "NONOBJECT": '--color-ctp-flamingo-950',
+      "NONOBJECT": '--color-ctp-flamingo-950', // buildings but non-interactable
       "FTOILET":   '--color-ctp-pink',
       "MTOILET":   '--color-ctp-lavender',
       "ATOILET":   '--color-ctp-sky',

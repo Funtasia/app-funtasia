@@ -23,6 +23,33 @@ To get acquainted with the code, focus on these files:
 2.  **`src/js/base/config.js`**: Central configuration. It maps model paths, defines floor orders, and sets color schemas.
 3.  **`src/js/base/appState.js`**: Holds references to the Three.js scene, camera, renderer, and active application state (current floor, selection, etc.).
 4. **`vite.config.js`**: Config options for Vite which specify how the project should be built, and also options for the local dev server
+5. **`src/js/floor/modelParser.js`**: The bridge between 3D geometry and application logic. It injects metadata and handles object naming.
+
+## Naming Conventions
+The application relies on specific naming patterns to link 3D meshes to logic.
+
+### 1. Blender Mesh Naming
+| Category | Convention | Usage |
+| :--- | :--- | :--- |
+| **Booth/Object** | `[ID]` (e.g., `BG1`) | Matches `booth_id` in `funtasia_data.json`. |
+| **Visual Splits** | `[Name]_1` and `[Name]_2` | `_1`: wall material <br> `_2`: top material |
+| **QR Markers** | `{level}-m{number}-{name}` | `l1-m8-amphi`. Internal name used for URL params and object search. See more [below](#qr-system) |
+
+### 2. Blender "Custom Properties" (userData)
+These must be set in Blender's **Object Properties > Custom Properties** panel before exporting to GLTF.
+
+| Property | Values | Description |
+| :--- | :--- | :--- |
+| `ROLE` | `CONFIG.MODELS.ROLES` | Defines how the mesh is processed and colored. Generated from `config.js` |
+| `ZONE` | `CONFIG.MODELS.ZONES` | Used if `ROLE` is `OBJECT`. Sets color from keys of `CONFIG.THEME.ZONE_SCHEMA`. |
+| `MARKERID` | Numeric String (e.g., `8`) | Used if `ROLE` is `MARKER`. Maps to physical QR location tags. |
+| `STAIRCASEDIRECTION` | `U`, `D`, `UD` | Used if `ROLE` is `STAIRCASE` to determine the icon displayed (Up, Down, or both). |
+
+### 3. Special Role Behaviors
+*   **`ROLE: "GREY"`**: Mesh is made completely transparent (`opacity: 0`). Used for collision or invisible triggers.
+*   **`ROLE: "OBJECT"`**: Mesh becomes interactive. If found in the JSON data, it will show a label and be clickable.
+*   **`ROLE: "MARKER"`** Mesh is almost invis, and it shows a text/icon.
+*   **Decorative Roles**: Roles listed in `CONFIG.MODELS.DECORATIVE_ROLES` (e.g., `FOOT`, `GRASS`, `DRIVE`) automatically use `polygonOffset` to prevent "Z-fighting" (flickering) when placed exactly on top of the base floor mesh.
 
 ## ⚙️ Configuration
 
@@ -34,7 +61,7 @@ Open `src/js/base/config.js` and update the `MODELS` object.
 - `FLOORS`: Maps floor IDs (e.g., `l1`, `b1`) to their `.glb` file paths relative to the ASSETS_BASE_URL.
 - `CHILDREN`: Defines child models (like the Canteen or Hall) that are loaded inside specific parent floors.
 
-### 3. Data Source
+### 3. Data Source (`funtasia_data.json`)
 TL;DR: Google sheets -> `.csv` -> `.json` -> promoted to `funtasia_assets` repo
 
 The directory is based on a [Google sheets spreadsheet](https://docs.google.com/spreadsheets/d/1XRPx2ZcikyZykce8x2-sKBLCl2eSoay8EKH2Kdq2e60/edit) which is exported as a csv to [`./json_data`](./json_data/). Then the csv is processed using `parse.py` in the same folder to turn it into a `funtasia_data.json`. Finally, the json file is promoted to be in the `funtasia_assets` repo. (Remember this step!) 
@@ -89,8 +116,18 @@ Note: In theory, it is possible to have the build and deployment run on Github A
 
 ### QR System
 -   The QR marker ID in the model must follow the naming convention of `<Level>`-`m<MarkerNo>`-`<MarkerName>`, where:
-    -   Level: Basement levels are prefixed with '0' (e.g. 01-m1 for 1st marker at B1), other levels prefixed with '1'
+    -   Level: Internal floor ID (e.g., `l1` for Level 1, `b2` for Basement 2).
     -   MarkerNo: Unique number for the marker per level (MarkerNo is unique within each level, not necessarily unique across levels)
     -   MarkerName: A name for the marker to help us know the general location of the marker by just looking at it, can be anything and is unimportant. (e.g. l1-m8-amphi for the QR marker near the Amphitheatre)
--   The manual input system goes by `<Level>`-`<MarkerNo>`. Note the lack of the leading 'm' before MarkerID. The MarkerNo may be 0-padded, but this will be stripped before processing
--   The GET query in the URL (`?qrID=`) uses the marker ID inside the model (e.g. l1-m1-aesthetics) and will instantly place the marker on page load.
+-   The **Manual Input System** uses the format `<NumericFloorPrefix><FloorNumber>`-`<MarkerNo>`. 
+    -   The `NumericFloorPrefix` is `1` for levels (e.g., `12` for Level 2) and `0` for basements (e.g., `03` for Basement 3).
+    -   Note the lack of the leading 'm' before the marker number. 
+    -   The `MarkerNo` may be 0-padded, but this will be stripped before processing.
+-   The **URL GET Query** (`?qrID=`) uses the full internal marker ID (mesh name) found in the model (e.g. `l1-m1-aesthetics`) and will instantly focus the camera on the marker on page load.
+
+#### ID Mapping Logic (Manual Input)
+The system automatically maps manual input to the internal floor IDs:
+| Manual Input Example | Maps to Internal Floor ID |
+| :--- | :--- |
+| `11-1`/`11-01` | `l1-m1` |
+| `01-1`/`01-01` | `b1-m1` |

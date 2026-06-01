@@ -494,7 +494,8 @@ class Directory {
   const zoneTrigger = document.getElementById("filter-zone-trigger");
   const zoneMenu = document.getElementById("filter-zone-menu");
   if (zoneTrigger && zoneMenu) {
-    const zones = ["", "Yellow", "Green", "Blue", "Red", "Purple", "Orange", "Brown"];
+    const zoneValues = CONFIG.MODELS.ZONES.filter(z => z !== 'NONE');
+    const zones = [""].concat(zoneValues);
     zoneMenu.innerHTML = zones.map(z => `
       <div class="custom-dropdown-item" data-filter="zone" data-value="${z}" onclick="setZoneFilter('${z}');">
         ${z || "All Zones"}

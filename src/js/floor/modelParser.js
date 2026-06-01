@@ -39,8 +39,8 @@ export function applyThemeToScene(appState) {
       const role = child.userData.ROLE;
       let colorVal;
 
-      if (role === "OBJECT") {
-        colorVal = zoneColours[child.userData.ZONE || "NONE"];
+      if (role === 'OBJECT') {
+        colorVal = zoneColours[child.userData.ZONE] || zoneColours.NONE;
         if (child.name.endsWith("_2")) {
           const c = new THREE.Color(colorVal);
           c.multiplyScalar(1.2);
@@ -245,7 +245,7 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
       // Use opaque materials by default to prevent transparency sorting artifacts.
       // Walkways and grass (FOOT, GRASS, DRIVE) often overlap with the BASE.
       // We use polygonOffset to "nudge" them slightly forward in the depth buffer.
-      const isDecoration = ["FOOT", "GRASS", "DRIVE"].includes(role);
+      const isDecoration = CONFIG.MODELS.DECORATIVE_ROLES.includes(role);
       child.material = new THREE.MeshBasicMaterial({ 
         color: colorVal, 
         transparent: false,
