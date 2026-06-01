@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
-import { Marker, FONT_URL } from "@/js/marker/marker.js";
 import { Text } from "troika-three-text";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
+import { FONT_URL } from "@/js/marker/marker.js";
 
 /**
  * BaseTextMarker: Provides common functionality for text-based markers.

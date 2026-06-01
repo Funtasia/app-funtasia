@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { Text, preloadFont } from "troika-three-text";
 import { CONFIG } from "@/js/base/config.js";
 
@@ -113,27 +112,30 @@ export class LocationMarker extends Marker {
     // ----- 3D Model -----
     // Stored on the instance so animate() can reference it after the async load
     this._markerModel = null;
-    const loader = new GLTFLoader();
-    loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
-      this._markerModel = gltf.scene;
 
-      this._markerModel.traverse((child) => {
-        if (child.isMesh) {
-          child.material = activeMaterial;
-          const edges = new THREE.EdgesGeometry(child.geometry, 60);
-          const outline = new THREE.LineSegments(edges, outlineMaterialActive);
-          child.add(outline);
+    import("three/addons/loaders/GLTFLoader.js").then(({ GLTFLoader }) => {
+      const loader = new GLTFLoader();
+      loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
+        this._markerModel = gltf.scene;
+  
+        this._markerModel.traverse((child) => {
+          if (child.isMesh) {
+            child.material = activeMaterial;
+            const edges = new THREE.EdgesGeometry(child.geometry, 60);
+            const outline = new THREE.LineSegments(edges, outlineMaterialActive);
+            child.add(outline);
+          }
+        });
+  
+        const scale = 10;
+        this._markerModel.scale.set(scale, scale, scale);
+        this._markerModel.position.y = this.markerHeight;
+        
+        // Safety check: if the marker was cleared before the model finished loading
+        if (this.group) {
+          this.group.add(this._markerModel);
         }
       });
-
-      const scale = 10;
-      this._markerModel.scale.set(scale, scale, scale);
-      this._markerModel.position.y = this.markerHeight;
-      
-      // Safety check: if the marker was cleared before the model finished loading
-      if (this.group) {
-        this.group.add(this._markerModel);
-      }
     });
 
     // ----- text label group -----

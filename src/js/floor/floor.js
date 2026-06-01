@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { loadModel } from "@/js/floor/modelLoader.js";
 import { parseModel } from "@/js/floor/modelParser.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 
 export class Floor {
   // Static class attributes initialized in main.js
@@ -69,7 +68,7 @@ export class Floor {
 
     const gltf = await loadModel(this.modelPath);
     const parsingId = this.parentFloorId || this.id;
-    const result = parseModel(gltf, this.id, appState.scene, funtasiaData, parsingId);
+    const result = await parseModel(gltf, this.id, appState.scene, funtasiaData, parsingId, Floor.childModels);
     this.attachParsedData(result.model, result.interactiveObjects, result.cameraConfig, result.textMarkers, result.boothIDMarkers);
     
     this._loading = false;
@@ -80,7 +79,7 @@ export class Floor {
   /**
    * Called to show this floor and apply its specific camera constraints.
    */
-  activate(camera, controls) {
+  async activate(camera, controls) {
     if (!this.isLoaded()) {
       console.warn(`Attempted to activate unloaded floor: ${this.id}`);
       return;
@@ -89,6 +88,7 @@ export class Floor {
     this.sceneModel.visible = true;
     
     // Notify TextMarker system of the active level to sync visibility
+    const { TextMarker, BoothIDMarker } = await import("@/js/marker/textmarker.js");
     TextMarker.setLevel(this.id);
     BoothIDMarker.setLevel(this.id);
 

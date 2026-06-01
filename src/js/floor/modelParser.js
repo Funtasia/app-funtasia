@@ -1,9 +1,5 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
-import { Floor } from "@/js/floor/floor.js";
-import { Icon } from "@/js/marker/icon.js";
-import { QRMarker } from "@/js/marker/qrmarker.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 
 function getColor(colorName) {
   const documentStyle = getComputedStyle(document.documentElement);
@@ -74,7 +70,19 @@ export function applyThemeToScene(appState) {
 let skybox = null;
 let maxRadius = 0;
 
-export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = floorId) {
+export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = floorId, childModels = {}) {
+  // Dynamically import markers only when parsing occurs. 
+  // If they are already loaded by main.js, this resolves instantly from cache.
+  const [
+    { Icon },
+    { QRMarker },
+    { TextMarker, BoothIDMarker }
+  ] = await Promise.all([
+    import("@/js/marker/icon.js"),
+    import("@/js/marker/qrmarker.js"),
+    import("@/js/marker/textmarker.js")
+  ]);
+
   const model = gltf.scene;
   model.visible = false;
   scene.add(model);
@@ -262,7 +270,7 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     
     // Detect if this object belongs to a parent model (e.g. Canteen, ISH)
     let parentModelName = null;
-    const levelChildren = Floor.childModels[dataFloorId] || {};
+    const levelChildren = childModels[dataFloorId] || {};
     let p = logicalNode.parent;
     while (p && p !== model) {
       if (levelChildren[p.name]) {
@@ -305,8 +313,8 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
       }
     }
 
-    if (Floor.childModels && Floor.childModels[dataFloorId] && Floor.childModels[dataFloorId][logicalNode.name]) {
-      logicalNode.userData.child = Floor.childModels[dataFloorId][logicalNode.name];
+    if (childModels && childModels[dataFloorId] && childModels[dataFloorId][logicalNode.name]) {
+      logicalNode.userData.child = childModels[dataFloorId][logicalNode.name];
     }
 
     if (!objects.includes(logicalNode)) {

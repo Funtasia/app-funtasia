@@ -48,11 +48,30 @@ export default defineConfig({
           // split three.js into seperate chunk from other node_modules
           if (id.includes('node_modules')) {
             if (id.includes('three')) {
-              return 'vendor-three';
-            } else if (id.includes('html5-qrcode')) {
+              if (id.includes('GLTFLoader.js')) {
+                return 'vendor-three-gltf-loader';
+              }
+              if (id.includes('OrbitControls.js')) {
+                return 'vendor-three-orbit-controls';
+              }
+              if (id.includes('three.module.js')) {
+                return 'vendor-three-module';
+              }
+              if (id.includes('three.core.js')) {
+                return 'vendor-three-core';
+              }
+              if (id.includes('troika-three')) {
+                return 'vendor-troika-three';
+              }
+              return 'vendor-three-other';
+            } 
+            if (id.includes('html5-qrcode')) {
+              if (id.includes('zxing-js')) {
+                return 'vendor-html5-qrcode-xzing-js';
+              }
               return 'vendor-html5-qrcode';
             }
-            return 'vendor';
+            return 'vendor-other';
           }
         }
       }

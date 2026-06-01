@@ -8,8 +8,6 @@ import { applyThemeToScene } from "@/js/floor/modelParser.js";
 import { startAnimationLoop } from "@/js/ui_ux/animate.js";
 import * as UI from "@/js/ui_ux/ui.js";
 
-const { scene, camera, renderer, controls } = setupScene();
-
 // Instantiate Floor objects — they self-register into Floor.floors
 Object.entries(CONFIG.MODELS.FLOORS).forEach(([id, path]) => new Floor(id, path));
 Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
@@ -24,13 +22,8 @@ Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-appState.scene = scene;
-appState.camera = camera;
-appState.renderer = renderer;
-appState.controls = controls;
 appState.raycaster = raycaster;
 appState.mouse = mouse;
-
 // Bind UI functions and Floor registry to appState to reduce imports in other modules
 appState.floors = Floor.floors;
 appState.ui = {
@@ -53,6 +46,14 @@ Floor.appState = appState;
 
 // Initializing the application
 async function initApp() {
+  const { scene, camera, renderer, controls } = await setupScene();
+  
+  appState.scene = scene;
+  appState.camera = camera;
+  appState.renderer = renderer;
+  appState.controls = controls;
+  appState.raycaster = raycaster;
+
   // Dynamically import heavy feature modules to improve TBT (Total Blocking Time)
   const [
     { Navigation },

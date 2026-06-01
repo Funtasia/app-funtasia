@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CONFIG } from "@/js/base/config.js";
 
 export function getViewportSize() {
@@ -15,7 +14,7 @@ export function getViewportSize() {
   };
 }
 
-export function setupScene() {
+export async function setupScene() {
   const container = document.getElementById("canvas-container");
   const scene = new THREE.Scene();
   let bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-base')
@@ -43,6 +42,7 @@ export function setupScene() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
+  const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.touches = {
     ONE: THREE.TOUCH.PAN,
