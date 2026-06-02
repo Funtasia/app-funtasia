@@ -75,7 +75,7 @@ These must be set in Blender's **Object Properties > Custom Properties** panel b
 Most configuration options can be found in [`src/js/base/config.js`](src/js/base/config.js) and [`vite.config.js`](vite.config.js).
 
 ### 1. Asset Hosting
-In `vite.config.js`, update the `ASSETS_BASE_URL`. By default, it points to the jsDelivr CDN that points to the [`funtasia_assets`](https://github.com/garethlearnscoding/funtasia_assets/tree/main) repo (available as submodule). To update assets, you will also need to fork the `funtasia_assets` repo and update the jsDelivr link to [point to your repo](https://www.jsdelivr.com/?docs=gh).
+In `vite.config.js`, update the `ASSETS_BASE_URL`. By default, it points to the jsDelivr CDN that points to the [`funtasia_assets`](https://github.com/garethlearnscoding/funtasia_assets/tree/main) repo (available as submodule). To update assets, you will also need to fork the `funtasia_assets` repo and update the jsDelivr link to [point to your repo](https://www.jsdelivr.com/?docs=gh). Alternatively, you could potentially point it to your local funtasia_assets submodule (though pls don't push this to prod!).
 
 ### 2. Model Mapping
 Open `config.js` and update the `MODELS` object. 
@@ -103,7 +103,8 @@ npm install
 ```
 - Python3 for [data source pipeline](#3-data-source-funtasia_datajson) (optional)
 
-Note: this has mainly been tested on Linux and Git Bash on Windows. Other environements may or may not be supported.
+This project is tested on `bash` on Linux and `Git Bash` on Windows. Other environements may or may not be supported. However, the [GitHub Pages deployment from GitHub Actions](#via-github-actions-recommended) will run irregardles of your machine, thus it is sort of possible to develop without the requirements (although it will be painful). Another option would be to use a Github Codespace (which typically uses `bash`, which is supported).
+
 
 ### Cloning the repo
 ```bash
@@ -139,14 +140,16 @@ The project is designed to be hosted on static hosting services like **GitHub Pa
 2.  Upload the contents of `dist/`.
 
 ### Example for Github Pages
-**Old way**:
+
+#### Via GitHub Actions (recommended):
+1. Enable github actions/workflow runs and configure your Github repo pages to deploy from actions. There is already a deployment script at [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) ready to use.
+2. Every commit should automatically build and deploy the project.
+
+#### Via `gh-pages` branch
 1. Create a branch called `gh-pages`.
 2. Configure your Github repository pages to deploy from the `gh-pages` branch.
 3. Use the `./cmd/deploy.sh` script to automatically build and deploy the project.
 
-**New way:**
-1. Enable github actions/workflow runs and configure your Github repo pages to deploy from actions.
-2. Every commit should automatically build and deploy the project.
 
 ## 📝 Development Notes <!--Split contents to their own .md? FEATURES.md?-->
 
@@ -168,8 +171,8 @@ The project is designed to be hosted on static hosting services like **GitHub Pa
 The system automatically maps manual input to the internal floor IDs:
 | Manual Input Example | Maps to Internal Floor ID |
 | :--- | :--- |
-| `11-1`/`11-01` | `l1-m1` |
-| `01-1`/`01-01` | `b1-m1` |
+| `11-1`/`11-01` | `l1-m1-aesthetics` |
+| `01-1`/`01-01` | `b1-m1-example` |
 
 ### Deployment
 
