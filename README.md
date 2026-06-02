@@ -119,12 +119,15 @@ The project is designed to be hosted on static hosting services like **GitHub Pa
 1.  Ensure `base` in `vite.config.js` matches your deployment subdirectory (use `""` for root).
 2.  Upload the contents of `dist/`.
 
-#### Example for Github Pages
+### Example for Github Pages
+**Old way**:
 1. Create a branch called `gh-pages`.
-2. Configure your Github repository to deploy from the `gh-pages` branch.
+2. Configure your Github repository pages to deploy from the `gh-pages` branch.
 3. Use the `./cmd/deploy.sh` script to automatically build and deploy the project.
 
-Note: In theory, it is possible to have the build and deployment run on Github Actions, feel free to implement it if you want.
+**New way:**
+1. Enable github actions/workflow runs and configure your Github repo pages to deploy from actions.
+2. Every commit should automatically build and deploy the project.
 
 ## 📝 Development Notes
 
