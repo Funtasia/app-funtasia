@@ -80,7 +80,15 @@ Ensure your booth IDs in the spreadsheet match the object names in your .glb fil
 ```bash
 npm install
 ```
-Note: this has mainly been tested on Linux and WSL. Other environements may or may not be supported.
+- Python3 for [data source pipeline](#3-data-source-funtasia_datajson)
+
+Note: this has mainly been tested on Linux and Git Bash. Other environements may or may not be supported.
+
+### Cloning the repo
+```bash
+# --recursive to include funtasia_assets submodule
+git clone --recursive https://github.com/ffgtfgh53/funtasia_app.git
+```
 
 ### Local Development
 Start the Vite dev server:

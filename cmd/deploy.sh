@@ -1,4 +1,10 @@
 #!/bin/bash
+# 1. cd to project root and Switch to main branch
+# 2. Build the project to dist/
+# 3. Delete everything tracked but keeps CNAME
+# 4. Move ./dist/ to ./
+# 5. Commit with `-m "build deploy"` or arguments supplied and pushes to origin
+# 6. Switch back to main branch
 
 set -e  # exit on any error
 
