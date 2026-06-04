@@ -341,8 +341,7 @@ export function setupUI(floors, appState) {
         updateThumbUI(index); // Update thumb position
         
         const floorId = DOM.floorBtns[index].dataset.floor;
-        const NavigationPromise = import("@/js/events/navigation.js");
-        NavigationPromise.then(({ Navigation }) => {
+        import("@/js/events/navigation.js").then(({ Navigation }) => {
           Navigation.switchFloor(floorId);
         });
       }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { loadModel } from "@/js/floor/modelLoader.js";
 import { parseModel } from "@/js/floor/modelParser.js";
 
@@ -85,11 +86,8 @@ export class Floor {
    * @param {string} activeFloorId - The ID of the target floor
    */
   startYAnimation(activeFloorId) {
-    const { CONFIG } = import("@/js/base/config.js");
     this._isAnimating = true;
-    import("@/js/base/config.js").then(({ CONFIG }) => {
-      this._targetIndex = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(activeFloorId);
-    });
+    this._targetIndex = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(activeFloorId);
   }
 
   unload() {

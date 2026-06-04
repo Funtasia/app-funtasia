@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
 import { DirectoryMarker } from '@/js/marker/directorymarker.js';
-import { focusOnObject, focusOnFloor, focusAt as focusAtUtil } from "@/js/ui_ux/cameraUtils.js";
+import { focusOnObject, focusAt as focusAtUtil } from "@/js/ui_ux/cameraUtils.js";
 import { Icon } from "@/js/marker/icon.js";
 import { QRMarker } from "@/js/marker/qrmarker.js";
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
@@ -51,6 +51,25 @@ export class Navigation {
         appState.activeMarkers.push(marker);
       }
     }
+  }
+
+  /**
+   * Internal helper to update Directory Marker visibility and UI state.
+   * Part of Performance Optimization Plan Win #4.
+   * @private
+   */
+  static _updateDirectoryMarkerVisibility(floorId) {
+    const appState = Navigation.appState;
+    if (!appState.activeDirectoryMarker) return;
+
+    const isMatch = appState.activeDirectoryMarker.level === floorId;
+    if (appState.activeDirectoryMarker.group) {
+      appState.activeDirectoryMarker.group.visible = isMatch;
+    }
+    if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
+      appState.activeMarkers.push(appState.activeDirectoryMarker);
+    }
+    if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
   }
 
   /**
@@ -287,7 +306,6 @@ export class Navigation {
       Icon.setLevel(floorId);
       TextMarker.setLevel(floorId);
       BoothIDMarker.setLevel(floorId);
-      console.log(`Switched to floor: ${floorId}`);
     }
 
     Navigation.clearActiveMarkers();
@@ -295,7 +313,8 @@ export class Navigation {
     Navigation._syncDirectoryMarker(floorId);
 
     // Re-initialize listeners using the registry return function.
-    // This fixes the "clicks stop working" bug after switching floors.
+    // This is called here to ensure listeners are restored even if 
+    // the floor was already loaded or transition was skipped.
     if (appState) {
         appState.cleanupEventListeners = setupEventListeners(appState);
     }
@@ -308,17 +327,7 @@ export class Navigation {
   static _syncDirectoryMarker(floorId) {
     const appState = Navigation.appState;
     if (!appState.activeDirectoryBoothId || !appState.activeDirectoryLevel) {
-      // Fallback for legacy marker handling
-      if (appState.activeDirectoryMarker) {
-      const isMatch = appState.activeDirectoryMarker.level === floorId;
-      if (appState.activeDirectoryMarker.group) {
-        appState.activeDirectoryMarker.group.visible = isMatch;
-      }
-      if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
-        appState.activeMarkers.push(appState.activeDirectoryMarker);
-      }
-      if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
-    }
+      Navigation._updateDirectoryMarkerVisibility(floorId);
       return;
     }
 
@@ -372,15 +381,8 @@ export class Navigation {
       Navigation.focusAt(targetMarkerLocation, { 
         lookAtOffset: new THREE.Vector3(0, appState.activeDirectoryMarker.markerHeight + CONFIG.MARKERS.LOCATION.textOffset, 0) 
       });
-    } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group) {
-      const isMatch = appState.activeDirectoryMarker.level === floorId;
-      if (appState.activeDirectoryMarker.group) {
-        appState.activeDirectoryMarker.group.visible = isMatch;
-      }
-      if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
-        appState.activeMarkers.push(appState.activeDirectoryMarker);
-      }
-      if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
+    } else {
+      Navigation._updateDirectoryMarkerVisibility(floorId);
     }
   }
 
@@ -414,8 +416,6 @@ export class Navigation {
     const qrID = urlParams.get("qrID");
     
     if (qrID) {
-      console.log(`URL/Popstate qrID: ${qrID}`);
-      
       const executeAsyncCheck = async () => {
         // Attempt immediate handle (if already in registry)
         const handled = await Navigation.handleQRID(qrID, true);
