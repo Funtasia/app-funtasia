@@ -788,25 +788,13 @@
         }
 
         // Transform first input: leading 0 → "b", leading 1 → "l"
-        const markerID = secondVal.charAt(0) === '0' ? secondVal.slice(1) : secondVal;
-        const firstDigit = firstVal.charAt(0);
-        const restDigits = firstVal.slice(1);
-        const prefix = firstDigit === '0' ? 'b' : firstDigit === '1' ? 'l' : firstDigit;
-        const floorPart = `${prefix}${restDigits}`;
-        let qrID = `${floorPart}-m${markerID}`;
-        console.log(`Manual input qrID: ${qrID}`);
-        
-        // Fallback: If exact match fails, check if there's a marker that counts as a "match" (e.g. l1-m2-tc)
-        const { QRMarker } = await import('/src/js/marker/qrmarker.js');
-        const fuzzyMatch = Object.keys(QRMarker.allMarkers).find(id => id.startsWith(qrID + '-'));
-        if (fuzzyMatch) {
-          qrID = fuzzyMatch;
-        }
+        const floor = ({ '0': 'b', '1': 'l' }[firstVal[0]] || firstVal[0]) + firstVal.slice(1);
+        const base = `${floor}-m${secondVal.replace(/^0/, '')}`;
 
-        if (!QRMarker.allMarkers[qrID]) {
-          showToast(`Marker ${qrID} not found.`, 2000);
-          return;
-        }
+        const { QRMarker } = await import('/src/js/marker/qrmarker.js');
+        const qrID = QRMarker.allMarkers[base] ? base : Object.keys(QRMarker.allMarkers).find(k => k.startsWith(`${base}-`));
+
+        if (!qrID) return showToast(`Marker ${base} not found.`, 2000);
 
         clearStoredBottomSheet();
         const { Navigation } = await import('/src/js/events/navigation.js');

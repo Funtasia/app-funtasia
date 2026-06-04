@@ -100,7 +100,7 @@ async function findBestCamera() {
             .filter(d => scoreCamera(d.label) < 99)
             .sort((a, b) => scoreCamera(a.label) - scoreCamera(b.label));
 
-        console.log('[Camera] Candidates:', candidates.map(d => `"${d.label}"`));
+        // console.log('[Camera] Candidates:', candidates.map(d => `"${d.label}"`));
 
         const testVideo = document.createElement('video');
         testVideo.muted = true;
@@ -110,9 +110,6 @@ async function findBestCamera() {
         let firstVerifiedRearId = null; // first confirmed-rear camera (with or without torch)
 
         const oldIOS = !iosSupportsTorch();
-        if (oldIOS) {
-            console.log('[Camera] iOS < 17.2 — skipping torch probe, finding first rear camera only');
-        }
 
         for (const device of candidates) {
             const label = device.label.toLowerCase();
@@ -134,7 +131,7 @@ async function findBestCamera() {
             // (it is NOT affected by the stale-torch bug).
             const facingMode = track.getSettings().facingMode;
             if (facingMode === 'user') {
-                console.log('[Camera] Skipping — facingMode user (selfie):', device.label);
+                // console.log('[Camera] Skipping — facingMode user (selfie):', device.label);
                 track.stop();
                 continue;
             }
@@ -145,7 +142,7 @@ async function findBestCamera() {
             // Old iOS shortcut: torch will never work, return first verified rear camera now
             if (oldIOS) {
                 track.stop();
-                console.log('[Camera] Old iOS: using first verified rear camera:', device.label);
+                // console.log('[Camera] Old iOS: using first verified rear camera:', device.label);
                 cachedCameraSetup = { deviceId: device.deviceId, hasTorch: false };
                 return cachedCameraSetup;
             }
@@ -174,7 +171,7 @@ async function findBestCamera() {
                     if (!bestCameraId) bestCameraId = device.deviceId;
                 } else {
                     cachedCameraSetup = { deviceId: device.deviceId, hasTorch: true };
-                    console.log('[Camera] Selected (main lens, torch):', device.label);
+                    // console.log('[Camera] Selected (main lens, torch):', device.label);
                     return cachedCameraSetup;
                 }
             }
@@ -182,18 +179,18 @@ async function findBestCamera() {
 
         if (bestCameraId) {
             cachedCameraSetup = { deviceId: bestCameraId, hasTorch: true };
-            console.log('[Camera] Selected (secondary lens, torch)');
+            // console.log('[Camera] Selected (secondary lens, torch)');
             return cachedCameraSetup;
         }
 
         // No torch anywhere — use first verified rear camera.
         // If firstVerifiedRearId is null, startScanner falls back to facingMode.
         cachedCameraSetup = { deviceId: firstVerifiedRearId || null, hasTorch: false };
-        console.log('[Camera] No torch. Fallback rear id:', firstVerifiedRearId || 'none');
+        // console.log('[Camera] No torch. Fallback rear id:', firstVerifiedRearId || 'none');
         return cachedCameraSetup;
 
     } catch (err) {
-        console.error('[Camera] findBestCamera() error:', err);
+        // console.error('[Camera] findBestCamera() error:', err);
         return null;
     }
 }

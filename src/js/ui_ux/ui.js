@@ -14,7 +14,6 @@ const DOM = {
   floorBtns: Array.from(document.querySelectorAll(".floor-btn")),
   toastPopup: document.getElementById("toast-popup"),
   toastMessage: document.getElementById("toast-message"),
-  openInfoBtn: document.getElementById("open-info-btn"),
   exitChildBtn: document.getElementById("exit-child-btn"),
 };
 /** @type {Object.<string, {title: string, description: string}>} */
@@ -468,16 +467,4 @@ export function setupUI(floors, appState) {
   DOM.sheet.addEventListener("pointermove", handlePointerMove);
   DOM.sheet.addEventListener("pointerup", handlePointerUp);
   DOM.sheet.addEventListener("pointercancel", handlePointerUp);
-
-  // --- FAB Button Listeners ---
-  if (DOM.openInfoBtn) {
-    DOM.openInfoBtn.addEventListener("click", () => {
-      showInfo();
-    });
-  }
-}
-
-export function showInfo() {
-  console.log("Info button clicked - function placeholder");
-  // Future implementation: show app info / tutorial modal
 }

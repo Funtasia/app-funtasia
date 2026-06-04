@@ -78,7 +78,6 @@ class Events {
 
         let html = '';
         let currentEventID = null;
-        // console.log(data_arr) // Removed console.log for cleaner output
         data_arr.forEach((data, index) => {
             if (!data.events || data.events.length === 0) {
                 DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">No events scheduled in this category.</p>';
@@ -102,7 +101,6 @@ class Events {
             </header>
             <div class="events-timeline">
             `;            
-            // console.log(data.location_id) // Removed console.log for cleaner output
 
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();

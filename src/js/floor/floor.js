@@ -78,7 +78,6 @@ export class Floor {
     this._materialCache = result.materialCache;
     this._loading = false;
     window.dispatchEvent(new CustomEvent("floorReady", { detail: { floorId: this.id } }));
-    console.log(`[Floor] Parsed ${this.id}: ${result.interactiveObjects.length} interactive meshes.`);
   }
 
   /**
@@ -119,7 +118,6 @@ export class Floor {
 
     // Apply specific camera config
     if (this.cameraConfig) {
-      // console.log(`[Floor] Applying camera config for ${this.id}:`, this.cameraConfig);
 
       const isMainLevelTransition = !this.parentFloorId && Floor.currentFloor && !Floor.currentFloor.parentFloorId;
       const shouldPreserveRotation = Floor.appState.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;

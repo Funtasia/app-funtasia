@@ -88,7 +88,6 @@ class AppState {
   }
 
   set currentFloor(floor) {
-    console.log(`[State] Floor changing to: ${floor?.id}`);
     this._currentFloor = floor;
     
     // Automatically trigger UI updates if the UI bridge is set
