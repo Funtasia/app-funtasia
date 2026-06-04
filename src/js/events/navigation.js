@@ -152,9 +152,76 @@ export class Navigation {
       return;
     }
 
+    // Ensure child-floor exit button visibility is handled even if floor hasn't changed.
+    // This handles cases where UI might have been hidden by a modal (like the Directory).
+    const isChildFloor = !!targetFloor.parentFloorId;
+    appState.isChildFloor = isChildFloor;
+
+    const exitBtn = document.getElementById("exit-child-btn");
+    if (exitBtn) {
+      if (isChildFloor) {
+        exitBtn.style.display = "flex";
+        exitBtn.onclick = async () => {
+           // Priority: 1. Parent of the child floor we are in, 2. Floor we came from
+           const exitTargetId = targetFloor.parentFloorId || appState.previousMainFloorId || CONFIG.NAVIGATION.DEFAULT_FLOOR;
+           await Navigation.switchFloor(exitTargetId);
+           
+           // Attempt to re-select the parent object
+           let targetObj = appState.previousSelectedObject;
+           
+           // Ensure the previous selection is actually the parent of the child floor we just left
+           if (targetObj && targetObj.userData.child !== floorId) {
+               targetObj = null;
+           }
+           
+           // If no previously selected object, try to find it by matching the child floor ID
+           if (!targetObj && appState.currentFloor && appState.currentFloor.constructor.childModels[appState.currentFloor.id]) {
+               for (const [nodeName, childId] of Object.entries(appState.currentFloor.constructor.childModels[appState.currentFloor.id])) {
+                   if (childId === floorId) {
+                       targetObj = appState.interactiveObjects.find(obj => obj.name === nodeName || obj.userData.boothId === nodeName);
+                       break;
+                   }
+               }
+           }
+
+           if (targetObj) {
+               // Temporarily reset parent floor Y to 0 to get the correct "rest" world position for focusOnObject.
+               // Otherwise, if the floor is mid-animation, the focus target will be offset.
+               const parentFloorModel = appState.currentFloor?.sceneModel;
+               const currentY = parentFloorModel ? parentFloorModel.position.y : 0;
+               
+               if (parentFloorModel) {
+                   parentFloorModel.position.y = 0;
+                   parentFloorModel.updateMatrixWorld(true);
+               }
+
+               Navigation.focusOnObject(targetObj);
+
+               if (parentFloorModel) {
+                   parentFloorModel.position.y = currentY;
+                   parentFloorModel.updateMatrixWorld(true);
+               }
+               appState.ui.showSheet(targetObj.userData.boothId, targetObj.userData.child, targetObj.userData.boothDescription, targetObj.name);
+           }
+        };
+      } else {
+        exitBtn.style.display = "none";
+      }
+    }
+
+    // TASK #1: Cleanup listeners at the start of a floor switch
+    if (appState && appState.cleanupEventListeners) {
+      appState.cleanupEventListeners();
+    }
+
     const isSameFloor = appState.currentFloor && appState.currentFloor.id === floorId;
 
     if (!isSameFloor) {
+      // TASK #3: Mark all floors as starting animation
+      Object.values(appState.floors).forEach(floor => {
+        if (floor.startYAnimation) floor.startYAnimation(floorId);
+      });
+
       // Redundant UI update removed: Handled by appState.currentFloor setter
       
       // Store the active selected object to enable deep-back resuming
@@ -176,53 +243,11 @@ export class Navigation {
         appState.selected = null;
       }
 
-      const isChildFloor = !!targetFloor.parentFloorId;
-      appState.isChildFloor = isChildFloor;
       if (appState.currentFloor && !appState.currentFloor.parentFloorId) {
         appState.previousMainFloorId = appState.currentFloor.id;
         appState.previousSelectedObject = savedSelection;
       }
       
-      const exitBtn = document.getElementById("exit-child-btn");
-      if (exitBtn) {
-        if (isChildFloor) {
-          exitBtn.style.display = "flex";
-          exitBtn.onclick = async () => {
-             // Priority: 1. Parent of the child floor we are in, 2. Floor we came from
-             const exitTargetId = targetFloor.parentFloorId || appState.previousMainFloorId || CONFIG.NAVIGATION.DEFAULT_FLOOR;
-             await Navigation.switchFloor(exitTargetId);
-             
-             // Attempt to re-select the parent object
-             let targetObj = appState.previousSelectedObject;
-             
-             // Ensure the previous selection is actually the parent of the child floor we just left
-             // (Prevents stale selection when jumping between child models via the directory)
-             if (targetObj && targetObj.userData.child !== floorId) {
-                 targetObj = null;
-             }
-             
-             // If no previously selected object, try to find it by matching the child floor ID
-             if (!targetObj && appState.currentFloor && appState.currentFloor.constructor.childModels[appState.currentFloor.id]) {
-                 for (const [nodeName, childId] of Object.entries(appState.currentFloor.constructor.childModels[appState.currentFloor.id])) {
-                     if (childId === floorId) {
-                         // Found the parent node name, now find the object in the scene
-                         targetObj = appState.interactiveObjects.find(obj => obj.name === nodeName || obj.userData.boothId === nodeName);
-                         break;
-                     }
-                 }
-             }
-
-             if (targetObj) {
-                 Navigation.focusOnObject(targetObj);
-                 console.log("TARGET OBJECT: ", targetObj.userData.boothId)
-                 appState.ui.showSheet(targetObj.userData.boothId, targetObj.userData.child, targetObj.userData.boothDescription, targetObj.name);
-             }
-          };
-        } else {
-          exitBtn.style.display = "none";
-        }
-      }
-
       // Lazy load
       if (!targetFloor.isLoaded()) {
         const isPreloaded = appState.loadedAssets.has(targetFloor.modelPath);
@@ -266,6 +291,12 @@ export class Navigation {
     Navigation.clearActiveMarkers();
     Navigation.restoreLastMarker(floorId);
     Navigation._syncDirectoryMarker(floorId);
+
+    // TASK #1: Re-initialize listeners (assuming setupEventListeners is available via global/appState scope)
+    // Note: This requires Task 1D/1E implementation in event.js and main.js to be complete.
+    if (appState && typeof setupEventListeners === 'function') {
+        appState._eventListenerCleanup = setupEventListeners(appState);
+    }
   }
 
   /**
@@ -277,15 +308,15 @@ export class Navigation {
     if (!appState.activeDirectoryBoothId || !appState.activeDirectoryLevel) {
       // Fallback for legacy marker handling
       if (appState.activeDirectoryMarker) {
-        const isMatch = appState.activeDirectoryMarker.level === floorId;
-        if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
-            appState.activeMarkers.push(appState.activeDirectoryMarker);
-        }
-        if (appState.scene && appState.activeDirectoryMarker.group) {
-            isMatch ? appState.scene.add(appState.activeDirectoryMarker.group) : appState.scene.remove(appState.activeDirectoryMarker.group);
-            if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
-        }
+      const isMatch = appState.activeDirectoryMarker.level === floorId;
+      if (appState.activeDirectoryMarker.group) {
+        appState.activeDirectoryMarker.group.visible = isMatch;
       }
+      if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
+        appState.activeMarkers.push(appState.activeDirectoryMarker);
+      }
+      if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
+    }
       return;
     }
 
@@ -315,7 +346,11 @@ export class Navigation {
       if (parentNodeName) {
         const parentObj = appState.interactiveObjects.find(obj => obj.name === parentNodeName || obj.userData.boothId === parentNodeName);
         if (parentObj) {
-          targetMarkerLocation = parentObj.getWorldPosition(new THREE.Vector3());
+          // Capture position but subtract the floor's current animation offset
+          // to ensure we focus on the canonical "rest" world position.
+          const worldPos = parentObj.getWorldPosition(new THREE.Vector3());
+          worldPos.y -= targetFloor.sceneModel.position.y;
+          targetMarkerLocation = worldPos;
           targetMarkerFloorId = floorId;
         }
       }
@@ -330,13 +365,16 @@ export class Navigation {
       appState.activeDirectoryMarker = new DirectoryMarker(targetMarkerLocation, targetMarkerFloorId);
       appState.activeMarkers.push(appState.activeDirectoryMarker);
       if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(true);
-    } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group && appState.scene) {
+
+      // Re-trigger focus on the canonical rest position
+      Navigation.focusAt(targetMarkerLocation, { 
+        lookAtOffset: new THREE.Vector3(0, appState.activeDirectoryMarker.markerHeight + CONFIG.MARKERS.LOCATION.textOffset, 0) 
+      });
+    } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group) {
       const isMatch = appState.activeDirectoryMarker.level === floorId;
-      if (isMatch) {
-          if (!appState.activeMarkers.includes(appState.activeDirectoryMarker)) appState.activeMarkers.push(appState.activeDirectoryMarker);
-          appState.scene.add(appState.activeDirectoryMarker.group);
-      } else {
-          appState.scene.remove(appState.activeDirectoryMarker.group);
+      appState.activeDirectoryMarker.group.visible = isMatch;
+      if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
+        appState.activeMarkers.push(appState.activeDirectoryMarker);
       }
       if (appState.ui.setClearDirectoryMarkerVisible) appState.ui.setClearDirectoryMarkerVisible(isMatch);
     }
@@ -382,17 +420,35 @@ export class Navigation {
         // If not in registry, wait for floor load
         const targetFloorId = qrID.slice(0, 2);
         
-        // Setup listener which will fire during switchFloor's load()
+        // TASK #8: Improved QR listener with cleanup and timeout
+        let isResolved = false;
+        let timeoutId = null;
+
+        const cleanup = () => {
+          if (!isResolved) {
+            isResolved = true;
+            window.removeEventListener("floorReady", onFloorReady);
+            if (timeoutId) clearTimeout(timeoutId);
+          }
+        };
+
         const onFloorReady = async (e) => {
+          cleanup(); // Remove listener immediately on first fire
+          
           // IMPORTANT: Wait a tiny bit to ensure switchFloor's activation 
           // doesn't stomp on the animation we're about to start.
           setTimeout(async () => {
-            if (await Navigation.handleQRID(qrID)) {
-              window.removeEventListener("floorReady", onFloorReady);
-            }
+            await Navigation.handleQRID(qrID);
           }, CONFIG.INTERACTION.FLOOR_READY_DELAY);
         };
+
         window.addEventListener("floorReady", onFloorReady);
+
+        // Auto-cleanup after 10s timeout
+        timeoutId = setTimeout(() => {
+          cleanup();
+          console.warn(`[Navigation] floorReady timeout for QR: ${qrID}`);
+        }, 10000);
 
         // Derive target floor from first 2 chars of qrID (e.g. "l1-...", "b2-...")
         await Navigation.switchFloor(targetFloorId);

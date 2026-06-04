@@ -11,6 +11,45 @@ function getColor(colorName) {
 export const miscColours = { "MARKER": 0xffffff, "STAIRCASE": 0xffffff };
 export const zoneColours = {};
 
+/**
+ * Material cache to reuse materials with identical properties
+ */
+class MaterialCache {
+  constructor() {
+    this.cache = new Map();
+  }
+
+  getMaterial(colorVal, isDecoration) {
+    const key = `${colorVal.toString(16)}-${isDecoration}`;
+    if (this.cache.has(key)) return this.cache.get(key);
+
+    const material = new THREE.MeshBasicMaterial({
+      color: colorVal,
+      transparent: false,
+      polygonOffset: isDecoration,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    });
+
+    this.cache.set(key, material);
+    return material;
+  }
+
+  clear() {
+    for (const material of this.cache.values()) {
+      material.dispose();
+    }
+    this.cache.clear();
+  }
+
+  getStats() {
+    return {
+      cachedMaterials: this.cache.size,
+      entries: Array.from(this.cache.keys())
+    };
+  }
+}
+
 // Helper to update color maps from schemas.
 function refreshPalette(target, schema) {
   for (const [key, cssVar] of Object.entries(schema)) {
@@ -86,6 +125,7 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
   const model = gltf.scene;
   model.visible = false;
   scene.add(model);
+  const materialCache = new MaterialCache();
 
   let box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
@@ -242,17 +282,22 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
         colorVal = baseColor.getHex();
       }
 
-      // Use opaque materials by default to prevent transparency sorting artifacts.
-      // Walkways and grass (FOOT, GRASS, DRIVE) often overlap with the BASE.
-      // We use polygonOffset to "nudge" them slightly forward in the depth buffer.
       const isDecoration = CONFIG.MODELS.DECORATIVE_ROLES.includes(role);
-      child.material = new THREE.MeshBasicMaterial({ 
-        color: colorVal, 
-        transparent: false,
+      child.material = materialCache.getMaterial(colorVal, isDecoration);
+      
+      // PRE-BAKE ghost (transparent) variant
+      const ghostMaterial = new THREE.MeshBasicMaterial({
+        color: colorVal,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
         polygonOffset: isDecoration,
         polygonOffsetFactor: -1,
         polygonOffsetUnits: -1
       });
+      child.userData.ghostMaterial = ghostMaterial;
+      child.userData.originalMaterial = child.material;
+
       if (isInteractive) child.userData.material = child.material;
     }
 
@@ -322,5 +367,5 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
     }
   });
   
-  return { model, interactiveObjects: objects, cameraConfig, textMarkers, boothIDMarkers };
+  return { model, interactiveObjects: objects, cameraConfig, textMarkers, boothIDMarkers, materialCache };
 }

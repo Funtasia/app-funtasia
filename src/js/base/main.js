@@ -5,7 +5,7 @@ import { setupScene } from "@/js/base/sceneSetup.js";
 import { setupEventListeners } from "@/js/events/event.js";
 import { Floor } from "@/js/floor/floor.js";
 import { applyThemeToScene } from "@/js/floor/modelParser.js";
-import { startAnimationLoop } from "@/js/ui_ux/animate.js";
+import { startAnimationLoop, animateCameraTo } from "@/js/ui_ux/animate.js";
 import * as UI from "@/js/ui_ux/ui.js";
 
 // Instantiate Floor objects — they self-register into Floor.floors
@@ -34,9 +34,23 @@ appState.ui = {
   updateFloor: UI.updateFloorUI,
   showToast: UI.showToast,
   hideToast: UI.hideToast,
-  // Delegate to global UI handlers defined in index.html
-  showFabButtons: () => window.showFabButtons && window.showFabButtons(),
-  hideFabButtons: () => window.hideFabButtons && window.hideFabButtons(),
+  /**
+   * Delegates to global UI handlers but ensures child-floor exit button 
+   * state is preserved. This fixes cases where closing a modal (like 
+   * the Directory) would hide the 'Exit Area' button.
+   */
+  showFabButtons: () => {
+    if (typeof window.showFabButtons === 'function') window.showFabButtons();
+    const exitBtn = document.getElementById("exit-child-btn");
+    if (exitBtn) {
+      exitBtn.style.display = appState.isChildFloor ? "flex" : "none";
+    }
+  },
+  hideFabButtons: () => {
+    if (typeof window.hideFabButtons === 'function') window.hideFabButtons();
+    const exitBtn = document.getElementById("exit-child-btn");
+    if (exitBtn) exitBtn.style.display = "none";
+  },
   setClearDirectoryMarkerVisible: (visible) => 
     window.setClearDirectoryMarkerVisible && window.setClearDirectoryMarkerVisible(visible)
 };
@@ -182,12 +196,8 @@ async function initApp() {
         // Lerp camera to front of the model when locked
         if (isLocked && appState.currentFloor && appState.currentFloor.cameraConfig) {
           const config = appState.currentFloor.cameraConfig;
-          // Use consolidated navigation focus to ensure cardinal snapping
-          appState.navigation.focusAt(config.target, {
-            distance: config.initialPosition.distanceTo(config.target),
-            heightOffset: config.initialPosition.y - config.target.y,
-            isSystem: true
-          });
+          // Reset to canonical front view instead of snapping from current angle
+          animateCameraTo(appState, config.initialPosition, config.target, true);
         }
       },
       appState.rotationLocked

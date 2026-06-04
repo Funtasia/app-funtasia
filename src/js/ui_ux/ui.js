@@ -1,10 +1,15 @@
 import { focusOnFloor } from "@/js/ui_ux/cameraUtils.js";
 import { CONFIG } from "@/js/base/config.js";
 
-const sheet = document.getElementById("bottom-sheet");
-const sheetTitle = document.getElementById("sheet-title");
-const sheetDesc = document.getElementById("sheet-desc");
-const closeBtn = document.getElementById("close-btn");
+/**
+ * Cached DOM elements for quick access
+ */
+const DOM = {
+  sheet: document.getElementById("bottom-sheet"),
+  sheetTitle: document.getElementById("sheet-title"),
+  sheetDesc: document.getElementById("sheet-desc"),
+  closeBtn: document.getElementById("close-btn"),
+};
 /** @type {Object.<string, {title: string, description: string}>} */
 const locationData = {}; 
 
@@ -130,8 +135,8 @@ export function showBottomSheet(objectName, childFloorId = null, description = n
   // Store the current state so it can be restored later
   storedBottomSheetState = { objectName, childFloorId, description, title };
   const locationInfo = getLocationInfo(objectName);
-  sheetTitle.textContent = title || locationInfo.title;
-  sheetDesc.textContent = description ? description : locationInfo.description;
+  DOM.sheetTitle.textContent = title || locationInfo.title;
+  DOM.sheetDesc.textContent = description ? description : locationInfo.description;
 
   // Process modular action buttons
   const btnContext = { objectName, childFloorId, locationInfo };
@@ -148,7 +153,7 @@ export function showBottomSheet(objectName, childFloorId = null, description = n
     }
   });
 
-  sheet.classList.add("show");
+  DOM.sheet.classList.add("show");
   if (currentAppState) currentAppState.isBottomSheetOpen = true;
 }
 
@@ -157,7 +162,7 @@ export function showBottomSheet(objectName, childFloorId = null, description = n
  * @param {boolean} [clearState=true] - Whether to clear the reference to the last selected object.
  */
 export function hideBottomSheet(clearState = true) {
-  sheet.classList.remove("show");
+  DOM.sheet.classList.remove("show");
   if (currentAppState) {
     currentAppState.isBottomSheetOpen = false;
   }
@@ -276,13 +281,13 @@ export function updateFloorUI(floorId) {
 export function setupUI(floors, appState) {
   currentAppState = appState;
   
-  closeBtn.addEventListener("click", (e) => {
+  DOM.closeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     e.preventDefault();
     hideBottomSheet();
   });
 
-  closeBtn.addEventListener("touchend", (e) => {
+  DOM.closeBtn.addEventListener("touchend", (e) => {
     e.stopPropagation();
     e.preventDefault();
     hideBottomSheet();
@@ -373,19 +378,22 @@ export function setupUI(floors, appState) {
   let rafId = null;
 
   const updatePosition = () => {
-    if (!isDragging) return;
-    sheet.style.transform = `translate3d(0, ${currentY}px, 0)`;
+    if (!isDragging) {
+      rafId = null;
+      return;
+    }
+    DOM.sheet.style.transform = `translate3d(0, ${currentY}px, 0)`;
     rafId = requestAnimationFrame(updatePosition);
   };
 
   const handlePointerDown = (e) => {
-    if (e.target.closest('#sheet-handle') || e.target.closest('h2') || e.target === sheet) {
+    if (e.target.closest('#sheet-handle') || e.target.closest('h2') || e.target === DOM.sheet) {
       isDragging = true;
       startY = e.clientY - currentY; // Consistent start from current position
-      sheet.setPointerCapture(e.pointerId);
-      sheet.classList.add("shifting");
+      DOM.sheet.setPointerCapture(e.pointerId);
+      DOM.sheet.classList.add("shifting");
       
-      cancelAnimationFrame(rafId);
+      if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(updatePosition);
     }
   };
@@ -399,15 +407,19 @@ export function setupUI(floors, appState) {
   const handlePointerUp = (e) => {
     if (!isDragging) return;
     isDragging = false;
-    sheet.releasePointerCapture(e.pointerId);
-    sheet.classList.remove("shifting");
-    cancelAnimationFrame(rafId);
+    DOM.sheet.releasePointerCapture(e.pointerId);
+    DOM.sheet.classList.remove("shifting");
+    
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
 
-    const threshold = sheet.offsetHeight * 0.05; // Honoring user's 5% change
+    const threshold = DOM.sheet.offsetHeight * 0.05; // Honoring user's 5% change
     
     if (currentY > threshold) {
       // Use Web Animations API to finish the motion fluidly to the bottom (100%)
-      const closingAnim = sheet.animate([
+      const closingAnim = DOM.sheet.animate([
         { transform: `translate3d(0, ${currentY}px, 0)` },
         { transform: `translate3d(0, 100%, 0)` }
       ], {
@@ -417,15 +429,15 @@ export function setupUI(floors, appState) {
       });
 
       closingAnim.onfinish = () => {
-        sheet.classList.remove("shifting");
-        sheet.style.transform = "";
+        DOM.sheet.classList.remove("shifting");
+        DOM.sheet.style.transform = "";
         hideBottomSheet();
         closingAnim.cancel(); // Remove the "fill: forwards" effect so CSS takes over
         currentY = 0;
       };
     } else {
       // Snap back to 0
-      const snapAnim = sheet.animate([
+      const snapAnim = DOM.sheet.animate([
         { transform: `translate3d(0, ${currentY}px, 0)` },
         { transform: `translate3d(0, 0, 0)` }
       ], {
@@ -435,18 +447,18 @@ export function setupUI(floors, appState) {
       });
 
       snapAnim.onfinish = () => {
-        sheet.classList.remove("shifting");
-        sheet.style.transform = "";
+        DOM.sheet.classList.remove("shifting");
+        DOM.sheet.style.transform = "";
         snapAnim.cancel();
         currentY = 0;
       };
     }
   };
 
-  sheet.addEventListener("pointerdown", handlePointerDown);
-  sheet.addEventListener("pointermove", handlePointerMove);
-  sheet.addEventListener("pointerup", handlePointerUp);
-  sheet.addEventListener("pointercancel", handlePointerUp);
+  DOM.sheet.addEventListener("pointerdown", handlePointerDown);
+  DOM.sheet.addEventListener("pointermove", handlePointerMove);
+  DOM.sheet.addEventListener("pointerup", handlePointerUp);
+  DOM.sheet.addEventListener("pointercancel", handlePointerUp);
 
   // --- FAB Button Listeners ---
   const infoBtn = document.getElementById("open-info-btn");

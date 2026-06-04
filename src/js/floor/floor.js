@@ -32,6 +32,10 @@ export class Floor {
     this.interactiveObjects = [];
     this.textMarkers = [];
     this.boothIDMarkers = [];
+
+    this._isAnimating = false;
+    this._targetIndex = -1;
+    this._materialCache = null;
     
     // Initialize userData so markers can observe state without importing Floor
     if (this.sceneModel) this.sceneModel.userData.currentOpacity = 1.0;
@@ -71,9 +75,30 @@ export class Floor {
     const result = await parseModel(gltf, this.id, appState.scene, funtasiaData, parsingId, Floor.childModels);
     this.attachParsedData(result.model, result.interactiveObjects, result.cameraConfig, result.textMarkers, result.boothIDMarkers);
     
+    this._materialCache = result.materialCache;
     this._loading = false;
     window.dispatchEvent(new CustomEvent("floorReady", { detail: { floorId: this.id } }));
     console.log(`[Floor] Parsed ${this.id}: ${result.interactiveObjects.length} interactive meshes.`);
+  }
+
+  /**
+   * Marks this floor as animating and caches the target floor index
+   * @param {string} activeFloorId - The ID of the target floor
+   */
+  startYAnimation(activeFloorId) {
+    const { CONFIG } = import("@/js/base/config.js");
+    this._isAnimating = true;
+    import("@/js/base/config.js").then(({ CONFIG }) => {
+      this._targetIndex = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(activeFloorId);
+    });
+  }
+
+  unload() {
+    if (this._materialCache) {
+      this._materialCache.clear();
+      this._materialCache = null;
+    }
+    this.sceneModel = null;
   }
 
   /**

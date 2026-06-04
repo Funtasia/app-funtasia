@@ -11,7 +11,8 @@ export class Marker {
 
   constructor(parent, position, level) {
     this.appState = Marker.appState;
-    this.parent = parent || Marker.scene || (this.appState ? this.appState.scene : null);
+    // Markers should be children of their floor models to follow animations.
+    this.parent = parent || (this.appState ? this.appState.scene : null);
     
     this.position = position ? position.clone() : new THREE.Vector3();
     this.level = level;
@@ -19,13 +20,18 @@ export class Marker {
     this.group = new THREE.Group();
     
     if (this.parent && this.parent.type !== 'Scene') {
-      // Convert world position to local position. 
-      // To prevent the marker from being "offset" by current floor animations,
-      // we add the parent's current Y displacement back into the result.
-      // This effectively calculates the position relative to the "rest" floor height.
+      // To ensure the marker follows the floor geometry correctly, we must calculate 
+      // the local position relative to the floor's "rest" state (y=0). 
+      // Otherwise, the current animation offset gets baked into the marker's height.
+      const currentParentY = this.parent.position.y;
+      this.parent.position.y = 0;
+      this.parent.updateMatrixWorld(true);
+
       const localPos = this.parent.worldToLocal(this.position.clone());
-      localPos.y += this.parent.position.y; 
       this.group.position.copy(localPos);
+
+      // Restore the animating position so the transition remains smooth
+      this.parent.position.y = currentParentY;
       this.parent.updateMatrixWorld(true);
     } else {
       this.group.position.copy(this.position);
@@ -33,8 +39,10 @@ export class Marker {
 
     this.indicator = null; // To be populated by subclasses
 
-    if (this.parent) {
-      this.parent.add(this.group);
+    // Ensure parent is valid before adding
+    const actualParent = this.parent || Marker.scene || (this.appState ? this.appState.scene : null);
+    if (actualParent) {
+      actualParent.add(this.group);
     }
   }
 
@@ -44,7 +52,8 @@ export class Marker {
    * @param {boolean} isVisible - Optional local visibility override from subclass
    */
   updateSyncState(isVisible = true) {
-    if (!this.group || !this.parent || this.parent.type === 'Scene') return;
+    // If this.parent is floor.sceneModel, this is correct.
+    if (!this.group || !this.parent || this.parent.type === 'Scene' || !this.parent.userData) return;
 
     const targetOpacity = this.parent.userData.currentOpacity ?? 1.0;
     this.group.visible = isVisible && targetOpacity > 0.01;
