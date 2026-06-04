@@ -41,15 +41,11 @@ appState.ui = {
    */
   showFabButtons: () => {
     if (typeof window.showFabButtons === 'function') window.showFabButtons();
-    const exitBtn = document.getElementById("exit-child-btn");
-    if (exitBtn) {
-      exitBtn.style.display = appState.isChildFloor ? "flex" : "none";
-    }
+    UI.updateExitButtonVisibility(appState.isChildFloor);
   },
   hideFabButtons: () => {
     if (typeof window.hideFabButtons === 'function') window.hideFabButtons();
-    const exitBtn = document.getElementById("exit-child-btn");
-    if (exitBtn) exitBtn.style.display = "none";
+    UI.updateExitButtonVisibility(false);
   },
   setClearDirectoryMarkerVisible: (visible) => 
     window.setClearDirectoryMarkerVisible && window.setClearDirectoryMarkerVisible(visible)
@@ -99,7 +95,7 @@ async function initApp() {
 
   // Initialize systems that depend on the dynamic modules
   appState.navigation.init(appState);
-  setupEventListeners(appState);
+  appState.cleanupEventListeners = setupEventListeners(appState);
 
   // 1. Fetch raw data
   const rawData = await directory.fetchDirectoryData();
@@ -224,16 +220,7 @@ async function initApp() {
 
   startAnimationLoop(appState);
 
-  // Events toggle buttons logic - Moved inside initApp to ensure appState.events exists
-  const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
-  const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
-  const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
-
-  ccaToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('cca'));
-  dunklistToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('dunklist'));
-  pabuskingToggleBtn.addEventListener('click', () => appState.events.switchEventCategory('pabusking'));
-
-  window.switchEventCategory = (cat) => appState.events.switchEventCategory(cat);
+  // window.switchEventCategory is no longer needed as event listeners are managed internally by Events.js
 
   // Clear Directory Marker Button Logic
   const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');

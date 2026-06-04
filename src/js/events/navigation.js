@@ -6,6 +6,10 @@ import { Icon } from "@/js/marker/icon.js";
 import { QRMarker } from "@/js/marker/qrmarker.js";
 import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 import { setFloorOpacity } from "@/js/helper/util.js";
+import { updateExitButtonVisibility } from "@/js/ui_ux/ui.js";
+import { disposeThreeObject } from "@/js/helper/threeUtils.js";
+import { MaterialUpdater } from "@/js/helper/materialUtils.js";
+import { setupEventListeners } from "@/js/events/event.js";
 
 export class Navigation {
   static appState = null;
@@ -88,6 +92,11 @@ export class Navigation {
           // Hide main floor if we are inside one of its child areas
           floor.sceneModel.visible = !isViewingChild;
           floor.targetY = 0;
+
+          if (Math.abs(floor.targetY - floor.sceneModel.position.y) > 0.01) {
+            if (typeof floor.startYAnimation === 'function') floor.startYAnimation(activeFloorId);
+          }
+
           floor.sceneModel.renderOrder = 10; // Ensure it renders on top
           floor.currentOpacity = 1.0;
           setFloorOpacity(floor.sceneModel, 1.0);
@@ -105,6 +114,10 @@ export class Navigation {
           const depth = targetIdx - index;
           floor.targetY = -depth * CONFIG.NAVIGATION.GHOST_SPACING;
 
+          if (Math.abs(floor.targetY - floor.sceneModel.position.y) > 0.01) {
+            if (typeof floor.startYAnimation === 'function') floor.startYAnimation(activeFloorId);
+          }
+
           floor.sceneModel.visible = true;
           floor.sceneModel.renderOrder = index; // Lower floors render first
 
@@ -119,6 +132,10 @@ export class Navigation {
           const depthAbove = index - targetIdx;
           floor.targetY = depthAbove * CONFIG.NAVIGATION.GHOST_SPACING;
           
+          if (Math.abs(floor.targetY - floor.sceneModel.position.y) > 0.01) {
+            if (typeof floor.startYAnimation === 'function') floor.startYAnimation(activeFloorId);
+          }
+
           // Fade out as it flies away
           floor.currentOpacity = 0;
           setFloorOpacity(floor.sceneModel, 0); 
@@ -135,6 +152,11 @@ export class Navigation {
         if (id === activeFloorId) {
           f.sceneModel.visible = true;
           f.targetY = 0;
+
+          if (Math.abs(f.targetY - f.sceneModel.position.y) > 0.01) {
+            if (typeof f.startYAnimation === 'function') f.startYAnimation(activeFloorId);
+          }
+
           setFloorOpacity(f.sceneModel, 1.0);
         } else if (f.sceneModel) {
           f.hide();
@@ -157,11 +179,7 @@ export class Navigation {
     const isChildFloor = !!targetFloor.parentFloorId;
     appState.isChildFloor = isChildFloor;
 
-    const exitBtn = document.getElementById("exit-child-btn");
-    if (exitBtn) {
-      if (isChildFloor) {
-        exitBtn.style.display = "flex";
-        exitBtn.onclick = async () => {
+    updateExitButtonVisibility(isChildFloor, async () => {
            // Priority: 1. Parent of the child floor we are in, 2. Floor we came from
            const exitTargetId = targetFloor.parentFloorId || appState.previousMainFloorId || CONFIG.NAVIGATION.DEFAULT_FLOOR;
            await Navigation.switchFloor(exitTargetId);
@@ -203,27 +221,15 @@ export class Navigation {
                }
                appState.ui.showSheet(targetObj.userData.boothId, targetObj.userData.child, targetObj.userData.boothDescription, targetObj.name);
            }
-        };
-      } else {
-        exitBtn.style.display = "none";
-      }
-    }
+    });
 
-    // TASK #1: Cleanup listeners at the start of a floor switch
     if (appState && appState.cleanupEventListeners) {
       appState.cleanupEventListeners();
     }
 
     const isSameFloor = appState.currentFloor && appState.currentFloor.id === floorId;
 
-    if (!isSameFloor) {
-      // TASK #3: Mark all floors as starting animation
-      Object.values(appState.floors).forEach(floor => {
-        if (floor.startYAnimation) floor.startYAnimation(floorId);
-      });
-
-      // Redundant UI update removed: Handled by appState.currentFloor setter
-      
+    if (!isSameFloor) {      
       // Store the active selected object to enable deep-back resuming
       const savedSelection = appState.selected;
 
@@ -235,11 +241,7 @@ export class Navigation {
       appState.ui.hideSheet();
 
       if (appState.selected) {
-        appState.selected.traverse((child) => {
-          if (child.isMesh && child.userData.material) {
-            child.material = child.userData.material;
-          }
-        });
+        appState.selected.traverse(MaterialUpdater.setProperty('material', (child) => child.userData.material));
         appState.selected = null;
       }
 
@@ -292,10 +294,10 @@ export class Navigation {
     Navigation.restoreLastMarker(floorId);
     Navigation._syncDirectoryMarker(floorId);
 
-    // TASK #1: Re-initialize listeners (assuming setupEventListeners is available via global/appState scope)
-    // Note: This requires Task 1D/1E implementation in event.js and main.js to be complete.
-    if (appState && typeof setupEventListeners === 'function') {
-        appState._eventListenerCleanup = setupEventListeners(appState);
+    // Re-initialize listeners using the registry return function.
+    // This fixes the "clicks stop working" bug after switching floors.
+    if (appState) {
+        appState.cleanupEventListeners = setupEventListeners(appState);
     }
   }
 
@@ -372,7 +374,9 @@ export class Navigation {
       });
     } else if (appState.activeDirectoryMarker && appState.activeDirectoryMarker.group) {
       const isMatch = appState.activeDirectoryMarker.level === floorId;
-      appState.activeDirectoryMarker.group.visible = isMatch;
+      if (appState.activeDirectoryMarker.group) {
+        appState.activeDirectoryMarker.group.visible = isMatch;
+      }
       if (isMatch && !appState.activeMarkers.includes(appState.activeDirectoryMarker)) {
         appState.activeMarkers.push(appState.activeDirectoryMarker);
       }

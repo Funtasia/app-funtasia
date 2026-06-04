@@ -3,6 +3,7 @@ import { CONFIG } from "@/js/base/config.js";
 import { Text } from "troika-three-text";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
 import { FONT_URL } from "@/js/marker/marker.js";
+import { disposeThreeObject } from "@/js/helper/threeUtils.js";
 
 /**
  * BaseTextMarker: Provides common functionality for text-based markers.
@@ -81,10 +82,7 @@ export class BaseTextMarker extends ManagedMarker {
   }
 
   clear() {
-    this.group?.traverse((child) => {
-      if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
-    });
+    disposeThreeObject(this.group);
     super.clear();
   }
 }

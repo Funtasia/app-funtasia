@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { MaterialUpdater } from "@/js/helper/materialUtils.js";
 
 export function isPointerOverUI(event) {
   try {
@@ -50,22 +51,16 @@ export function setFloorOpacity(group, opacity) {
   if (group.userData.currentOpacity === opacity) return;
   group.userData.currentOpacity = opacity;
 
-  group.traverse((child) => {
-    if (child.isMesh || child.isSprite) {
-      // CRITICAL: Do not override opacity for structural/invisible meshes
-      if (child.userData.ROLE === "GREY") return;
+  const setMaterial = MaterialUpdater.setProperty('material', (c) => isTransparent 
+    ? (c.userData.ghostMaterial || c.material) 
+    : (c.userData.originalMaterial || c.material));
+    
+  const setOpacity = MaterialUpdater.setProperty('opacity', opacity);
 
-      if (isTransparent) {
-        if (child.userData.ghostMaterial) {
-          child.material = child.userData.ghostMaterial;
-          child.material.opacity = opacity;
-        }
-      } else {
-        if (child.userData.originalMaterial) {
-          child.material = child.userData.originalMaterial;
-        }
-      }
-      child.material.needsUpdate = true;
+  group.traverse((child) => {
+    if ((child.isMesh || child.isSprite) && child.userData.ROLE !== "GREY") {
+      setMaterial(child);
+      setOpacity(child);
     }
   });
 }

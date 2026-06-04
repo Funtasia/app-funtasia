@@ -1,20 +1,35 @@
 import { appState } from "@/js/base/appState.js";
+import { createEventRegistry } from "@/js/events/event.js";
 
-const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
-const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
-const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
-const eventsListContainer = document.getElementById('events-list-container');
-const eventsContentArea = document.getElementById('events-content-area');
-const eventsBackToTopBtn = document.getElementById('events-back-to-top');
-const toggleContainer = document.getElementById('fullwidth-toggle-selector-container');
+/**
+ * Cached DOM elements for the Events module.
+ */
+const DOM = {
+    ccaToggleBtn: document.getElementById('events-cca-toggle-btn'),
+    dunklistToggleBtn: document.getElementById('events-dunklist-toggle-btn'),
+    pabuskingToggleBtn: document.getElementById('events-pabusking-toggle-btn'),
+    eventsListContainer: document.getElementById('events-list-container'),
+    eventsContentArea: document.getElementById('events-content-area'),
+    eventsBackToTopBtn: document.getElementById('events-back-to-top'),
+    toggleContainer: document.getElementById('fullwidth-toggle-selector-container'),
+};
+
+// Ensure DOM elements exist before proceeding
+if (!DOM.eventsListContainer || !DOM.eventsContentArea || !DOM.eventsBackToTopBtn || !DOM.toggleContainer) {
+    console.error("Events module: One or more required DOM elements not found.");
+}
 
 const eventCategories = {
-    cca: ccaToggleBtn,
-    dunklist: dunklistToggleBtn,    
-    pabusking: pabuskingToggleBtn
+    cca: DOM.ccaToggleBtn,
+    dunklist: DOM.dunklistToggleBtn,    
+    pabusking: DOM.pabuskingToggleBtn
 };
 
 class Events {
+  constructor() {
+    this.registry = createEventRegistry();
+  }
+
   parseTimeToMinutes(timeInput) {
     const timeStr = String(timeInput || "");
     if (/^\d{4}$/.test(timeStr)) {
@@ -53,9 +68,9 @@ class Events {
     });
 
     // Update Content
-    eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">Loading events...</p>';
-    eventsListContainer.style.position = 'relative';
-    eventsListContainer.style.zIndex = '0';
+    DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">Loading events...</p>';
+    DOM.eventsListContainer.style.position = 'relative';
+    DOM.eventsListContainer.style.zIndex = '0';
     try {
         const response = await fetch(`${ASSETS_BASE_URL}/json_data/events/${category}_events.json`);
         if (!response.ok) throw new Error('Failed to load events for ' + category);
@@ -63,10 +78,10 @@ class Events {
 
         let html = '';
         let currentEventID = null;
-        console.log(data_arr)
+        // console.log(data_arr) // Removed console.log for cleaner output
         data_arr.forEach((data, index) => {
             if (!data.events || data.events.length === 0) {
-                eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">No events scheduled in this category.</p>';
+                DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">No events scheduled in this category.</p>';
                 return;
             }
             const eventID = "events-item-" + (index + 1)
@@ -87,7 +102,7 @@ class Events {
             </header>
             <div class="events-timeline">
             `;            
-            console.log(data.location_id)
+            // console.log(data.location_id) // Removed console.log for cleaner output
 
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -215,7 +230,7 @@ class Events {
             </div>
             `;
         });
-        eventsListContainer.innerHTML = html;
+        DOM.eventsListContainer.innerHTML = html;
         if (currentEventID) {
             const eventHeader = document.getElementById(currentEventID);
             eventHeader.scrollIntoView({
@@ -223,34 +238,45 @@ class Events {
                 block: "start",
                 container: "nearest",
             });
-            toggleContainer.style.top = `-${toggleContainer.offsetHeight + 20}px`;
-            eventsContentArea.style.setProperty('--event-header-top', '-16px');
+            DOM.toggleContainer.style.top = `-${DOM.toggleContainer.offsetHeight + 20}px`;
+            DOM.eventsContentArea.style.setProperty('--event-header-top', '-16px');
         }
     } catch (err) {
         console.error("Error rendering timeline:", err);
-        eventsListContainer.innerHTML = '<p class="text-center text-ctp-red py-10">Failed to load events. Please try again later.</p>';
+        DOM.eventsListContainer.innerHTML = '<p class="text-center text-ctp-red py-10">Failed to load events. Please try again later.</p>';
     }
 
-    // Delegate click events for locations
-    eventsListContainer.addEventListener('click', (e) => {
-        const locationTag = e.target.closest('.events-location');
-        console.log(locationTag);
-        if (locationTag && locationTag.dataset.boothId) {
-            const boothId = locationTag.dataset.boothId.trim();
-            if (boothId && boothId !== "-") appState.directory.focusOnBooth(boothId);
-        }
-    });
 }
 
 // Setup Back to Top scroll listener
-  init() { // New init method for Events class
-   // Setup Back to Top scroll listener
-   if (eventsContentArea && eventsBackToTopBtn) { 
+  init() {
+    this.registry.cleanup(); // Clear any existing listeners if init is called multiple times
+
+    // Add listeners for category toggle buttons
+    if (DOM.ccaToggleBtn) this.registry.add(DOM.ccaToggleBtn, 'click', () => this.switchEventCategory('cca'));
+    if (DOM.dunklistToggleBtn) this.registry.add(DOM.dunklistToggleBtn, 'click', () => this.switchEventCategory('dunklist'));
+    if (DOM.pabuskingToggleBtn) this.registry.add(DOM.pabuskingToggleBtn, 'click', () => this.switchEventCategory('pabusking'));
+
+    // Delegate click events for location tags inside the list (setup once)
+    if (DOM.eventsListContainer) {
+        this.registry.add(DOM.eventsListContainer, 'click', (e) => {
+            const locationTag = e.target.closest('.events-location');
+            if (locationTag && locationTag.dataset.boothId) {
+                const boothId = locationTag.dataset.boothId.trim();
+                if (boothId && boothId !== "-") appState.directory.focusOnBooth(boothId);
+            }
+        });
+    }
+
+    // Setup Back to Top scroll listener
+    if (DOM.eventsContentArea && DOM.eventsBackToTopBtn) {
     let lastScrollTop = 0;
     let upScrollAccumulator = 0;
     let downScrollAccumulator = 0;
-    if (toggleContainer) {
-        Object.assign(toggleContainer.style, {
+
+    // Apply sticky styling once if not already applied
+    if (DOM.toggleContainer && !DOM.toggleContainer.dataset.styled) {
+        Object.assign(DOM.toggleContainer.style, {
             position: 'sticky',
             top: '-16px',
             zIndex: '60',
@@ -259,56 +285,57 @@ class Events {
             transition: 'top 0.3s ease-in-out',
             willChange: 'top'
         });
+        DOM.toggleContainer.dataset.styled = 'true'; // Mark as styled
     }
 
     // Base offset matches Tailwind's -top-8 (-2rem / -32px)
     const headerBaseOffset = -16; 
 
-    eventsContentArea.addEventListener('scroll', () => {
+    this.registry.add(DOM.eventsContentArea, 'scroll', () => {
         // Clamp scrollTop to 0 to prevent Safari overscroll from messing with delta logic
-        const scrollTop = Math.max(0, eventsContentArea.scrollTop);
+        const scrollTop = Math.max(0, DOM.eventsContentArea.scrollTop);
         
         // Measure actual height to ensure headers stack perfectly below buttons
-        const toggleHeight = toggleContainer ? toggleContainer.offsetHeight : 0;
+        const toggleHeight = DOM.toggleContainer ? DOM.toggleContainer.offsetHeight : 0;
 
         // Back to Top button logic
         if (scrollTop > 200) {
-            eventsBackToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
-            eventsBackToTopBtn.classList.add('opacity-100', 'pointer-events-auto');
+            DOM.eventsBackToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            DOM.eventsBackToTopBtn.classList.add('opacity-100', 'pointer-events-auto');
         } else {
-            eventsBackToTopBtn.classList.add('opacity-0', 'pointer-events-none');
-            eventsBackToTopBtn.classList.remove('opacity-100', 'pointer-events-auto');
+            DOM.eventsBackToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            DOM.eventsBackToTopBtn.classList.remove('opacity-100', 'pointer-events-auto');
         }
 
         // Toggle container scroll-back logic
-        if (toggleContainer) {
+        if (DOM.toggleContainer) {
             const delta = lastScrollTop - scrollTop;
             if (scrollTop <= 0) {
-                toggleContainer.style.top = '-16px';
-                eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
+                DOM.toggleContainer.style.top = '-16px';
+                DOM.eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
                 upScrollAccumulator = 0;
                 downScrollAccumulator = 0;
             } else if (delta > 0) { // Scrolling up
                 upScrollAccumulator += delta;
                 downScrollAccumulator = 0;
                 if (upScrollAccumulator >= 0) {
-                    toggleContainer.style.top = '-16px';
-                    eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
+                    DOM.toggleContainer.style.top = '-16px';
+                    DOM.eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
                 }
             } else if (delta < 0) { // Scrolling down
                 downScrollAccumulator += Math.abs(delta);
                 upScrollAccumulator = 0;
                 if (scrollTop > 120 && downScrollAccumulator >= 20) {
-                    toggleContainer.style.top = `-${toggleHeight + 20}px`;
-                    eventsContentArea.style.setProperty('--event-header-top', `${headerBaseOffset}px`);
+                    DOM.toggleContainer.style.top = `-${DOM.toggleContainer.offsetHeight + 20}px`;
+                    DOM.eventsContentArea.style.setProperty('--event-header-top', `${headerBaseOffset}px`);
                 }
             }
         }
         lastScrollTop = scrollTop;
     }, { passive: true });
 
-    eventsBackToTopBtn.addEventListener('click', () => {
-        eventsContentArea.scrollTo({ top: 0, behavior: 'smooth' });
+    this.registry.add(DOM.eventsBackToTopBtn, 'click', () => {
+        DOM.eventsContentArea.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 }
@@ -316,3 +343,6 @@ class Events {
 }
 
 export const events = new Events();
+
+// Expose global for onclick handlers in index.html or dynamic content
+window.switchEventCategory = (category) => events.switchEventCategory(category);

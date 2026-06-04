@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
+import { disposeThreeObject } from "@/js/helper/threeUtils.js";
 
 function getColor(colorName) {
   const documentStyle = getComputedStyle(document.documentElement);
@@ -19,13 +20,15 @@ class MaterialCache {
     this.cache = new Map();
   }
 
-  getMaterial(colorVal, isDecoration) {
-    const key = `${colorVal.toString(16)}-${isDecoration}`;
+  getMaterial(colorVal, isDecoration, isGhost = false) {
+    const key = `${colorVal.toString(16)}-${isDecoration}-${isGhost}`;
     if (this.cache.has(key)) return this.cache.get(key);
 
     const material = new THREE.MeshBasicMaterial({
       color: colorVal,
-      transparent: false,
+      transparent: isGhost,
+      opacity: isGhost ? 0.5 : 1.0,
+      depthWrite: !isGhost,
       polygonOffset: isDecoration,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1
@@ -129,16 +132,12 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
 
   let box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
-  // console.log(`[Parser] Model ${floorId} center:`, center);
   model.position.sub(center);
 
   box = new THREE.Box3().setFromObject(model);
   const sizeVec = box.getSize(new THREE.Vector3());
   const radius = sizeVec.length() * 0.5;
   const isChildModel = dataFloorId !== floorId;
-  // console.log(`[Parser] ── Model: ${floorId} (${isChildModel ? 'CHILD of ' + dataFloorId : 'FLOOR'}) ──`);
-  // console.log(`[Parser]   Bounding box size: W=${sizeVec.x.toFixed(2)}, H=${sizeVec.y.toFixed(2)}, D=${sizeVec.z.toFixed(2)}`);
-  // console.log(`[Parser]   Radius (half-diagonal): ${radius.toFixed(2)}`);
   maxRadius = Math.max(maxRadius, radius);
 
   if (!skybox) {
@@ -172,7 +171,6 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
         near: radius / 1000,
         far: Math.max(radius * 10000, 2000),
       };
-  // console.log(`[Parser]   Camera Config:`, cameraConfig);
   const objects = [];
   const boothIDMarkers = [];
   const textMarkers = [];
@@ -285,17 +283,7 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
       const isDecoration = CONFIG.MODELS.DECORATIVE_ROLES.includes(role);
       child.material = materialCache.getMaterial(colorVal, isDecoration);
       
-      // PRE-BAKE ghost (transparent) variant
-      const ghostMaterial = new THREE.MeshBasicMaterial({
-        color: colorVal,
-        transparent: true,
-        opacity: 0.5,
-        depthWrite: false,
-        polygonOffset: isDecoration,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1
-      });
-      child.userData.ghostMaterial = ghostMaterial;
+      child.userData.ghostMaterial = materialCache.getMaterial(colorVal, isDecoration, true);
       child.userData.originalMaterial = child.material;
 
       if (isInteractive) child.userData.material = child.material;

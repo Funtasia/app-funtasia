@@ -9,6 +9,13 @@ const DOM = {
   sheetTitle: document.getElementById("sheet-title"),
   sheetDesc: document.getElementById("sheet-desc"),
   closeBtn: document.getElementById("close-btn"),
+  floorSelector: document.getElementById("floor-selector"),
+  floorThumb: document.getElementById("floor-thumb"),
+  floorBtns: Array.from(document.querySelectorAll(".floor-btn")),
+  toastPopup: document.getElementById("toast-popup"),
+  toastMessage: document.getElementById("toast-message"),
+  openInfoBtn: document.getElementById("open-info-btn"),
+  exitChildBtn: document.getElementById("exit-child-btn"),
 };
 /** @type {Object.<string, {title: string, description: string}>} */
 const locationData = {}; 
@@ -162,7 +169,7 @@ export function showBottomSheet(objectName, childFloorId = null, description = n
  * @param {boolean} [clearState=true] - Whether to clear the reference to the last selected object.
  */
 export function hideBottomSheet(clearState = true) {
-  DOM.sheet.classList.remove("show");
+  if (DOM.sheet) DOM.sheet.classList.remove("show");
   if (currentAppState) {
     currentAppState.isBottomSheetOpen = false;
   }
@@ -170,6 +177,23 @@ export function hideBottomSheet(clearState = true) {
     storedBottomSheetState = null;
   }
   window.dispatchEvent(new Event('bottomsheetclose'));
+}
+
+/**
+ * Centralized logic for the floating 'Exit Area' button.
+ * @param {boolean} isChildFloor 
+ * @param {Function|null} onExitClick 
+ */
+export function updateExitButtonVisibility(isChildFloor, onExitClick = null) {
+  const exitBtn = DOM.exitChildBtn;
+  if (!exitBtn) return;
+
+  if (isChildFloor) {
+    exitBtn.style.display = "flex";
+    if (onExitClick) exitBtn.onclick = onExitClick;
+  } else {
+    exitBtn.style.display = "none";
+  }
 }
 
 /**
@@ -205,7 +229,7 @@ export function clearStoredBottomSheet() {
  * Cleans up any pending hide timeouts.
  */
 export function hideToast() {
-  const toast = document.getElementById("toast-popup");
+  const toast = DOM.toastPopup;
   if (!toast) return;
   toast.classList.remove("show");
   if (toast.hideTimeout) {
@@ -220,11 +244,11 @@ export function hideToast() {
  * @param {number} [duration=3000] - How long to show the toast in milliseconds.
  */
 export function showToast(message, duration = CONFIG.UI.TOAST_DURATION) {
-  const toast = document.getElementById("toast-popup");
-  const toastMsg = document.getElementById("toast-message");
-  if (!toast || !toastMsg) return;
+  const toast = DOM.toastPopup;
+  const toastMsg = DOM.toastMessage;
+  if (!toast || !toastMsg) return; // Ensure toast elements exist
 
-  hideToast(); // Clear any existing toast before showing new one
+  hideToast(); // Clear any existing toast before showing a new one
 
   toastMsg.textContent = message;
   toast.classList.add("show");
@@ -235,9 +259,6 @@ export function showToast(message, duration = CONFIG.UI.TOAST_DURATION) {
   }, duration);
 }
 
-let floorSelector = null;
-let floorThumb = null;
-let floorBtns = [];
 let activeIndex = -1;
 
 /**
@@ -245,32 +266,25 @@ let activeIndex = -1;
  * @param {string} floorId - The ID of the floor (e.g., 'l1', 'b2').
  */
 export function updateFloorUI(floorId) {
-  if (!floorThumb || floorBtns.length === 0) {
-    // Retry finding elements if they aren't captured yet
-    floorSelector = document.getElementById("floor-selector");
-    floorThumb = document.getElementById("floor-thumb");
-    floorBtns = Array.from(document.querySelectorAll(".floor-btn"));
-    if (!floorThumb || floorBtns.length === 0) return;
-  }
+  if (!DOM.floorThumb || DOM.floorBtns.length === 0) return;
 
-  const index = floorBtns.findIndex(btn => btn.dataset.floor === floorId);
+  const index = DOM.floorBtns.findIndex(btn => btn.dataset.floor === floorId);
   if (index === -1) return;
 
   activeIndex = index;
   
   // Update button classes
-  floorBtns.forEach((btn, i) => {
+  DOM.floorBtns.forEach((btn, i) => {
     btn.classList.toggle("active", i === index);
   });
 
   // Update thumb position
-  const buttonHeight = floorBtns[0].offsetHeight || (window.innerWidth <= 768 ? 36 : 40);
+  const buttonHeight = DOM.floorBtns[0].offsetHeight || (window.innerWidth <= 768 ? 36 : 40);
   const gap = 4;
   const padding = window.innerWidth <= 768 ? 6 : 8;
   const newTop = padding + (index * (buttonHeight + gap));
-  
-  floorThumb.style.top = `${newTop}px`;
-  floorThumb.style.opacity = "1";
+  DOM.floorThumb.style.top = `${newTop}px`;
+  DOM.floorThumb.style.opacity = "1";
 }
 
 /**
@@ -294,12 +308,7 @@ export function setupUI(floors, appState) {
   });
 
 
-  floorSelector = document.getElementById("floor-selector");
-  floorThumb = document.getElementById("floor-thumb");
-  floorBtns = Array.from(document.querySelectorAll(".floor-btn"));
-
-
-  if (floorSelector && floorThumb && floorBtns.length > 0) {
+  if (DOM.floorSelector && DOM.floorThumb && DOM.floorBtns.length > 0) {
     let isDragging = false;
     
     function getCSSPadding() {
@@ -308,31 +317,31 @@ export function setupUI(floors, appState) {
 
     function updateThumbUI(index) {
       if (index < 0) index = 0;
-      if (index >= floorBtns.length) index = floorBtns.length - 1;
-      const buttonHeight = floorBtns[0].offsetHeight || 40;
+      if (index >= DOM.floorBtns.length) index = DOM.floorBtns.length - 1;
+      const buttonHeight = DOM.floorBtns[0].offsetHeight || 40;
       const gap = 4;
       const newTop = getCSSPadding() + (index * (buttonHeight + gap));
-      floorThumb.style.top = `${newTop}px`;
-      floorThumb.style.opacity = "1";
+      DOM.floorThumb.style.top = `${newTop}px`;
+      DOM.floorThumb.style.opacity = "1";
     }
 
     function processInteraction(clientY) {
-      const rect = floorSelector.getBoundingClientRect();
+      const rect = DOM.floorSelector.getBoundingClientRect();
       const relativeY = clientY - rect.top;
       
-      const buttonHeight = floorBtns[0].offsetHeight || 40;
+      const buttonHeight = DOM.floorBtns[0].offsetHeight || 40;
       const step = buttonHeight + 4; // button height + gap
       const offsetToCenter = getCSSPadding() + (buttonHeight / 2);
       
       let index = Math.round((relativeY - offsetToCenter) / step);
       if (index < 0) index = 0;
-      if (index >= floorBtns.length) index = floorBtns.length - 1;
+      if (index >= DOM.floorBtns.length) index = DOM.floorBtns.length - 1;
       
       if (index !== activeIndex) {
         activeIndex = index;
-        updateThumbUI(index);
+        updateThumbUI(index); // Update thumb position
         
-        const floorId = floorBtns[index].dataset.floor;
+        const floorId = DOM.floorBtns[index].dataset.floor;
         const NavigationPromise = import("@/js/events/navigation.js");
         NavigationPromise.then(({ Navigation }) => {
           Navigation.switchFloor(floorId);
@@ -340,15 +349,15 @@ export function setupUI(floors, appState) {
       }
     }
 
-    floorSelector.addEventListener("pointerdown", (e) => {
+    DOM.floorSelector.addEventListener("pointerdown", (e) => {
       isDragging = true;
-      floorSelector.setPointerCapture(e.pointerId);
+      DOM.floorSelector.setPointerCapture(e.pointerId);
       processInteraction(e.clientY);
       e.preventDefault();
       e.stopPropagation();
     });
 
-    floorSelector.addEventListener("pointermove", (e) => {
+    DOM.floorSelector.addEventListener("pointermove", (e) => {
       if (isDragging) {
         processInteraction(e.clientY);
         e.preventDefault();
@@ -356,18 +365,18 @@ export function setupUI(floors, appState) {
       }
     });
 
-    floorSelector.addEventListener("pointerup", (e) => {
+    DOM.floorSelector.addEventListener("pointerup", (e) => {
       if (isDragging) {
         isDragging = false;
-        floorSelector.releasePointerCapture(e.pointerId);
+        DOM.floorSelector.releasePointerCapture(e.pointerId);
         e.preventDefault();
         e.stopPropagation();
       }
     });
     
-    floorSelector.addEventListener("pointercancel", (e) => {
+    DOM.floorSelector.addEventListener("pointercancel", (e) => {
         isDragging = false;
-        try { floorSelector.releasePointerCapture(e.pointerId); } catch(err) {}
+        try { DOM.floorSelector.releasePointerCapture(e.pointerId); } catch(err) {}
     });
   }
 
@@ -461,10 +470,8 @@ export function setupUI(floors, appState) {
   DOM.sheet.addEventListener("pointercancel", handlePointerUp);
 
   // --- FAB Button Listeners ---
-  const infoBtn = document.getElementById("open-info-btn");
-
-  if (infoBtn) {
-    infoBtn.addEventListener("click", () => {
+  if (DOM.openInfoBtn) {
+    DOM.openInfoBtn.addEventListener("click", () => {
       showInfo();
     });
   }

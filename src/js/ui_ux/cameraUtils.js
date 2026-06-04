@@ -2,17 +2,13 @@ import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
 import { animateCameraTo } from "@/js/ui_ux/animate.js";
 import { zoneColours } from "@/js/floor/modelParser.js";
+import { MaterialUpdater } from "@/js/helper/materialUtils.js";
 
 export function applySelection(target, appState) {
   if (appState.selected === target) return;
 
   if (appState.selected) {
-    // Restore materials on all mesh children
-    appState.selected.traverse((child) => {
-      if (child.isMesh && child.userData.material) {
-        child.material = child.userData.material;
-      }
-    });
+    appState.selected.traverse(MaterialUpdater.setProperty('material', (c) => c.userData.originalMaterial || c.userData.material));
   }
 
   appState.selected = target;
@@ -22,17 +18,10 @@ export function applySelection(target, appState) {
 
     const wallHighlightColor = baseColor.clone().multiplyScalar(1.4); // Values here are twiddled until they look good
     const topHighlightColor = baseColor.clone().multiplyScalar(1.6);  // Both are multiplied based on same base color, so walls need to be dimmer than top
-
-    const wallHighlightMaterial = new THREE.MeshBasicMaterial({color: wallHighlightColor,});
-    const topHighlightMaterial = new THREE.MeshBasicMaterial({color: topHighlightColor,});
-
-    // Apply highlight to all mesh children
-    appState.selected.traverse((child) => {
-      if (child.isMesh && child.userData.material) {
-        // Determine if the child mesh represents a wall ('_1') or a top ('_2') face
-        child.material = child.name.endsWith('_1') ? wallHighlightMaterial : topHighlightMaterial;
-      }
-    });
+    
+    appState.selected.traverse(MaterialUpdater.setProperty('material', (c) => 
+      c.name.endsWith('_2') ? new THREE.MeshBasicMaterial({color: topHighlightColor}) : new THREE.MeshBasicMaterial({color: wallHighlightColor})
+    ));
   }
 }
 

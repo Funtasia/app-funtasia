@@ -15,6 +15,8 @@ export class ManagedMarker extends Marker {
   constructor(parent, position, level) {
     super(parent, position, level);
 
+    this.group.userData.isMarker = true;
+
     // Register this instance globally and by level
     ManagedMarker.allManagedMarkers.push(this);
     if (!ManagedMarker.managedMarkersByLevel[this.level]) {
