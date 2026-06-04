@@ -100,9 +100,12 @@ class AppState {
    * Helper to track assets and potentially persist to localStorage
    */
   recordAssetLoaded(path) {
+    const isNew = !this.loadedAssets.has(path);
     this.loadedAssets.add(path);
+    if (isNew) {
     const loadedArray = Array.from(this.loadedAssets);
     localStorage.setItem('funtasia_preloaded_assets', JSON.stringify(loadedArray));
+    }
   }
 }
 
