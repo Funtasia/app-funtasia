@@ -1,12 +1,10 @@
 import { Html5Qrcode } from "html5-qrcode";
+import { CONFIG } from "@/src/js/base/config";
 
 let html5QrCode = null;
 let torchOn = false;
 let torchSupported = false;
 let cachedCameraSetup = null;
-
-const torchOnColor  = 'var(--color-ctp-mauve-700)';
-const torchOffColor = 'var(--color-ctp-mauve-950)';
 
 // ── Shared UI helpers ─────────────────────────────────────────────────────────
 
@@ -20,7 +18,7 @@ function getFlashIds(elementId) {
 
 function updateTorchUI(btnEl, iconEl, isOn) {
     if (iconEl) iconEl.textContent = isOn ? 'flashlight_on' : 'flashlight_off';
-    if (btnEl)  btnEl.style.background = isOn ? torchOnColor : torchOffColor;
+    if (btnEl)  btnEl.style.background = isOn ? CONFIG.QRSCANNER.torchOnColor : CONFIG.QRSCANNER.torchOffColor;
 }
 
 // ── iOS helpers ───────────────────────────────────────────────────────────────

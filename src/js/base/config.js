@@ -11,6 +11,11 @@ const FUNCTIONAL_ROLES = ["OBJECT", "MARKER", "GREY"];
 
 // Note that idk what some constants do
 export const CONFIG = {
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LOCATIONS - Locations of resources
+  // ─────────────────────────────────────────────────────────────────────────────
+
   MODELS: {
     // Dynamically generated from THEME schemas + functional roles
     get ROLES() { return [...FUNCTIONAL_ROLES, ...Object.keys(CONFIG.THEME.MISC_SCHEMA)]; },
@@ -43,6 +48,10 @@ export const CONFIG = {
     // Roles that are flat and should be offset to avoid clashing with floor
     DECORATIVE_ROLES: ["FOOT", "GRASS", "DRIVE"]
   },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CONSTANTS - Funny numbers and stuff
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // Navigation & Floor Stack
   NAVIGATION: {
@@ -128,6 +137,10 @@ export const CONFIG = {
     }
   },
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // THEMING - Colours and stuff
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // UI & Directory
   DIRECTORY: {
     FALLBACK_TAG_COLOR: "#6b7280",
@@ -161,7 +174,7 @@ export const CONFIG = {
   },
 
   EVENTS: {
-    // Colors for each entry based on status
+    // Tailwind classes for each entry based on status
     STATUS_CLASSES: {
       past: {
         node: 'bg-ctp-surface2',
@@ -184,7 +197,12 @@ export const CONFIG = {
     }
   },
 
-  // 3D Theming & Materials
+  QRSCANNER: {
+    torchOnColor: 'var(--color-ctp-mauve-700)',
+    torchOffColor: 'var(--color-ctp-mauve-950)',
+  },
+
+  // Theming for the model
   THEME: {
     MISC_SCHEMA: {
       "BASE":      '--color-ctp-surface0',
