@@ -1,9 +1,7 @@
 import { appState } from "@/js/base/appState.js";
 import { createEventRegistry } from "@/js/events/event.js";
+import { CONFIG } from "@/js/base/config";
 
-/**
- * Cached DOM elements for the Events module.
- */
 const DOM = {
     ccaToggleBtn: document.getElementById('events-cca-toggle-btn'),
     dunklistToggleBtn: document.getElementById('events-dunklist-toggle-btn'),
@@ -14,333 +12,233 @@ const DOM = {
     toggleContainer: document.getElementById('fullwidth-toggle-selector-container'),
 };
 
-// Ensure DOM elements exist before proceeding
 if (!DOM.eventsListContainer || !DOM.eventsContentArea || !DOM.eventsBackToTopBtn || !DOM.toggleContainer) {
     console.error("Events module: One or more required DOM elements not found.");
 }
 
 const eventCategories = {
-    cca: DOM.ccaToggleBtn,
-    dunklist: DOM.dunklistToggleBtn,    
+    cca:       DOM.ccaToggleBtn,
+    dunklist:  DOM.dunklistToggleBtn,
     pabusking: DOM.pabuskingToggleBtn
 };
 
+function buildLinkHTML(link) {
+    if (!link) return "";
+    return `<span class="bg-ctp-surface0 text-ctp-blue ml-4 px-3 py-1 rounded-full font-label text-[10px] uppercase tracking-widest flex items-center gap-1 w-fit">
+        <span class="material-symbols-outlined" style="font-size:12px">${link.icon || "open_in_new"}</span>
+        <a class="capitalize" href="${link.link}" target="${link.target || "_blank"}">${link.text}</a>
+    </span>`;
+}
+
+function buildSongsHTML(songs) {
+    return (songs || []).map(song => `
+        <div class="flex items-center gap-3 my-4">
+            <span class="material-symbols-outlined text-[18px] text-ctp-text">${song.icon || "music_note"}</span>
+            <div class="flex flex-col gap-0.5">
+                <span class="font-headline font-bold text-[12px] text-ctp-text uppercase tracking-wider">${song.title}</span>
+                <span class="font-body text-[10px] text-ctp-mauve font-bold uppercase tracking-widest">${song.author}</span>
+            </div>
+        </div>`).join("");
+}
+
 class Events {
-  constructor() {
-    this.registry = createEventRegistry();
-  }
-
-  parseTimeToMinutes(timeInput) {
-    const timeStr = String(timeInput || "");
-    if (/^\d{4}$/.test(timeStr)) {
-        const hours = parseInt(timeStr.slice(0, 2), 10);
-        const minutes = parseInt(timeStr.slice(2, 4), 10);
-        return hours * 60 + minutes;
+    constructor() {
+        this.registry = createEventRegistry();
     }
-    return 0;
-}
 
-  formatTime(timeInput) {
-    if (!timeInput) return "";
-    const timeStr = String(timeInput);
-    // Format 4-digit 24h string (e.g., "1330") to 12h string (e.g., "1:30 PM")
-    if (/^\d{4}$/.test(timeStr)) {
-        let hours = Number(timeStr.slice(0, 2));
-        const minutes = timeStr.slice(2, 4);
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-        return `${hours}:${minutes} ${ampm}`;
+    parseTimeToMinutes(timeInput) {
+        const s = String(timeInput || "");
+        return /^\d{4}$/.test(s) ? parseInt(s.slice(0, 2), 10) * 60 + parseInt(s.slice(2, 4), 10) : 0;
     }
-    return timeStr;
-}
 
-  async switchEventCategory(category) {
-    // Update Buttons
-    Object.entries(eventCategories).forEach(([key, btn]) => {
-        if (key === category) {
-        btn.style.background = 'var(--color-ctp-mauve)';
-        btn.style.color = 'var(--color-ctp-base)';
-        } else {
-        btn.style.background = 'transparent';
-        btn.style.color = 'var(--color-ctp-text)';
+    formatTime(timeInput) {
+        if (!timeInput) return "";
+        const s = String(timeInput);
+        if (!/^\d{4}$/.test(s)) return s;
+        let h = Number(s.slice(0, 2));
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${s.slice(2, 4)} ${ampm}`;
+    }
+
+    _getNextMins(events, ev_no) {
+        for (let i = ev_no + 1; i < events.length; i++) {
+            if (events[i].time) return this.parseTimeToMinutes(events[i].time);
         }
-    });
+        return Infinity;
+    }
 
-    // Update Content
-    DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">Loading events...</p>';
-    DOM.eventsListContainer.style.position = 'relative';
-    DOM.eventsListContainer.style.zIndex = '0';
-    try {
-        const response = await fetch(`${ASSETS_BASE_URL}/json_data/events/${category}_events.json`);
-        if (!response.ok) throw new Error('Failed to load events for ' + category);
-        const data_arr = await response.json();
-
-        let html = '';
-        let currentEventID = null;
-        data_arr.forEach((data, index) => {
-            if (!data.events || data.events.length === 0) {
-                DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">No events scheduled in this category.</p>';
-                return;
-            }
-            const eventID = "events-item-" + (index + 1)
-            
-            // We use a CSS variable for 'top' so it can be updated by the scroll listener 
-            // when the toggle buttons are revealed/hidden. Defaulting to -2rem (-32px)
-            // to match the original layout.
-            html += `
-            <header id="${eventID}" class="text-left sticky -left-3 bg-ctp-base text-ctp-base min-h-28 z-50 w-[calc(100%+var(--spacing)*3)]" 
-                    style="top: var(--event-header-top, -1rem); transition: top 0.3s ease-in-out; contain: layout paint;">
-                <div class="flex flex-row mb-1 items-center justify-between w-full pr-8 mt-8 gap-4">
-                    <h1 class="font-headline text-3xl font-bold tracking-tight text-ctp-text leading-none ml-4 truncate">${data.title}</h1>
-                    <span class="events-location cursor-pointer hover:opacity-70 transition-opacity active:scale-95 flex-0" data-booth-id="${data.location_id || data.location}">
-                        <span class="material-symbols-outlined text-[12px]">location_on</span>${data.location}  
-                    </span>
+    _buildEventItemHTML(ev, status) {
+        const c = CONFIG.EVENTS.STATUS_CLASSES[status];
+        const bodyHTML = !ev.isSessionHeader && (ev.description || ev.songs?.length)
+            ? `<div class="${c.box} events-item-body">
+                ${ev.description ? `<p class="${status === 'past' ? 'text-ctp-subtext0' : 'text-ctp-subtext1'} events-item-description">${ev.description}</p>` : ""}
+                ${buildSongsHTML(ev.songs)}
+               </div>`
+            : "";
+        return `
+            <div class="events-item-container group">
+                <div class="${c.node} events-item-dots"></div>
+                <div class="flex flex-col gap-1 mb-3">
+                    <span class="${c.time} events-item-time">${this.formatTime(ev.time)}</span>
+                    <div class="flex flex-row">
+                        <h3 class="${c.title} events-item-title">${ev.title}</h3>
+                        ${buildLinkHTML(ev.link)}
+                    </div>
                 </div>
-                <p class="text-ctp-subtext0 font-body text-sm w-full ml-4">${data.subtitle || '<br>'}</p>        
-            </header>
-            <div class="events-timeline">
-            `;            
+                ${bodyHTML}
+            </div>`;
+    }
+
+    async switchEventCategory(category) {
+        // Update button styles
+        Object.entries(eventCategories).forEach(([key, btn]) => {
+            btn.style.background = key === category ? 'var(--color-ctp-mauve)' : 'transparent';
+            btn.style.color      = key === category ? 'var(--color-ctp-base)'  : 'var(--color-ctp-text)';
+        });
+
+        DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">Loading events...</p>';
+        DOM.eventsListContainer.style.cssText += ';position:relative;z-index:0';
+
+        try {
+            const res = await fetch(`${ASSETS_BASE_URL}/json_data/events/${category}_events.json`);
+            if (!res.ok) throw new Error('Failed to load events for ' + category);
+            const data_arr = await res.json();
 
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let html = '';
+            let currentEventID = null;
 
-            let isAllPast = true;
-
-            data.events.forEach((ev, ev_no) => {
-                const evMins = this.parseTimeToMinutes(ev.time);
-                let nextEvMins = Infinity;
-                
-                if (ev.endTime) {
-                    nextEvMins = this.parseTimeToMinutes(ev.endTime);
-                } else {
-                    for (let i = ev_no + 1; i < data.events.length; i++) {
-                        if (data.events[i].time) {
-                            nextEvMins = this.parseTimeToMinutes(data.events[i].time);
-                            break;
-                        }
-                    }
+            data_arr.forEach((data, index) => {
+                if (!data.events?.length) {
+                    DOM.eventsListContainer.innerHTML = '<p class="text-center opacity-50 py-10">No events scheduled in this category.</p>';
+                    return;
                 }
 
-                let status;
-                if (currentMinutes >= nextEvMins) {
-                    status = 'past';
-                } else if (currentMinutes >= evMins && currentMinutes < nextEvMins) {
-                    status = 'current';
-                    isAllPast = false;
-                } else {
-                    status = 'future';
-                    isAllPast = false;
-                }
-
-                if (!isAllPast && !currentEventID) currentEventID = eventID
-
-                let nodeColor, timeColor, titleColor, boxClass;
-
-                if (status === 'past') {
-                    nodeColor = 'bg-ctp-surface2';
-                    timeColor = 'text-ctp-subtext0';
-                    titleColor = 'text-ctp-subtext0';
-                    boxClass = 'bg-ctp-surface0/50 opacity-50 ring-1 ring-ctp-surface1';
-                } else if (status === 'current') {
-                    nodeColor = 'bg-ctp-mauve shadow-[0_0_10px_var(--color-ctp-mauve)]';
-                    timeColor = 'text-ctp-mauve font-bold';
-                    titleColor = 'text-ctp-text font-bold';
-                    boxClass = 'bg-ctp-surface0 ring-1 ring-ctp-mauve/70 shadow-lg shadow-ctp-mauve/10';
-                } else { // future
-                    nodeColor = 'bg-ctp-surface2 group-hover:bg-ctp-mauve';
-                    timeColor = 'text-ctp-subtext0';
-                    titleColor = 'text-ctp-text';
-                    boxClass = 'bg-ctp-surface0 ring-1 ring-ctp-surface1 hover:bg-ctp-surface1';
-                }
-
-                let linkHtml = ""
-                if (ev.link) {
-                    linkHtml = `<span class="bg-ctp-surface0 text-ctp-blue ml-4 px-3 py-1 rounded-full font-label text-[10px] uppercase tracking-widest flex items-center gap-1 w-fit">
-                    <span class="material-symbols-outlined text-[10px]" style="font-size: 12px">${ev.link.icon || "open_in_new"}</span>
-                    <a class="capitalize" href="${ev.link.link}" target="${ev.link.target || "_blank"}">${ev.link.text}</a>
-                  </span>`
-
-                }
+                const eventID = `events-item-${index + 1}`;
+                let isAllPast = true;
 
                 html += `
-                    <div class="events-item-container group">
-                        <div class="${nodeColor} events-item-dots"></div>
-                    
-                        <div class="flex flex-col gap-1 mb-3">
-                            <span class="${timeColor} events-item-time">${this.formatTime(ev.time)}</span>
-                            <div class="flex flex-row">
-                                <h3 class="${titleColor} events-item-title">${ev.title}</h3>
-                                ${linkHtml}
-                            </div>
-                        </div>
-                `;
-
-                let songsHtml = "";
-                if (ev.songs) {
-                    ev.songs.forEach(song => {
-                        songsHtml += `
-                        <div class="flex items-center gap-3 my-4">
-                            <span class="material-symbols-outlined text-[18px] text-ctp-text">${song.icon ? song.icon : "music_note"}</span>
-                            <div class="flex flex-col gap-0.5">
-                                <span class="font-headline font-bold text-[12px] text-ctp-text uppercase tracking-wider">${song.title}</span>
-                                <span class="font-body text-[10px] text-ctp-mauve font-bold uppercase tracking-widest">${song.author}</span>
-                            </div>
-                        </div>`
-                    })
-                }
-
-                let descHtml = "";
-                if (ev.description) descHtml = `<p class="${status === 'past' ? 'text-ctp-subtext0' : 'text-ctp-subtext1'} events-item-description">${ev.description}</p>`
-
-                if (!ev.isSessionHeader && (descHtml || songsHtml)) {
-                    html += `
-                    <div class="${boxClass} events-item-body">
-                        ${descHtml}
-                        ${songsHtml}
+                <header id="${eventID}" class="text-left sticky -left-3 bg-ctp-base text-ctp-base min-h-28 z-50 w-[calc(100%+var(--spacing)*3)]"
+                        style="top:var(--event-header-top,-1rem);transition:top 0.3s ease-in-out;contain:layout paint;">
+                    <div class="flex flex-row mb-1 items-center justify-between w-full pr-8 mt-8 gap-4">
+                        <h1 class="font-headline text-3xl font-bold tracking-tight text-ctp-text leading-none ml-4 truncate">${data.title}</h1>
+                        <span class="events-location cursor-pointer hover:opacity-70 transition-opacity active:scale-95 flex-0" data-booth-id="${data.location_id || data.location}">
+                            <span class="material-symbols-outlined text-[12px]">location_on</span>${data.location}
+                        </span>
                     </div>
-                    `;
-                }
+                    <p class="text-ctp-subtext0 font-body text-sm w-full ml-4">${data.subtitle || '<br>'}</p>
+                </header>
+                <div class="events-timeline">`;
 
-                html += `</div>`; // Close timeline item
+                data.events.forEach((ev, ev_no) => {
+                    const evMins   = this.parseTimeToMinutes(ev.time);
+                    const nextMins = ev.endTime ? this.parseTimeToMinutes(ev.endTime) : this._getNextMins(data.events, ev_no);
+                    const status   = currentMinutes >= nextMins ? 'past' : currentMinutes >= evMins ? 'current' : 'future';
+
+                    if (status !== 'past') isAllPast = false;
+                    if (!isAllPast && !currentEventID) currentEventID = eventID;
+                    html += this._buildEventItemHTML(ev, status);
+                });
+
+                // End node — check if next section has already started
+                let nextSectionMins = Infinity;
+                for (let i = index + 1; i < data_arr.length; i++) {
+                    if (data_arr[i].events?.[0]?.time) { nextSectionMins = this.parseTimeToMinutes(data_arr[i].events[0].time); break; }
+                }
+                const isCurrentEnd = isAllPast && currentMinutes < nextSectionMins;
+                html += `
+                    <div class="relative w-full">
+                        <div class="${isCurrentEnd ? 'bg-ctp-mauve shadow-[0_0_10px_var(--color-ctp-mauve)]' : 'bg-ctp-surface2'} events-item-dots"></div>
+                        <span class="font-label ${isCurrentEnd ? 'text-ctp-text font-bold' : 'text-ctp-subtext0'} events-item-time block pt-0.5">${data.endText || 'End of Schedule'}</span>
+                    </div>
+                </div>`;
             });
 
-            // End Node
-            let nextEvMins = Infinity;
-            
-            for (let i = index + 1; i < data_arr.length; i++) {
-                if (data_arr[i].events && data_arr[i].events.length > 0 && data_arr[i].events[0].time) {
-                    nextEvMins = this.parseTimeToMinutes(data_arr[i].events[0].time);
-                    break;
-                }
+            DOM.eventsListContainer.innerHTML = html;
+            if (currentEventID) {
+                document.getElementById(currentEventID)?.scrollIntoView({ behavior: "smooth", block: "start", container: "nearest" });
+                DOM.toggleContainer.style.top = `-${DOM.toggleContainer.offsetHeight + 20}px`;
+                DOM.eventsContentArea.style.setProperty('--event-header-top', '-16px');
             }
+        } catch (err) {
+            console.error("Error rendering timeline:", err);
+            DOM.eventsListContainer.innerHTML = '<p class="text-center text-ctp-red py-10">Failed to load events. Please try again later.</p>';
+        }
+    }
 
-            const isNotNextEvent = currentMinutes < nextEvMins
-            const endNodeColor = isAllPast && isNotNextEvent ? 'bg-ctp-mauve shadow-[0_0_10px_var(--color-ctp-mauve)]' : 'bg-ctp-surface2';
-            const endTextColor = isAllPast && isNotNextEvent ? 'text-ctp-text font-bold' : 'text-ctp-subtext0';
+    _setupScrollBehavior() {
+        const { eventsContentArea: area, eventsBackToTopBtn: backBtn, toggleContainer: toggle } = DOM;
+        const HEADER_BASE = -16;
+        let lastTop = 0, upAcc = 0, downAcc = 0;
 
-            
-            html += `
-                <div class="relative w-full">
-                <div class="${endNodeColor} events-item-dots"></div>
-                <span class="font-label ${endTextColor} events-item-time block pt-0.5 ">${data.endText || 'End of Schedule'}</span>
-                </div>
-            </div>
-            `;
-        });
-        DOM.eventsListContainer.innerHTML = html;
-        if (currentEventID) {
-            const eventHeader = document.getElementById(currentEventID);
-            eventHeader.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-                container: "nearest",
+        if (toggle && !toggle.dataset.styled) {
+            Object.assign(toggle.style, {
+                position: 'sticky', top: '-16px', zIndex: '60',
+                width: 'calc(100% + var(--spacing) * 3)',
+                marginLeft: 'calc(var(--spacing) * -3)',
+                transition: 'top 0.3s ease-in-out', willChange: 'top',
             });
-            DOM.toggleContainer.style.top = `-${DOM.toggleContainer.offsetHeight + 20}px`;
-            DOM.eventsContentArea.style.setProperty('--event-header-top', '-16px');
-        }
-    } catch (err) {
-        console.error("Error rendering timeline:", err);
-        DOM.eventsListContainer.innerHTML = '<p class="text-center text-ctp-red py-10">Failed to load events. Please try again later.</p>';
-    }
-
-}
-
-// Setup Back to Top scroll listener
-  init() {
-    this.registry.cleanup(); // Clear any existing listeners if init is called multiple times
-
-    // Add listeners for category toggle buttons
-    if (DOM.ccaToggleBtn) this.registry.add(DOM.ccaToggleBtn, 'click', () => this.switchEventCategory('cca'));
-    if (DOM.dunklistToggleBtn) this.registry.add(DOM.dunklistToggleBtn, 'click', () => this.switchEventCategory('dunklist'));
-    if (DOM.pabuskingToggleBtn) this.registry.add(DOM.pabuskingToggleBtn, 'click', () => this.switchEventCategory('pabusking'));
-
-    // Delegate click events for location tags inside the list (setup once)
-    if (DOM.eventsListContainer) {
-        this.registry.add(DOM.eventsListContainer, 'click', (e) => {
-            const locationTag = e.target.closest('.events-location');
-            if (locationTag && locationTag.dataset.boothId) {
-                const boothId = locationTag.dataset.boothId.trim();
-                if (boothId && boothId !== "-") appState.directory.focusOnBooth(boothId);
-            }
-        });
-    }
-
-    // Setup Back to Top scroll listener
-    if (DOM.eventsContentArea && DOM.eventsBackToTopBtn) {
-    let lastScrollTop = 0;
-    let upScrollAccumulator = 0;
-    let downScrollAccumulator = 0;
-
-    // Apply sticky styling once if not already applied
-    if (DOM.toggleContainer && !DOM.toggleContainer.dataset.styled) {
-        Object.assign(DOM.toggleContainer.style, {
-            position: 'sticky',
-            top: '-16px',
-            zIndex: '60',
-            width: 'calc(100% + var(--spacing) * 3)',
-            marginLeft: 'calc(var(--spacing) * -3)',
-            transition: 'top 0.3s ease-in-out',
-            willChange: 'top'
-        });
-        DOM.toggleContainer.dataset.styled = 'true'; // Mark as styled
-    }
-
-    // Base offset matches Tailwind's -top-8 (-2rem / -32px)
-    const headerBaseOffset = -16; 
-
-    this.registry.add(DOM.eventsContentArea, 'scroll', () => {
-        // Clamp scrollTop to 0 to prevent Safari overscroll from messing with delta logic
-        const scrollTop = Math.max(0, DOM.eventsContentArea.scrollTop);
-        
-        // Measure actual height to ensure headers stack perfectly below buttons
-        const toggleHeight = DOM.toggleContainer ? DOM.toggleContainer.offsetHeight : 0;
-
-        // Back to Top button logic
-        if (scrollTop > 200) {
-            DOM.eventsBackToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
-            DOM.eventsBackToTopBtn.classList.add('opacity-100', 'pointer-events-auto');
-        } else {
-            DOM.eventsBackToTopBtn.classList.add('opacity-0', 'pointer-events-none');
-            DOM.eventsBackToTopBtn.classList.remove('opacity-100', 'pointer-events-auto');
+            toggle.dataset.styled = 'true';
         }
 
-        // Toggle container scroll-back logic
-        if (DOM.toggleContainer) {
-            const delta = lastScrollTop - scrollTop;
-            if (scrollTop <= 0) {
-                DOM.toggleContainer.style.top = '-16px';
-                DOM.eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
-                upScrollAccumulator = 0;
-                downScrollAccumulator = 0;
-            } else if (delta > 0) { // Scrolling up
-                upScrollAccumulator += delta;
-                downScrollAccumulator = 0;
-                if (upScrollAccumulator >= 0) {
-                    DOM.toggleContainer.style.top = '-16px';
-                    DOM.eventsContentArea.style.setProperty('--event-header-top', `${toggleHeight + headerBaseOffset}px`);
-                }
-            } else if (delta < 0) { // Scrolling down
-                downScrollAccumulator += Math.abs(delta);
-                upScrollAccumulator = 0;
-                if (scrollTop > 120 && downScrollAccumulator >= 20) {
-                    DOM.toggleContainer.style.top = `-${DOM.toggleContainer.offsetHeight + 20}px`;
-                    DOM.eventsContentArea.style.setProperty('--event-header-top', `${headerBaseOffset}px`);
+        this.registry.add(area, 'scroll', () => {
+            const scrollTop  = Math.max(0, area.scrollTop);
+            const toggleH    = toggle?.offsetHeight ?? 0;
+            const isScrolled = scrollTop > 200;
+
+            backBtn.classList.toggle('opacity-0',           !isScrolled);
+            backBtn.classList.toggle('pointer-events-none', !isScrolled);
+            backBtn.classList.toggle('opacity-100',          isScrolled);
+            backBtn.classList.toggle('pointer-events-auto',  isScrolled);
+
+            if (toggle) {
+                const delta = lastTop - scrollTop;
+                if (scrollTop <= 0) {
+                    toggle.style.top = '-16px';
+                    area.style.setProperty('--event-header-top', `${toggleH + HEADER_BASE}px`);
+                    upAcc = downAcc = 0;
+                } else if (delta > 0) {
+                    upAcc += delta; downAcc = 0;
+                    if (upAcc >= 0) {
+                        toggle.style.top = '-16px';
+                        area.style.setProperty('--event-header-top', `${toggleH + HEADER_BASE}px`);
+                    }
+                } else if (delta < 0) {
+                    downAcc += Math.abs(delta); upAcc = 0;
+                    if (scrollTop > 120 && downAcc >= 20) {
+                        toggle.style.top = `-${toggle.offsetHeight + 20}px`;
+                        area.style.setProperty('--event-header-top', `${HEADER_BASE}px`);
+                    }
                 }
             }
+            lastTop = scrollTop;
+        }, { passive: true });
+
+        this.registry.add(backBtn, 'click', () => area.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    init() {
+        this.registry.cleanup();
+
+        if (DOM.ccaToggleBtn)       this.registry.add(DOM.ccaToggleBtn,       'click', () => this.switchEventCategory('cca'));
+        if (DOM.dunklistToggleBtn)  this.registry.add(DOM.dunklistToggleBtn,  'click', () => this.switchEventCategory('dunklist'));
+        if (DOM.pabuskingToggleBtn) this.registry.add(DOM.pabuskingToggleBtn, 'click', () => this.switchEventCategory('pabusking'));
+
+        if (DOM.eventsListContainer) {
+            this.registry.add(DOM.eventsListContainer, 'click', (e) => {
+                const tag = e.target.closest('.events-location');
+                if (tag?.dataset.boothId) {
+                    const id = tag.dataset.boothId.trim();
+                    if (id && id !== "-") appState.directory.focusOnBooth(id);
+                }
+            });
         }
-        lastScrollTop = scrollTop;
-    }, { passive: true });
 
-    this.registry.add(DOM.eventsBackToTopBtn, 'click', () => {
-        DOM.eventsContentArea.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-}
-}
-
+        if (DOM.eventsContentArea && DOM.eventsBackToTopBtn) this._setupScrollBehavior();
+    }
 }
 
 export const events = new Events();
-
-// Expose global for onclick handlers in index.html or dynamic content
 window.switchEventCategory = (category) => events.switchEventCategory(category);

@@ -160,6 +160,30 @@ export const CONFIG = {
     }
   },
 
+  EVENTS: {
+    // Colors for each entry based on status
+    STATUS_CLASSES: {
+      past: {
+        node: 'bg-ctp-surface2',
+        time: 'text-ctp-subtext0',
+        title: 'text-ctp-subtext0',
+        box: 'bg-ctp-surface0/50 opacity-50 ring-1 ring-ctp-surface1'
+      },
+      current: {
+        node: 'bg-ctp-mauve shadow-[0_0_10px_var(--color-ctp-mauve)]',
+        time: 'text-ctp-mauve font-bold',
+        title: 'text-ctp-text font-bold',
+        box: 'bg-ctp-surface0 ring-1 ring-ctp-mauve/70 shadow-lg shadow-ctp-mauve/10'
+      },
+      future: {
+        node: 'bg-ctp-surface2 group-hover:bg-ctp-mauve',
+        time: 'text-ctp-subtext0',
+        title: 'text-ctp-text',
+        box: 'bg-ctp-surface0 ring-1 ring-ctp-surface1 hover:bg-ctp-surface1'
+      },
+    }
+  },
+
   // 3D Theming & Materials
   THEME: {
     MISC_SCHEMA: {
