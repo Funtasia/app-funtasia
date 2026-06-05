@@ -76,6 +76,7 @@ let storedBottomSheetState = null;
  * @property {string} objectName - The unique ID or name of the interactive object.
  * @property {string|null} childFloorId - The ID of the floor to enter, if the object is a portal.
  * @property {Object} locationInfo - The resolved title and description metadata.
+ * @property {string} displayTitle - The actual title shown in the UI.
  */
 
 /**
@@ -95,7 +96,7 @@ const BOTTOM_SHEET_ACTIONS = [
   },
   {
     id: "lt5-event-btn",
-    condition: (ctx) => ctx.objectName === "CCA Performances @ LT5",
+    condition: (ctx) => ctx.displayTitle === "CCA Performances @ LT5",
     onClick: () => {
       if (window.openEventsModal) window.openEventsModal("cca");
       hideBottomSheet();
@@ -103,7 +104,7 @@ const BOTTOM_SHEET_ACTIONS = [
   },
   {
     id: "o2-event-btn",
-    condition: (ctx) => ctx.objectName === "Busking @ Linkway",
+    condition: (ctx) => ctx.displayTitle === "Busking @ Linkway",
     onClick: () => {
       if (window.openEventsModal) window.openEventsModal("pabusking");
       hideBottomSheet();
@@ -111,7 +112,7 @@ const BOTTOM_SHEET_ACTIONS = [
   },
   {
     id: "amphi-event-btn",
-    condition: (ctx) => ctx.objectName === "Water Dunk Tank",
+    condition: (ctx) => ctx.displayTitle === "Water Dunk Tank",
     onClick: () => {
       if (window.openEventsModal) window.openEventsModal("dunklist");
       hideBottomSheet();
@@ -119,12 +120,12 @@ const BOTTOM_SHEET_ACTIONS = [
   },
   {
     id: "makers-redirect-btn",
-    condition: (ctx) => ctx.locationInfo.title === "Makers",
+    condition: (ctx) => ctx.displayTitle === "Makers",
     onClick: () => window.open("https://makers.njcfuntasia.com", "_blank")
   },
   {
     id: "escaperoom-redirect-btn",
-    condition: (ctx) => ctx.locationInfo.title.toLowerCase().includes("escape room"),
+    condition: (ctx) => ctx.displayTitle.toLowerCase().includes("escape room"),
     displayStyle: "flex",
     onClick: () => window.open("https://escape-room.njcfuntasia.com", "_blank")
   }
@@ -141,11 +142,14 @@ export function showBottomSheet(objectName, childFloorId = null, description = n
   // Store the current state so it can be restored later
   storedBottomSheetState = { objectName, childFloorId, description, title };
   const locationInfo = getLocationInfo(objectName);
-  DOM.sheetTitle.textContent = title || locationInfo.title;
-  DOM.sheetDesc.textContent = description ? description : locationInfo.description;
+  const displayTitle = title || locationInfo.title;
+  const displayDescription = description || locationInfo.description;
+
+  DOM.sheetTitle.textContent = displayTitle;
+  DOM.sheetDesc.textContent = displayDescription;
 
   // Process modular action buttons
-  const btnContext = { objectName, childFloorId, locationInfo };
+  const btnContext = { objectName, childFloorId, locationInfo, displayTitle };
   BOTTOM_SHEET_ACTIONS.forEach(config => {
     const btn = document.getElementById(config.id);
     if (!btn) return;
