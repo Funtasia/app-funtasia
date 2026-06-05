@@ -1,590 +1,440 @@
 import * as THREE from "three";
 import { DirectoryMarker } from '@/js/marker/directorymarker.js';
-import { appState } from "@/js/base/appState.js"; 
-import { CONFIG } from "@/js/base/config.js"
+import { appState } from "@/js/base/appState.js";
+import { CONFIG } from "@/js/base/config.js";
 
-/* ── Filter State ────────────────────────────────────────── */
+// ── Module-level helpers ──────────────────────────────────────────────────────
+
+function buildTagPillsHTML(tags) {
+    return tags.map(tag => {
+        const raw    = CONFIG.DIRECTORY.TAG_COLORS[tag] || CONFIG.DIRECTORY.FALLBACK_TAG_COLOR;
+        const cssVal = raw.startsWith('--') ? `var(${raw})` : raw;
+        return `<span class="tag-pill" style="--pill-color:${cssVal};">${tag}</span>`;
+    }).join("");
+}
+
+// ── Directory class ───────────────────────────────────────────────────────────
 
 class Directory {
-  constructor() {
-    this.cachedFuntasiaData = null;
-    this.filterState = {
-      search: "",
-      level: "",      // "" = all
-      zone: "",       // "" = all
-      tags: new Set() // multi-select
-    };
-  }
+    constructor() {
+        this.cachedFuntasiaData = null;
+        this.filterState = { search: "", level: "", zone: "", tags: new Set() };
+    }
 
-/* ── Data Fetching ───────────────────────────────────────── */
+    // ── Data Fetching ─────────────────────────────────────────────────────────
 
-  async fetchDirectoryData() {
-    try {
-      const response = await fetch(`${ASSETS_BASE_URL}/json_data/funtasia_data.json`);
-      const rawData = await response.json();
-      
-      // Normalize data: convert array format to object format keyed by "Booth ID"
-      // This ensures compatibility whether the CDN serves the old array or new object format.
-      const normalizedData = {};
-      for (const [level, items] of Object.entries(rawData)) {
-        if (Array.isArray(items)) {
-          normalizedData[level] = {};
-          items.forEach(item => {
-            if (item["Booth ID"]) {
-              normalizedData[level][item["Booth ID"]] = item;
+    async fetchDirectoryData() {
+        try {
+            const rawData = await fetch(`${ASSETS_BASE_URL}/json_data/funtasia_data.json`).then(r => r.json());
+            const normalized = {};
+            for (const [level, items] of Object.entries(rawData)) {
+                if (Array.isArray(items)) {
+                    normalized[level] = {};
+                    items.forEach(item => { 
+                      if (item["Booth ID"]) normalized[level][item["Booth ID"]] = item; 
+                    });
+                } else {
+                    normalized[level] = items;
+                }
             }
-          });
-        } else {
-          normalizedData[level] = items;
+            return normalized;
+        } catch (e) {
+            console.error("Failed to fetch directory data:", e);
+            throw e;
         }
-      }
-      
-      return normalizedData;
-    } catch (e) {
-      console.error("Failed to fetch directory data:", e);
-      throw e;
     }
-  }
 
-  setDirectoryListData(processedData) {
-    this.cachedFuntasiaData = processedData;
-  const container = document.getElementById("funtasia-directory-list");
-  if (container) {
-    // Re-populate tags and re-render with the latest processed data
-    this.initCustomFilters(this.cachedFuntasiaData);
-    this.applyFilters();
-  }
-}
-
-  getDirectoryData() {
-    return this.cachedFuntasiaData;
-  }
-
-/* ── Tag Helpers ─────────────────────────────────────────── */
-
-/** Normalise Tags field (string | string[] | empty) into a clean array */
-  parseTags(rawTags) {
-    if (!rawTags) return [];
-    if (Array.isArray(rawTags)) return rawTags.map(t => t.trim()).filter(Boolean);
-    return rawTags.split(",").map(t => t.trim()).filter(Boolean);
-  }
-
-  /** Collect every unique tag from the full dataset */
-  collectAllTags(funtasiaData) {
-  const tags = new Set();
-  Object.values(funtasiaData).forEach(levelData => {
-    if (typeof levelData !== 'object' || levelData === null) return;
-    Object.values(levelData).forEach(item => {
-      this.parseTags(item.tags || item.Tags).forEach(t => tags.add(t));
-    });
-  });
-  return [...tags].sort();
-}
-
-/* ── Zone Color Helper ───────────────────────────────────── */
-
-  getZoneColors(zoneName) {
-  if (!zoneName) return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "bg-ctp-surface0" };
-  const lower = zoneName.toLowerCase();
-  for (const [key, colors] of Object.entries(CONFIG.DIRECTORY.ZONE_COLORS)) {
-    if (lower.includes(key)) return colors;
-  }
-  return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "color-ctp-mauve" };
-}
-
-/* ── Filtering ───────────────────────────────────────────── */
-
-/**
- * Returns a flat array of { item, level } objects that pass all active filters.
- * Filters are AND-ed: level ∩ zone ∩ tags ∩ search.
- * Tags use OR within themselves (item matches if it has ANY selected tag).
-   */
-  getFilteredData(funtasiaData) {
-  const results = [];
-  const search = this.filterState.search.toLowerCase().trim();
-  const tokens = search ? search.split(/\s+/) : [];
-  const zoneFilter = this.filterState.zone?.toLowerCase();
-
-  const levelsToSearch = this.filterState.level
-    ? [this.filterState.level]
-    : Object.keys(funtasiaData);
-
-  levelsToSearch.forEach(level => {
-    const levelData = funtasiaData[level];
-    if (!levelData || typeof levelData !== 'object') return;
-    
-    const levelStr = String(level || "");
-    const humanLevel = `level ${levelStr.replace(/[^0-9]/g, "")}`;
-
-    Object.entries(levelData).forEach(([boothId, item]) => {
-      if (zoneFilter) {
-        const itemZone = (item.zone || item.Zone || "").trim().toLowerCase();
-        if (itemZone !== zoneFilter) return;
-      }
-
-      const itemTags = this.parseTags(item.tags || item.Tags);
-      if (this.filterState.tags.size > 0 && !itemTags.some(t => this.filterState.tags.has(t))) return;
-
-      if (tokens.length > 0) {
-        const tStr = Array.isArray(item.tags || item.Tags) ? (item.tags || item.Tags).join(" ") : String(item.tags || item.Tags || "");
-        const iStr = Array.isArray(item.invis_tags) ? item.invis_tags.join(" ") : String(item.invis_tags || "");
-        const kStr = Array.isArray(item.Keywords) ? item.Keywords.join(" ") : String(item.Keywords || "");
-
-        const haystack = `${item.booth_name || ""} ${item.booth_oneline_description || ""} ${item.booth_description || ""} ${tStr} ${iStr} ${kStr} ${item.parent_model || ""} ${boothId} ${levelStr} ${humanLevel}`.toLowerCase();
-        if (!tokens.every(token => haystack.includes(token))) return;
-      }
-
-      results.push({ item: { ...item, "Booth ID": boothId }, level });
-    });
-  });
-
-  return results;
-}
-
-/**
- * Orchestrates navigation, marker placement, and camera focus for a specific booth.
- * Can be called from the directory, event schedule, or external links.
- */
-  async focusOnBooth(boothNum, levelHint = null) {
-  if (!this.cachedFuntasiaData || !appState) return;
-
-  let level = levelHint;
-  let item = null;
-
-  // Find the item and its level in the cached data
-  if (level && this.cachedFuntasiaData[level] && this.cachedFuntasiaData[level][boothNum]) {
-    item = this.cachedFuntasiaData[level][boothNum];
-  } else {
-    // Search all levels if hint is missing or incorrect
-    for (const l of Object.keys(this.cachedFuntasiaData)) {
-      if (this.cachedFuntasiaData[l] && this.cachedFuntasiaData[l][boothNum]) {
-        item = this.cachedFuntasiaData[l][boothNum];
-        level = l;
-        break;
-      }
+    setDirectoryListData(processedData) {
+        this.cachedFuntasiaData = processedData;
+        const container = document.getElementById("funtasia-directory-list");
+        if (container) {
+            this.initCustomFilters(this.cachedFuntasiaData);
+            this.applyFilters();
+        }
     }
-  }
 
-  if (!item || !level) {
-    console.warn(`Booth ${boothNum} not found in directory data.`);
-    return;
-  }
+    getDirectoryData() { return this.cachedFuntasiaData; }
 
-  const boothName = item["booth_name"] || boothNum;
-  const boothDesc = item["booth_description"] || "No description available.";
+    // ── Tag Helpers ───────────────────────────────────────────────────────────
 
-  // 1. Navigation Logic
-  let targetFloorId = level;
-  const children = appState.floors[level]?.constructor.childModels[level] || {};
-
-  if (children[boothName]) targetFloorId = children[boothName];
-  else {
-    for (const [nodeName, childId] of Object.entries(children)) {
-      if (boothNum.toLowerCase().startsWith(childId.toLowerCase()) || (nodeName[0] && boothNum.toLowerCase().startsWith(nodeName[0].toLowerCase()))) {
-        targetFloorId = childId; break;
-      }
+    parseTags(rawTags) {
+        if (!rawTags) return [];
+        return (Array.isArray(rawTags) ? rawTags : rawTags.split(",")).map(t => t.trim()).filter(Boolean);
     }
-  }
 
-  await appState.navigation.switchFloor(targetFloorId);
-  if (appState.ui.clearStoredSheet) appState.ui.clearStoredSheet(); 
-  appState.ui.hideSheet();
-
-  // 2. Clear previous markers
-  if (appState.activeDirectoryMarker) {
-    appState.activeDirectoryMarker.clear();
-    appState.activeDirectoryMarker = null;
-  }
-  
-  appState.activeDirectoryBoothId = boothNum;
-  appState.activeDirectoryLevel = level;
-  appState.activeDirectoryActualFloor = targetFloorId;
-
-  // 3. Marker and Camera Logic
-  // Re-fetch to ensure we have any runtime-injected data (like Location coordinates)
-  const latestItem = this.cachedFuntasiaData[level][boothNum] || item;
-  const locationData = latestItem["location"] || latestItem["Location"];
-
-  if (locationData) {
-    const marker = new DirectoryMarker(locationData, targetFloorId);
-    appState.activeDirectoryMarker = marker;
-    appState.activeMarkers.push(marker);
-
-    // 4. Camera Focus
-    // Find the interactive object in the scene to apply highlight and focus
-    const currentFloor = appState.floors[targetFloorId];
-    const targetObject = currentFloor?.interactiveObjects?.find(obj => 
-      obj.userData.boothId === boothNum
-    );
-
-    if (targetObject) {
-      appState.navigation.focusOnObject(targetObject);
-    } else {
-      // Fallback: Camera animation using stored location coordinates if object is missing
-      appState.navigation.focusAt(locationData);
+    collectAllTags(funtasiaData) {
+        const tags = new Set();
+        Object.values(funtasiaData).forEach(levelData => {
+            if (!levelData || typeof levelData !== 'object') return;
+            Object.values(levelData).forEach(item => this.parseTags(item.tags || item.Tags).forEach(t => tags.add(t)));
+        });
+        return [...tags].sort();
     }
-  }
 
-  // 4. Interaction messaging
-  window.parent.postMessage({ type: 'selectPOI', id: boothNum, floor: level }, '*');
+    // ── Zone Color Helper ─────────────────────────────────────────────────────
 
-  // 5. UI Cleanup/Update
-  if (appState.ui.setClearDirectoryMarkerVisible) {
-    appState.ui.setClearDirectoryMarkerVisible(true);
-  }
+    getZoneColors(zoneName) {
+        if (!zoneName) return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "bg-ctp-surface0" };
+        const lower = zoneName.toLowerCase();
+        for (const [key, colors] of Object.entries(CONFIG.DIRECTORY.ZONE_COLORS)) {
+            if (lower.includes(key)) return colors;
+        }
+        return { bg: "bg-ctp-surface1", text: "text-ctp-text", bar: "color-ctp-mauve" };
+    }
 
-  document.querySelectorAll(".modal-wrapper").forEach(mod_wrapp => {
-    mod_wrapp.style.display = 'none';
-  });
+    // ── Filtering ─────────────────────────────────────────────────────────────
 
-  if (appState.ui.showFabButtons) {
-    appState.ui.showFabButtons();
-  }
+    getFilteredData(funtasiaData) {
+        const search     = this.filterState.search.toLowerCase().trim();
+        const tokens     = search ? search.split(/\s+/) : [];
+        const zoneFilter = this.filterState.zone?.toLowerCase();
+        const levels     = this.filterState.level ? [this.filterState.level] : Object.keys(funtasiaData);
+        const results    = [];
 
-  appState.ui.showSheet(boothNum, null, boothDesc, boothName);
-}
+        levels.forEach(level => {
+            const levelData = funtasiaData[level];
+            if (!levelData || typeof levelData !== 'object') return;
+            const levelStr   = String(level || "");
+            const humanLevel = `level ${levelStr.replace(/[^0-9]/g, "")}`;
 
-  /* ── Rendering ───────────────────────────────────────────── */
+            Object.entries(levelData).forEach(([boothId, item]) => {
+                if (zoneFilter && (item.zone || item.Zone || "").trim().toLowerCase() !== zoneFilter) return;
 
-  renderDirectory(container, funtasiaData) {
-  container.innerHTML = "";
-  const filtered = this.getFilteredData(funtasiaData);
+                const itemTags = this.parseTags(item.tags || item.Tags);
+                if (this.filterState.tags.size > 0 && !itemTags.some(t => this.filterState.tags.has(t))) return;
 
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-12 text-center px-6">
-        <span class="material-symbols-outlined text-[40px] text-ctp-subtext1 mb-3">search_off</span>
-        <p class="font-headline font-bold text-ctp-text text-sm">No results found</p>
-        <p class="text-ctp-subtext1 text-xs mt-1">Try adjusting your filters or search term</p>
-      </div>`;
-    return;
-  }
+                if (tokens.length > 0) {
+                    const tStr = Array.isArray(item.tags || item.Tags) ? (item.tags || item.Tags).join(" ") : String(item.tags || item.Tags || "");
+                    const iStr = Array.isArray(item.invis_tags) ? item.invis_tags.join(" ") : String(item.invis_tags || "");
+                    const kStr = Array.isArray(item.Keywords)   ? item.Keywords.join(" ")   : String(item.Keywords || "");
+                    const haystack = `${item.booth_name || ""} ${item.booth_oneline_description || ""} ${item.booth_description || ""} ${tStr} ${iStr} ${kStr} ${item.parent_model || ""} ${boothId} ${levelStr} ${humanLevel}`.toLowerCase();
+                    if (!tokens.every(t => haystack.includes(t))) return;
+                }
 
-  // Group by level, then by zone
-  const grouped = {};
-  filtered.forEach(({ item, level }) => {
-    if (!grouped[level]) grouped[level] = {};
-    let zone = item["zone"] || item["Zone"];
-    if (!zone || zone.trim() === "-") zone = "Other Zones";
-    else zone = zone.trim();
-    if (!grouped[level][zone]) grouped[level][zone] = [];
-    grouped[level][zone].push(item);
-  });
+                results.push({ item: { ...item, "Booth ID": boothId }, level });
+            });
+        });
+        return results;
+    }
 
-  const sortedLevels = Object.keys(grouped).sort(
-    (a, b) => CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(a) - CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(b)
-  );
+    // ── Booth Focus ───────────────────────────────────────────────────────────
 
-  sortedLevels.forEach(level => {
-    const levelSection = document.createElement("div");
-    levelSection.className = "mb-8";
+    _findBoothInData(boothNum, levelHint) {
+        if (levelHint && this.cachedFuntasiaData[levelHint]?.[boothNum]) {
+            return { item: this.cachedFuntasiaData[levelHint][boothNum], level: levelHint };
+        }
+        for (const [l, levelData] of Object.entries(this.cachedFuntasiaData)) {
+            if (levelData?.[boothNum]) return { item: levelData[boothNum], level: l };
+        }
+        return null;
+    }
 
-    const levelHeader = document.createElement("h3");
-    levelHeader.className = "modal-section-title text-primary";
-    levelHeader.textContent = level.toUpperCase();
-    levelSection.appendChild(levelHeader);
+    _determineTargetFloor(level, boothName, boothNum) {
+        const children = appState.floors[level]?.constructor.childModels[level] || {};
+        if (children[boothName]) return children[boothName];
+        for (const [nodeName, childId] of Object.entries(children)) {
+            if (boothNum.toLowerCase().startsWith(childId.toLowerCase()) ||
+                (nodeName[0] && boothNum.toLowerCase().startsWith(nodeName[0].toLowerCase()))) {
+                return childId;
+            }
+        }
+        return level;
+    }
 
-    for (const [zone, items] of Object.entries(grouped[level])) {
-      const zoneBlock = document.createElement("div");
-      zoneBlock.className = "mb-6 last:mb-0";
-      const zoneColors = this.getZoneColors(zone);
+    async focusOnBooth(boothNum, levelHint = null) {
+        if (!this.cachedFuntasiaData || !appState) return;
 
-      const zoneHeader = document.createElement("h4");
-      zoneHeader.className = `text-xs font-bold tracking-[0.1em] uppercase px-4 mb-3 ${zoneColors.text}`;
-      zoneHeader.textContent = zone;
-      zoneBlock.appendChild(zoneHeader);
+        const found = this._findBoothInData(boothNum, levelHint);
+        if (!found) { console.warn(`Booth ${boothNum} not found in directory data.`); return; }
+        const { item, level } = found;
 
-      const itemsContainer = document.createElement("div");
-      itemsContainer.className = "space-y-2";
+        const boothName  = item.booth_name      || boothNum;
+        const boothDesc  = item.booth_description || "No description available.";
+        const targetFloorId = this._determineTargetFloor(level, boothName, boothNum);
 
-      items.forEach(item => {
-        const itemEl = document.createElement("div");
-        itemEl.className = "modal-list-item";
+        await appState.navigation.switchFloor(targetFloorId);
+        appState.ui.clearStoredSheet?.();
+        appState.ui.hideSheet();
 
-        let boothName = item["booth_name"] || "Unnamed Booth";
-        if (boothName === "-") boothName = "Unnamed Booth";
-        const boothDesc = item["booth_oneline_description"] || item["booth_description"] || "";
-        const boothNum = item["Booth ID"];
-        const itemTags = this.parseTags(item["tags"] || item["Tags"]);
+        if (appState.activeDirectoryMarker) {
+            appState.activeDirectoryMarker.clear();
+            appState.activeDirectoryMarker = null;
+        }
+        Object.assign(appState, {
+            activeDirectoryBoothId:    boothNum,
+            activeDirectoryLevel:      level,
+            activeDirectoryActualFloor: targetFloorId,
+        });
 
-        // Build tag pills HTML
-        const tagPillsHTML = itemTags.map(tag => {
-          const raw = CONFIG.DIRECTORY.TAG_COLORS[tag] || CONFIG.DIRECTORY.FALLBACK_TAG_COLOR;
-          const cssVal = raw.startsWith('--') ? `var(${raw})` : raw;
-          return `<span class="tag-pill" style="--pill-color: ${cssVal};">${tag}</span>`;
-        }).join("");
+        const latestItem   = this.cachedFuntasiaData[level][boothNum] || item;
+        const locationData = latestItem.location || latestItem.Location;
+        if (locationData) {
+            const marker = new DirectoryMarker(locationData, targetFloorId);
+            appState.activeDirectoryMarker = marker;
+            appState.activeMarkers.push(marker);
 
-        itemEl.addEventListener('click', () => this.focusOnBooth(boothNum, level));
+            const targetObject = appState.floors[targetFloorId]?.interactiveObjects
+                ?.find(obj => obj.userData.boothId === boothNum);
+            targetObject
+                ? appState.navigation.focusOnObject(targetObject)
+                : appState.navigation.focusAt(locationData);
+        }
 
-        itemEl.innerHTML = `
-          <div class="modal-item-icon-wrapper ${zoneColors.bg} ${zoneColors.text}">
-            <span class="material-symbols-outlined text-[20px]" data-icon="festival">festival</span>
-          </div>
-          <div class="modal-item-accent-bar ${zoneColors.bar}"></div>
-          <div class="modal-item-content">
-            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
-              <h3 class="modal-item-title leading-tight">${boothName}</h3>
-              ${tagPillsHTML}
+        window.parent.postMessage({ type: 'selectPOI', id: boothNum, floor: level }, '*');
+        appState.ui.setClearDirectoryMarkerVisible?.(true);
+        document.querySelectorAll(".modal-wrapper").forEach(el => el.style.display = 'none');
+        appState.ui.showFabButtons?.();
+        appState.ui.showSheet(boothNum, null, boothDesc, boothName);
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+
+    _groupResults(filtered) {
+        const grouped = {};
+        filtered.forEach(({ item, level }) => {
+            if (!grouped[level]) grouped[level] = {};
+            let zone = (item.zone || item.Zone || "").trim();
+            if (!zone || zone === "-") zone = "Other Zones";
+            if (!grouped[level][zone]) grouped[level][zone] = [];
+            grouped[level][zone].push(item);
+        });
+        return grouped;
+    }
+
+    _buildItem(item, level) {
+        const boothNum  = item["Booth ID"];
+        const rawName   = item.booth_name;
+        const boothName = (!rawName || rawName === "-") ? "Unnamed Booth" : rawName;
+        const boothDesc = item.booth_oneline_description || item.booth_description || "";
+        const tags      = this.parseTags(item.tags || item.Tags);
+        const zc        = this.getZoneColors(item.zone || item.Zone);
+
+        const el = document.createElement("div");
+        el.className = "modal-list-item";
+        el.addEventListener('click', () => this.focusOnBooth(boothNum, level));
+        el.innerHTML = `
+            <div class="modal-item-icon-wrapper ${zc.bg} ${zc.text}">
+                <span class="material-symbols-outlined text-[20px]" data-icon="festival">festival</span>
             </div>
-            <p class="modal-item-subtitle mt-0.5 opacity-80 line-clamp-2">${boothDesc}</p>
-          </div>
-          <span class="modal-item-chevron">chevron_right</span>
-        `;
-        itemsContainer.appendChild(itemEl);
-      });
-
-      zoneBlock.appendChild(itemsContainer);
-      levelSection.appendChild(zoneBlock);
+            <div class="modal-item-accent-bar ${zc.bar}"></div>
+            <div class="modal-item-content">
+                <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <h3 class="modal-item-title leading-tight">${boothName}</h3>
+                    ${buildTagPillsHTML(tags)}
+                </div>
+                <p class="modal-item-subtitle mt-0.5 opacity-80 line-clamp-2">${boothDesc}</p>
+            </div>
+            <span class="modal-item-chevron">chevron_right</span>`;
+        return el;
     }
 
-    container.appendChild(levelSection);
-  });
-}
+    renderDirectory(container, funtasiaData) {
+        container.innerHTML = "";
+        const filtered = this.getFilteredData(funtasiaData);
+        if (!filtered.length) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 text-center px-6">
+                    <span class="material-symbols-outlined text-[40px] text-ctp-subtext1 mb-3">search_off</span>
+                    <p class="font-headline font-bold text-ctp-text text-sm">No results found</p>
+                    <p class="text-ctp-subtext1 text-xs mt-1">Try adjusting your filters or search term</p>
+                </div>`;
+            return;
+        }
 
-  /* ── Tag Multiselect ─────────────────────────────────────── */
+        const grouped = this._groupResults(filtered);
+        Object.keys(grouped)
+            .sort((a, b) => CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(a) - CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(b))
+            .forEach(level => {
+                const section = document.createElement("div");
+                section.className = "mb-8";
+                const header = document.createElement("h3");
+                header.className = "modal-section-title text-primary";
+                header.textContent = level.toUpperCase();
+                section.appendChild(header);
 
-  /** Injects a <style> block with per-tag colours for Choices.js pills */
-  injectTagColorStyles() {
-  const existing = document.getElementById("choices-tag-colors");
-  if (existing) existing.remove();
+                for (const [zone, items] of Object.entries(grouped[level])) {
+                    const zc        = this.getZoneColors(zone);
+                    const zoneEl    = document.createElement("div");
+                    zoneEl.className = "mb-6 last:mb-0";
+                    const zoneHeader = document.createElement("h4");
+                    zoneHeader.className = `text-xs font-bold tracking-[0.1em] uppercase px-4 mb-3 ${zc.text}`;
+                    zoneHeader.textContent = zone;
+                    zoneEl.appendChild(zoneHeader);
 
-  const style = document.createElement("style");
-  style.id = "choices-tag-colors";
-
-  const rules = Object.entries(CONFIG.DIRECTORY.TAG_COLORS).map(([tag, color]) => {
-    const cssVal = color.startsWith('--') ? `var(${color})` : color;
-    return `
-      .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected {
-        color: ${cssVal};
-      }
-      .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected::after {
-        color: ${cssVal};
-      }
-      #selected-tags-container .tag-pill[data-value="${tag}"] {
-        border-color: ${cssVal};
-        background: color-mix(in srgb, ${cssVal} 15%, transparent);
-        color: ${cssVal};
-      }
-    `;
-  });
-
-  style.textContent = rules.join("");
-  document.head.appendChild(style);
-}
-
-  /** Updates the manual filter trigger UI based on filterState */
-  updateFilterUI() {
-  // 1. Tags
-  const tagContainer = document.getElementById("selected-tags-container");
-  const tagPlaceholder = document.getElementById("multiselect-placeholder");
-  if (tagContainer && tagPlaceholder) {
-    tagContainer.innerHTML = "";
-    if (this.filterState.tags.size === 0) {
-      tagPlaceholder.style.display = "block";
-    } else {
-      tagPlaceholder.style.display = "none";
-      this.filterState.tags.forEach(tag => {
-        const pill = document.createElement("span");
-        pill.className = "tag-pill";
-        pill.dataset.value = tag;
-        pill.innerHTML = `
-          ${tag}
-          <span class="remove-btn material-symbols-outlined" onclick="event.stopPropagation(); window.toggleTagSelection('${tag.replace(/'/g, "\\'")}');">close</span>
-        `;
-        tagContainer.appendChild(pill);
-      });
+                    const itemsContainer = document.createElement("div");
+                    itemsContainer.className = "space-y-2";
+                    items.forEach(item => itemsContainer.appendChild(this._buildItem(item, level)));
+                    zoneEl.appendChild(itemsContainer);
+                    section.appendChild(zoneEl);
+                }
+                container.appendChild(section);
+            });
     }
-  }
 
-  // 2. Level Label
-  const levelLabel = document.getElementById("filter-level-label");
-  if (levelLabel) {
-    levelLabel.textContent = this.filterState.level ? this.filterState.level.toUpperCase() : "All Levels";
-  }
+    // ── Tag Multiselect ───────────────────────────────────────────────────────
 
-  // 3. Zone Label
-  const zoneLabel = document.getElementById("filter-zone-label");
-  if (zoneLabel) {
-    zoneLabel.textContent = this.filterState.zone || "All Zones";
-  }
+    injectTagColorStyles() {
+        document.getElementById("choices-tag-colors")?.remove();
+        const style = document.createElement("style");
+        style.id = "choices-tag-colors";
+        style.textContent = Object.entries(CONFIG.DIRECTORY.TAG_COLORS).map(([tag, color]) => {
+            const cssVal = color.startsWith('--') ? `var(${color})` : color;
+            return `
+                .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected { color:${cssVal}; }
+                .custom-dropdown-menu .custom-dropdown-item[data-value="${tag}"].selected::after { color:${cssVal}; }
+                #selected-tags-container .tag-pill[data-value="${tag}"] { border-color:${cssVal}; background:color-mix(in srgb,${cssVal} 15%,transparent); color:${cssVal}; }
+            `;
+        }).join("");
+        document.head.appendChild(style);
+    }
 
-  // 4. Update menu item states
-  document.querySelectorAll(".custom-dropdown-item").forEach(item => {
-    const val = item.dataset.value;
-    const filterType = item.dataset.filter;
-    let isSelected = false;
+    updateFilterUI() {
+        // Tags
+        const tagContainer  = document.getElementById("selected-tags-container");
+        const tagPlaceholder = document.getElementById("multiselect-placeholder");
+        if (tagContainer && tagPlaceholder) {
+            tagContainer.innerHTML = "";
+            if (this.filterState.tags.size === 0) {
+                tagPlaceholder.style.display = "block";
+            } else {
+                tagPlaceholder.style.display = "none";
+                this.filterState.tags.forEach(tag => {
+                    const pill = document.createElement("span");
+                    pill.className = "tag-pill";
+                    pill.dataset.value = tag;
+                    pill.innerHTML = `${tag}<span class="remove-btn material-symbols-outlined" onclick="event.stopPropagation();window.toggleTagSelection('${tag.replace(/'/g, "\\'")}');">close</span>`;
+                    tagContainer.appendChild(pill);
+                });
+            }
+        }
+        document.getElementById("filter-level-label").textContent = this.filterState.level ? this.filterState.level.toUpperCase() : "All Levels";
+        document.getElementById("filter-zone-label").textContent = this.filterState.zone  || "All Zones";
 
-    if (filterType === "tags") isSelected = this.filterState.tags.has(val);
-    else if (filterType === "level") isSelected = (this.filterState.level === val);
-    else if (filterType === "zone") isSelected = (this.filterState.zone === val);
+        document.querySelectorAll(".custom-dropdown-item").forEach(item => {
+            const { value, filter: filterType } = item.dataset;
+            const selected = filterType === "tags"  ? this.filterState.tags.has(value)
+                           : filterType === "level" ? this.filterState.level === value
+                           : filterType === "zone"  ? this.filterState.zone  === value
+                           : false;
+            item.classList.toggle("selected", selected);
+        });
+    }
 
-    item.classList.toggle("selected", isSelected);
-  });
-}
+    toggleTagSelection(tag) {
+        this.filterState.tags.has(tag) ? this.filterState.tags.delete(tag) : this.filterState.tags.add(tag);
+        this.updateFilterUI();
+        this.applyFilters();
+    }
 
-  /** Toggles a tag in the filter state */
-  toggleTagSelection(tag) {
-  if (this.filterState.tags.has(tag)) this.filterState.tags.delete(tag);
-  else this.filterState.tags.add(tag);
-  this.updateFilterUI();
-  this.applyFilters();
-}
+    setLevelFilter(val) {
+        this.filterState.level = val;
+        document.getElementById("filter-level-menu")?.classList.add("hidden");
+        this.updateFilterUI();
+        this.applyFilters();
+    }
 
-  /** Sets level filter */
-  setLevelFilter(val) {
-  this.filterState.level = val;
-  document.getElementById("filter-level-menu")?.classList.add("hidden");
-  this.updateFilterUI();
-  this.applyFilters();
-}
+    setZoneFilter(val) {
+        this.filterState.zone = val;
+        document.getElementById("filter-zone-menu")?.classList.add("hidden");
+        this.updateFilterUI();
+        this.applyFilters();
+    }
 
-  /** Sets zone filter */
-  setZoneFilter(val) {
-  this.filterState.zone = val;
-  document.getElementById("filter-zone-menu")?.classList.add("hidden");
-  this.updateFilterUI();
-  this.applyFilters();
-}
+    // ── Custom Filter Dropdowns ───────────────────────────────────────────────
 
-  /** Initialises all custom manual dropdowns */
-  initCustomFilters(funtasiaData) {
-  const closeAllMenus = () => {
-    ["tags", "level", "zone"].forEach(f => {
-      document.getElementById(`filter-${f}-menu`)?.classList.add("hidden");
-    });
-  };
+    _setupDropdown(triggerId, menuId, itemsHTML, closeAll) {
+        const trigger = document.getElementById(triggerId);
+        const menu    = document.getElementById(menuId);
+        if (!trigger || !menu) return;
+        menu.innerHTML = itemsHTML;
+        trigger.onclick = (e) => {
+            e.stopPropagation();
+            const wasHidden = menu.classList.contains("hidden");
+            closeAll();
+            if (wasHidden) menu.classList.remove("hidden");
+        };
+    }
 
-  // 1. Tags
-  const tagTrigger = document.getElementById("filter-tags-trigger");
-  const tagMenu = document.getElementById("filter-tags-menu");
-  if (tagTrigger && tagMenu) {
-    const allTags = this.collectAllTags(funtasiaData);
-    tagMenu.innerHTML = allTags.map(tag => `
-      <div class="custom-dropdown-item" data-filter="tags" data-value="${tag}" onclick="toggleTagSelection('${tag.replace(/'/g, "\\'")}');">
-        ${tag}
-      </div>
-    `).join("");
-    tagTrigger.onclick = (e) => { 
-      e.stopPropagation(); 
-      const isHidden = tagMenu.classList.contains("hidden");
-      closeAllMenus();
-      if (isHidden) tagMenu.classList.remove("hidden");
-    };
-  }
+    initCustomFilters(funtasiaData) {
+        const closeAll = () => ['tags', 'level', 'zone'].forEach(f =>
+            document.getElementById(`filter-${f}-menu`)?.classList.add("hidden"));
 
-  // 2. Levels
-  const levelTrigger = document.getElementById("filter-level-trigger");
-  const levelMenu = document.getElementById("filter-level-menu");
-  if (levelTrigger && levelMenu) {
-    const levels = [""].concat(CONFIG.NAVIGATION.FLOOR_ORDER);
-    levelMenu.innerHTML = levels.map(l => `
-      <div class="custom-dropdown-item" data-filter="level" data-value="${l}" onclick="setLevelFilter('${l}');">
-        ${l ? l.toUpperCase() : "All Levels"}
-      </div>
-    `).join("");
-    levelTrigger.onclick = (e) => { 
-      e.stopPropagation(); 
-      const isHidden = levelMenu.classList.contains("hidden");
-      closeAllMenus();
-      if (isHidden) levelMenu.classList.remove("hidden");
-    };
-  }
+        const allTags  = this.collectAllTags(funtasiaData);
+        const levels   = [""].concat(CONFIG.NAVIGATION.FLOOR_ORDER);
+        const zones    = [""].concat(CONFIG.MODELS.ZONES.filter(z => z !== 'NONE'));
 
-  // 3. Zones
-  const zoneTrigger = document.getElementById("filter-zone-trigger");
-  const zoneMenu = document.getElementById("filter-zone-menu");
-  if (zoneTrigger && zoneMenu) {
-    const zoneValues = CONFIG.MODELS.ZONES.filter(z => z !== 'NONE');
-    const zones = [""].concat(zoneValues);
-    zoneMenu.innerHTML = zones.map(z => `
-      <div class="custom-dropdown-item" data-filter="zone" data-value="${z}" onclick="setZoneFilter('${z}');">
-        ${z || "All Zones"}
-      </div>
-    `).join("");
-    zoneTrigger.onclick = (e) => { 
-      e.stopPropagation(); 
-      const isHidden = zoneMenu.classList.contains("hidden");
-      closeAllMenus();
-      if (isHidden) zoneMenu.classList.remove("hidden");
-    };
-  }
+        this._setupDropdown('filter-tags-trigger', 'filter-tags-menu',
+            allTags.map(t => `<div class="custom-dropdown-item" data-filter="tags" data-value="${t}" onclick="toggleTagSelection('${t.replace(/'/g, "\\'")}');">${t}</div>`).join(""),
+            closeAll);
 
-  // 4. Global close logic
-  document.addEventListener("click", (e) => {
-    ["tags", "level", "zone"].forEach(f => {
-      const trigger = document.getElementById(`filter-${f}-trigger`);
-      const menu = document.getElementById(`filter-${f}-menu`);
-      if (trigger && menu && !trigger.contains(e.target) && !menu.contains(e.target)) {
-        menu.classList.add("hidden");
-      }
-    });
-  });
+        this._setupDropdown('filter-level-trigger', 'filter-level-menu',
+            levels.map(l => `<div class="custom-dropdown-item" data-filter="level" data-value="${l}" onclick="setLevelFilter('${l}');">${l ? l.toUpperCase() : "All Levels"}</div>`).join(""),
+            closeAll);
 
-  this.injectTagColorStyles();
-  this.updateFilterUI();
-}
+        this._setupDropdown('filter-zone-trigger', 'filter-zone-menu',
+            zones.map(z => `<div class="custom-dropdown-item" data-filter="zone" data-value="${z}" onclick="setZoneFilter('${z}');">${z || "All Zones"}</div>`).join(""),
+            closeAll);
 
-  /* ── Filter Application ──────────────────────────────────── */
+        // Global close-on-outside-click
+        document.addEventListener("click", (e) => {
+            ['tags', 'level', 'zone'].forEach(f => {
+                const trigger = document.getElementById(`filter-${f}-trigger`);
+                const menu    = document.getElementById(`filter-${f}-menu`);
+                if (trigger && menu && !trigger.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.add("hidden");
+                }
+            });
+        });
 
-  applyFilters() {
-  const container = document.getElementById("funtasia-directory-list");
-  if (!container || !this.cachedFuntasiaData) return;
-  this.renderDirectory(container, this.cachedFuntasiaData);
-}
+        this.injectTagColorStyles();
+        this.updateFilterUI();
+    }
 
-  /* ── Filter Event Binding ────────────────────────────────── */
+    // ── Filter Application ────────────────────────────────────────────────────
 
-  bindFilterEvents() {
-  // Search
-  const searchInput = document.getElementById("directory-search-input");
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      this.filterState.search = e.target.value;
-      this.applyFilters();
-    });
+    applyFilters() {
+        const container = document.getElementById("funtasia-directory-list");
+        if (!container || !this.cachedFuntasiaData) return;
+        this.renderDirectory(container, this.cachedFuntasiaData);
+    }
 
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") searchInput.blur();
-    });
-  }
+    bindFilterEvents() {
+        const searchInput = document.getElementById("directory-search-input");
+        if (searchInput) {
+            searchInput.addEventListener("input",  (e) => { this.filterState.search = e.target.value; this.applyFilters(); });
+            searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchInput.blur(); });
+        }
 
-  // Clear All
-  const clearBtn = document.getElementById("filter-clear-all-btn");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      this.filterState.search = "";
-      this.filterState.level = "";
-      this.filterState.zone = "";
-      this.filterState.tags.clear();
+        const clearBtn = document.getElementById("filter-clear-all-btn");
+        if (clearBtn) {
+            clearBtn.addEventListener("click", () => {
+                Object.assign(this.filterState, { search: "", level: "", zone: "" });
+                this.filterState.tags.clear();
+                if (searchInput) searchInput.value = "";
+                this.updateFilterUI();
+                this.applyFilters();
+                clearBtn.blur();
+            });
+        }
+    }
 
-      if (searchInput) searchInput.value = "";
-      this.updateFilterUI();
-      this.applyFilters();
-      clearBtn.blur();
-    });
-  }
-}
+    // ── Public Init ───────────────────────────────────────────────────────────
 
-  /* ── Public Init ─────────────────────────────────────────── */
-
-  init() { // Renamed from initDirectory
-  const container = document.getElementById("funtasia-directory-list");
-  if (!container) return;
-
-  this.bindFilterEvents();
-
-  if (this.cachedFuntasiaData) {
-    this.initCustomFilters(this.cachedFuntasiaData);
-    this.renderDirectory(container, this.cachedFuntasiaData);
-  } else {
-    container.innerHTML = "Loading directory data...";
-  }
-}
+    init() {
+        const container = document.getElementById("funtasia-directory-list");
+        if (!container) return;
+        this.bindFilterEvents();
+        if (this.cachedFuntasiaData) {
+            this.initCustomFilters(this.cachedFuntasiaData);
+            this.renderDirectory(container, this.cachedFuntasiaData);
+        } else {
+            container.innerHTML = "Loading directory data...";
+        }
+    }
 }
 
 export const directory = new Directory();
 
-// Expose global functions for onclick handlers, which will delegate to the instance
 window.toggleTagSelection = (tag) => directory.toggleTagSelection(tag);
-window.setLevelFilter = (val) => directory.setLevelFilter(val);
-window.setZoneFilter = (val) => directory.setZoneFilter(val);
+window.setLevelFilter     = (val) => directory.setLevelFilter(val);
+window.setZoneFilter      = (val) => directory.setZoneFilter(val);
