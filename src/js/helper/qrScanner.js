@@ -56,7 +56,7 @@ function scoreCamera(label) {
     const l = (label || '').toLowerCase();
 
     // Hard-reject front/selfie cameras by label
-    if (l.includes('front') || l.includes('facing front') || l.includes('user')) return 99;
+    if (l.includes('front') || l.includes('user')) return 99;
 
     // iOS main rear cameras (torch-capable)
     if (l === 'back camera' || l.includes('back dual') || l.includes('back triple') || l.match(/camera2 0,\s*facing back/)) return 0;
