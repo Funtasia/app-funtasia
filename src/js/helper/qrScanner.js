@@ -1,5 +1,5 @@
 import { Html5Qrcode } from "html5-qrcode";
-import { CONFIG } from "@/src/js/base/config";
+import { CONFIG } from "@/js/base/config.js";
 
 let html5QrCode = null;
 let torchOn = false;
