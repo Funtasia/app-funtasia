@@ -22,8 +22,9 @@ export function applySelection(target, appState) {
     const wallHighlightMaterial = new THREE.MeshBasicMaterial({color: wallHighlightColor});
     const topHighlightMaterial = new THREE.MeshBasicMaterial({color: topHighlightColor});
 
+
     appState.selected.traverse(MaterialUpdater.setProperty('material', (c) => 
-      c.name.endsWith('_2') ? topHighlightColor : wallHighlightColor
+      c.name.endsWith('_2') ? topHighlightMaterial : wallHighlightMaterial
     ));
   }
 }
