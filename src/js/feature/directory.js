@@ -57,16 +57,11 @@ class Directory {
 
     // ── Tag Helpers ───────────────────────────────────────────────────────────
 
-    parseTags(rawTags) {
-        if (!rawTags) return [];
-        return (Array.isArray(rawTags) ? rawTags : rawTags.split(",")).map(t => t.trim()).filter(Boolean);
-    }
-
     collectAllTags(funtasiaData) {
         const tags = new Set();
         Object.values(funtasiaData).forEach(levelData => {
             if (!levelData || typeof levelData !== 'object') return;
-            Object.values(levelData).forEach(item => this.parseTags(item.tags || item.Tags).forEach(t => tags.add(t)));
+            Object.values(levelData).forEach(item => item.tags.forEach(t => tags.add(t)));
         });
         return [...tags].sort();
     }
@@ -100,14 +95,13 @@ class Directory {
             Object.entries(levelData).forEach(([boothId, item]) => {
                 if (zoneFilter && (item.zone || item.Zone || "").trim().toLowerCase() !== zoneFilter) return;
 
-                const itemTags = this.parseTags(item.tags || item.Tags);
-                if (this.filterState.tags.size > 0 && !itemTags.some(t => this.filterState.tags.has(t))) return;
+                if (this.filterState.tags.size > 0 && !item.tags.some(t => this.filterState.tags.has(t))) return;
 
                 if (tokens.length > 0) {
-                    const tStr = Array.isArray(item.tags || item.Tags) ? (item.tags || item.Tags).join(" ") : String(item.tags || item.Tags || "");
-                    const iStr = Array.isArray(item.invis_tags) ? item.invis_tags.join(" ") : String(item.invis_tags || "");
-                    const kStr = Array.isArray(item.Keywords)   ? item.Keywords.join(" ")   : String(item.Keywords || "");
-                    const haystack = `${item.booth_name || ""} ${item.booth_oneline_description || ""} ${item.booth_description || ""} ${tStr} ${iStr} ${kStr} ${item.parent_model || ""} ${boothId} ${levelStr} ${humanLevel}`.toLowerCase();
+                    const tStr = item.tags.join(" ");
+                    const iStr = item.invis_tags.join(" ");
+                    // All attributes guaranteed to exist
+                    const haystack = `${item.booth_name} ${item.booth_oneline_description} ${item.booth_description} ${tStr} ${iStr} ${item.parent_model || ""} ${boothId} ${levelStr} ${humanLevel}`.toLowerCase();
                     if (!tokens.every(t => haystack.includes(t))) return;
                 }
 
@@ -206,7 +200,7 @@ class Directory {
         const rawName   = item.booth_name;
         const boothName = (!rawName || rawName === "-") ? "Unnamed Booth" : rawName;
         const boothDesc = item.booth_oneline_description || item.booth_description || "";
-        const tags      = this.parseTags(item.tags || item.Tags);
+        const tags      = item.tags;
         const zc        = this.getZoneColors(item.zone || item.Zone);
 
         const el = document.createElement("div");
