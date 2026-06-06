@@ -19,7 +19,7 @@ export default defineConfig({
     compression(), // compresses files
   ],
   define: {
-    ASSETS_BASE_URL: JSON.stringify('https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.1'),
+    ASSETS_BASE_URL: JSON.stringify('https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.1.0'), // Remember to bump the version here when updating `funtasia_assets`!
     VERSION: JSON.stringify('v6-8-5') // version number used for models
   },
   resolve: {
