@@ -7,9 +7,9 @@ import { resolve } from 'path';
 import { compression } from 'vite-plugin-compression2'
 
 export default defineConfig( ({ mode }) => { 
-  process.env = {...process.env, ...loadEnv(mode, process.cwd())};
+  const viteEnv = loadEnv(mode, process.cwd());
   return {
-    base: process.env.VITE_BASE,
+    base: viteEnv.VITE_BASE,
     plugins: [
       threeMinifier(), // 7kB saved
       ViteMinifyPlugin({removeAttributeQuotes: true, removeComments: true, removeRedundantAttributes: true}), // 1kB saved
@@ -17,8 +17,8 @@ export default defineConfig( ({ mode }) => {
       compression(), // compresses files
     ],
     define: {
-      ASSETS_BASE_URL: JSON.stringify(process.env.VITE_ASSETS_BASE_URL),
-      VERSION: JSON.stringify(process.env.VITE_MODEL_VERSION),
+      ASSETS_BASE_URL: JSON.stringify(viteEnv.VITE_ASSETS_BASE_URL),
+      VERSION: JSON.stringify(viteEnv.VITE_MODEL_VERSION),
     },
     resolve: {
       alias: {
