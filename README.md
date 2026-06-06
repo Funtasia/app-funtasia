@@ -40,7 +40,8 @@ To get acquainted with the code, focus on these files:
 1.  **`index.html`**: Contains the UI skeleton (modals for directory, settings, and events) and initial theme synchronization logic. Also contains many static elements, such as the help menu.
 2.  **`src/js/base/config.js`**: Central configuration. It maps model paths, defines floor orders, and sets color schemas.
 3.  **`src/js/base/appState.js`**: Holds references to the Three.js scene, camera, renderer, and active application state (current floor, selection, etc.).
-4. **`vite.config.js`**: Config options for Vite which specify how the project should be built, and also options for the local dev server
+4. **`vite.config.js`**: Config options for Vite which specify how the project should be built, and also options for the local dev server.
+5. **`.env*`**: Environment variables which change based on whether it is dev server or building for prod.
 5. **`src/js/floor/modelParser.js`**: The bridge between 3D geometry and application logic. It injects metadata and handles object naming. <!--Gang i have no idea why the AI thinks this is important-->
 
 # Naming Conventions
