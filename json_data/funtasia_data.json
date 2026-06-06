@@ -2,8 +2,12 @@
   "b3": {
     "BG1": {
       "booth_name": "Minigames",
-      "tags": "Game",
-      "invis_tags": "25SH21",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH21"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Dive into thrilling mini-games where every challenge is a chance to rack up epic points and beat the competition!",
@@ -11,8 +15,12 @@
     },
     "BG2": {
       "booth_name": "Human Slot Machine",
-      "tags": "Game",
-      "invis_tags": "25SH14",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH14"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Have you ever seen a human slot machine? No? Now is your chance!",
@@ -20,8 +28,12 @@
     },
     "BG3": {
       "booth_name": "Nerf N' Mosh",
-      "tags": "Game",
-      "invis_tags": "JH301",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH301"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Put your hand-eye coordination to the test with our Nerf battle zone, where accuracy and speed are key to victory!",
@@ -29,8 +41,12 @@
     },
     "BG4": {
       "booth_name": "Knock the Teeth!",
-      "tags": "Game",
-      "invis_tags": "JH204",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH204"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Do you find clowns creepy? Well, here is your chance to take revenge by breaking the clown's teeth! Test your aiming skills by seeing just how many teeth you can break!",
@@ -38,8 +54,12 @@
     },
     "BG5": {
       "booth_name": "The Fizzy Leaf",
-      "tags": "Drinks",
-      "invis_tags": "25SH12",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "25SH12"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Enjoy a refreshing selection of bottled water, carbonated drinks, and packet teas and juices, all kept perfectly chilled in ice-filled coolers.",
@@ -47,8 +67,12 @@
     },
     "BG6": {
       "booth_name": "Skeeball",
-      "tags": "Game",
-      "invis_tags": "JH202",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH202"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Show off your skill by rolling balls into numbered slots to earn points and unlock amazing rewards!",
@@ -56,8 +80,12 @@
     },
     "BG7": {
       "booth_name": "Info Counter",
-      "tags": "Info",
-      "invis_tags": "26SH10",
+      "tags": [
+        "Info"
+      ],
+      "invis_tags": [
+        "26SH10"
+      ],
       "zone": "Green",
       "booth_oneline_description": "Get your info here!",
       "booth_description": "",
@@ -65,8 +93,10 @@
     },
     "BG8": {
       "booth_name": "Ticket Counter",
-      "tags": "Tickets",
-      "invis_tags": "",
+      "tags": [
+        "Tickets"
+      ],
+      "invis_tags": [],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "",
@@ -74,8 +104,12 @@
     },
     "CG1": {
       "booth_name": "Sky Wars",
-      "tags": "Game",
-      "invis_tags": "25SH13",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH13"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Test your engineering skills by folding and launching paper airplanes to conquer the skies with the longest flight or furthest distance!",
@@ -83,8 +117,12 @@
     },
     "CG2": {
       "booth_name": "Rubber Duck Racing",
-      "tags": "Game",
-      "invis_tags": "JH306",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH306"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Race rubber ducks down a fun pool and cheer on your favorite floaters in this hilarious aquatic competition!",
@@ -92,8 +130,12 @@
     },
     "CG3": {
       "booth_name": "Guess & Chuck",
-      "tags": "Game",
-      "invis_tags": "25SH07",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH07"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Good at guessing items at touch? Have good aim? Here is a chance for you to combine both your skills and shine!",
@@ -101,8 +143,12 @@
     },
     "CG4": {
       "booth_name": "Catch That Dough!",
-      "tags": "Game",
-      "invis_tags": "25SH11",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH11"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Test your aim at tossing bouncy cookie dough balls into a Cookie Monster-themed bucket without them bouncing out!",
@@ -114,7 +160,9 @@
         "Game",
         "Drinks"
       ],
-      "invis_tags": "JH302",
+      "invis_tags": [
+        "JH302"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Test your aim at flicking balls to knock down pins and grab a refreshing drink while you're at it",
@@ -122,8 +170,12 @@
     },
     "ISH1": {
       "booth_name": "Punching Machine",
-      "tags": "Game",
-      "invis_tags": "26SH09",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH09"
+      ],
       "zone": "Green",
       "booth_oneline_description": "Put your strength to the test!",
       "booth_description": "",
@@ -131,8 +183,12 @@
     },
     "ISH2": {
       "booth_name": "Naughty Bean",
-      "tags": "Game",
-      "invis_tags": "26SH01",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH01"
+      ],
       "zone": "Green",
       "booth_oneline_description": "Fast fingers? Give it a Go!",
       "booth_description": "",
@@ -140,17 +196,25 @@
     },
     "ISH3": {
       "booth_name": "Gladiator Dome",
-      "tags": "Game",
-      "invis_tags": "26SH09",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH09"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
-      "booth_description": "Compete with your friend and try to knock them off balance\u2014first one down loses. It\u2019s all about timing, balance, and a bit of chaos.",
+      "booth_description": "Compete with your friend and try to knock them off balance\u2014first one down loses. It's all about timing, balance, and a bit of chaos.",
       "location": ""
     },
     "ISH4": {
       "booth_name": "Human Bowling Pin",
-      "tags": "Game",
-      "invis_tags": "26SH01",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH01"
+      ],
       "zone": "Green",
       "booth_oneline_description": "",
       "booth_description": "Tired of normal bowling? Try your hand with human sized pins!",
@@ -158,8 +222,12 @@
     },
     "ISH5": {
       "booth_name": "Ball Throwing",
-      "tags": "Game",
-      "invis_tags": "26SH09",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH09"
+      ],
       "zone": "Green",
       "booth_oneline_description": "Think you've got the aim? Prove it to us and gain some bragging rights!",
       "booth_description": "",
@@ -167,7 +235,9 @@
     },
     "ISH6": {
       "booth_name": "First Aid Station 1",
-      "tags": "First Aid",
+      "tags": [
+        "First Aid"
+      ],
       "invis_tags": [
         "medical",
         "injured",
@@ -183,8 +253,12 @@
   "b2": {
     "Gym": {
       "booth_name": "Laser Tag",
-      "tags": "Game",
-      "invis_tags": "26SH12",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH12"
+      ],
       "zone": "Green",
       "booth_oneline_description": "May the pew pew be with you",
       "booth_description": "Outplay your friends in an adrenaline-pumping laser tag showdown. Dodge, aim, and score your way to victory \u2014 fast-paced, competitive, and seriously fun!",
@@ -194,8 +268,12 @@
   "l1": {
     "Amphi": {
       "booth_name": "Water Dunk Tank",
-      "tags": "Game",
-      "invis_tags": "JH206",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH206"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Stand a chance to dunk our teachers and students, including our Principal and Vice Principal, at our dunk tank!\n",
@@ -203,8 +281,12 @@
     },
     "S1": {
       "booth_name": "Drawn For You: Caricature Photobooth",
-      "tags": "Photos",
-      "invis_tags": "25SH05",
+      "tags": [
+        "Photos"
+      ],
+      "invis_tags": [
+        "25SH05"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Get your very own caricature potrait drawn at our booth!",
@@ -212,8 +294,12 @@
     },
     "S2": {
       "booth_name": "Photomania",
-      "tags": "Photos",
-      "invis_tags": "25SH06",
+      "tags": [
+        "Photos"
+      ],
+      "invis_tags": [
+        "25SH06"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Strike up some poses with props and capture these memories with a photostrip to bring home!",
@@ -221,8 +307,12 @@
     },
     "S3": {
       "booth_name": "Keychain Corner",
-      "tags": "Merch",
-      "invis_tags": "25SH17",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH17"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Unleash your inner artist at our keychain customization station, where you can create one-of-a-kind keychains",
@@ -230,8 +320,12 @@
     },
     "S4": {
       "booth_name": "Gem it Up!: Face Gems",
-      "tags": "Glam Up",
-      "invis_tags": "25SH20",
+      "tags": [
+        "Glam Up"
+      ],
+      "invis_tags": [
+        "25SH20"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Get a unique face gem design with options to choose from a variety of styles!",
@@ -239,8 +333,12 @@
     },
     "S5": {
       "booth_name": "Revibe: Hairstyling,Henna",
-      "tags": "Glam Up",
-      "invis_tags": "25SH16",
+      "tags": [
+        "Glam Up"
+      ],
+      "invis_tags": [
+        "25SH16"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Transform your look with hair braiding, simple buns, temporary hair color, face/body painting, and optional henna art, plus handcrafted accessories to take home.",
@@ -248,8 +346,12 @@
     },
     "S6": {
       "booth_name": "Face Painting & Hair Tinsels",
-      "tags": "Glam Up",
-      "invis_tags": "JH207",
+      "tags": [
+        "Glam Up"
+      ],
+      "invis_tags": [
+        "JH207"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Get creative with face painting and dazzling hair tinsels, with design examples to inspire your look!",
@@ -257,8 +359,12 @@
     },
     "S7": {
       "booth_name": "Bedazzle: Bracelet Making",
-      "tags": "Merch",
-      "invis_tags": "25SH08",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH08"
+      ],
       "zone": "Blue",
       "booth_oneline_description": "",
       "booth_description": "Create your own anime-themed bracelet by selecting charms and assembling them!",
@@ -266,8 +372,12 @@
     },
     "AB1": {
       "booth_name": "Astro",
-      "tags": "Game",
-      "invis_tags": "astronomy",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "astronomy"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Discover the wonders of the universe with YOUR own eyes!",
       "booth_description": "From 4: 00 - 6: 00 pm:\nDiscover cosmic vents tied to your birthday or special dates through engaging astronomy activities\n\nFrom 6:00 - 8:00 pm:\nExplore the night sky up close with hands-on telescope viewing of the Moon, planets, and distant stars.",
@@ -275,8 +385,12 @@
     },
     "AB2": {
       "booth_name": "Soccer Dart",
-      "tags": "Game",
-      "invis_tags": "26SH01",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH01"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Love football? Love throwing darts? This game is a combination of both!",
@@ -284,8 +398,12 @@
     },
     "C1": {
       "booth_name": "Big Wok",
-      "tags": "Food",
-      "invis_tags": "26SH13",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH13"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Laksa, Chicken Wrap, Popcorn Chicken and more!",
@@ -293,8 +411,12 @@
     },
     "C11": {
       "booth_name": "Mumbo Time",
-      "tags": "Food",
-      "invis_tags": "26SH07",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH07"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Waffles, Sandwiches, Baos and other small snacks!",
@@ -302,8 +424,12 @@
     },
     "C12": {
       "booth_name": "Prata Hut",
-      "tags": "Food",
-      "invis_tags": "26SH07",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH07"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Chicken Biryani, Murtabak and Samosas!",
@@ -311,8 +437,12 @@
     },
     "C13": {
       "booth_name": "Ramly, Set, Go!",
-      "tags": "Food",
-      "invis_tags": "26SH19",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH19"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Your pit stop for the perfect burger!",
       "booth_description": "Want to try those trendy smash burgers? Look no further!",
@@ -320,8 +450,12 @@
     },
     "C14": {
       "booth_name": "Finger Foods",
-      "tags": "Food",
-      "invis_tags": "26SH11",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH11"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Popcorn & Crackers; Pancake Mania and much more!",
       "booth_description": "Your favourite staples here at NJC's Funtasia!",
@@ -329,8 +463,12 @@
     },
     "C15": {
       "booth_name": "Cakes & Puffs",
-      "tags": "Food",
-      "invis_tags": "26SH08",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH08"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Eat Sweet   Look Sweet",
       "booth_description": "Hungry for those baked goods? Time to stop your stomach from grumbling and stop by!",
@@ -338,8 +476,12 @@
     },
     "C16": {
       "booth_name": "Takoyaki",
-      "tags": "Food",
-      "invis_tags": "26SH14",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH14"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Well if your looking for takoyaki, you found it!",
@@ -347,8 +489,12 @@
     },
     "C2": {
       "booth_name": "Iconic Flavors",
-      "tags": "Food",
-      "invis_tags": "26SH13",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH13"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Different types of Chicken Rice!",
@@ -356,8 +502,12 @@
     },
     "C4": {
       "booth_name": "Bites, Brews Bliss - Western",
-      "tags": "Food",
-      "invis_tags": "26SH05",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH05"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Shepard's Pie, Beef Stew and More! ",
@@ -365,8 +515,12 @@
     },
     "C6": {
       "booth_name": "Bites, Brews Bliss - Hot Drinks",
-      "tags": "Drinks",
-      "invis_tags": "26SH05",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "26SH05"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Tiramisu, and assorted Hand-made drinks!",
@@ -374,8 +528,12 @@
     },
     "C7": {
       "booth_name": "Bites, Brews Bliss - Cold Drinks",
-      "tags": "Drinks",
-      "invis_tags": "26SH05",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "26SH05"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Cold drinks, Ice-pops and more!",
@@ -383,8 +541,12 @@
     },
     "C8": {
       "booth_name": "Drinks stall : Herbal Tea (ZTP)",
-      "tags": "Drinks",
-      "invis_tags": "26SH14",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "26SH14"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Feeling a bit heaty? Have a herbal drink to cool yourself down!",
@@ -392,8 +554,12 @@
     },
     "C9": {
       "booth_name": "Noodle",
-      "tags": "Food",
-      "invis_tags": "26SH03",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH03"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Come try out NJC's own canteen food! Selling: Wanton Mee, Prawn Mee, and other Singaporean staples!",
@@ -401,8 +567,12 @@
     },
     "CB1": {
       "booth_name": "Popcorn and Candy Floss",
-      "tags": "Food",
-      "invis_tags": "26SH14",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH14"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Well it won't be a funfair without popcorn and candy floss right? Come get yours right now!",
@@ -410,8 +580,12 @@
     },
     "CB2": {
       "booth_name": "Seaweed Fries",
-      "tags": "Food",
-      "invis_tags": "26SH16",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH16"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Buy it, Share it, Love it!",
       "booth_description": "Craving seaweed fries? Well, come make your way here!",
@@ -419,8 +593,12 @@
     },
     "CE1": {
       "booth_name": "Heyya Duck Rice",
-      "tags": "Food",
-      "invis_tags": "26SH03",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH03"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "I love duck rice and so should you. Come buy it right now!",
@@ -428,8 +606,12 @@
     },
     "CE2": {
       "booth_name": "Korean Fire Noodles",
-      "tags": "Food",
-      "invis_tags": "26SH16",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH16"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Seoul Spicy! Soul Satisfied!",
       "booth_description": "Are you coming? No? You are missing out on the most fire noodles ever!",
@@ -437,8 +619,12 @@
     },
     "DS3": {
       "booth_name": "Gatecrash: Escape Room",
-      "tags": "Game",
-      "invis_tags": "JH203",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH203"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Step into a thrilling escape room experience where you'll solve puzzles and unravel mysteries to escape before time runs out!",
@@ -446,8 +632,12 @@
     },
     "O1": {
       "booth_name": "Go Kart",
-      "tags": "Game",
-      "invis_tags": "26SH06",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH06"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "Don't have a driving license? Well fret not! You get to drive here as well!",
@@ -455,7 +645,9 @@
     },
     "O2": {
       "booth_name": "Busking @ Linkway",
-      "tags": "Performance",
+      "tags": [
+        "Performance"
+      ],
       "invis_tags": [
         "PA",
         "HCWeyoung",
@@ -474,7 +666,9 @@
     },
     "O3": {
       "booth_name": "First Aid Station 2",
-      "tags": "First Aid",
+      "tags": [
+        "First Aid"
+      ],
       "invis_tags": [
         "medical",
         "injured",
@@ -487,8 +681,12 @@
     },
     "O4": {
       "booth_name": "Info Counter",
-      "tags": "Info",
-      "invis_tags": "26SH10",
+      "tags": [
+        "Info"
+      ],
+      "invis_tags": [
+        "26SH10"
+      ],
       "zone": "Orange",
       "booth_oneline_description": "Get your info here!",
       "booth_description": "",
@@ -496,8 +694,10 @@
     },
     "O5": {
       "booth_name": "Ticket Counter",
-      "tags": "Tickets",
-      "invis_tags": "",
+      "tags": [
+        "Tickets"
+      ],
+      "invis_tags": [],
       "zone": "Orange",
       "booth_oneline_description": "",
       "booth_description": "",
@@ -505,8 +705,12 @@
     },
     "A1": {
       "booth_name": "Info Counter",
-      "tags": "Info",
-      "invis_tags": "26SH10",
+      "tags": [
+        "Info"
+      ],
+      "invis_tags": [
+        "26SH10"
+      ],
       "zone": "Red",
       "booth_oneline_description": "Get your info here!",
       "booth_description": "",
@@ -514,8 +718,10 @@
     },
     "A2": {
       "booth_name": "Ticket Counter",
-      "tags": "Tickets",
-      "invis_tags": "",
+      "tags": [
+        "Tickets"
+      ],
+      "invis_tags": [],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "",
@@ -523,8 +729,12 @@
     },
     "A34a": {
       "booth_name": "PAACT: NJC Merch",
-      "tags": "Merch",
-      "invis_tags": "26SH18",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "26SH18"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Merch made by our very own Parents in Action team! Come get your cute exclusive NJ merch now!",
@@ -532,8 +742,12 @@
     },
     "A4b": {
       "booth_name": "Slushie",
-      "tags": "Drinks",
-      "invis_tags": "26SH07",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "26SH07"
+      ],
       "zone": "Red",
       "booth_oneline_description": "Get a refreshing cup of slushie at our booth!",
       "booth_description": "",
@@ -541,8 +755,12 @@
     },
     "A5": {
       "booth_name": "NJC Heritage",
-      "tags": "Merch",
-      "invis_tags": "26Sh18",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "26Sh18"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Wondering what is the history behind Singapore's first junior college? Look no further! Come visit us at NJC's Heritage Room to learn more!",
@@ -550,8 +768,12 @@
     },
     "AC1": {
       "booth_name": "Lucky Pop Shootout",
-      "tags": "Game",
-      "invis_tags": "JH307",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH307"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Test your aim and pop balloons to earn exciting stickers!",
@@ -559,8 +781,12 @@
     },
     "AC2": {
       "booth_name": "Hypercrate Co",
-      "tags": "Game",
-      "invis_tags": "JH303",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH303"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Test your luck at Hypercrate Co, where you can win amazing prizes by selecting mystery boxes filled with surprises!",
@@ -568,8 +794,12 @@
     },
     "AC3": {
       "booth_name": "Made With Love: Nails, Bracelets, Keychains",
-      "tags": "Merch",
-      "invis_tags": "25SH15",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH15"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Dive into a treasure trove of trendy press-on nails, shimmering keychains, quirky shrinky art, and sparkling bracelets for every style!",
@@ -581,7 +811,9 @@
         "Food",
         "Drinks"
       ],
-      "invis_tags": "26SH18",
+      "invis_tags": [
+        "26SH18"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "I don't know why but I kind of want to go shopping at a supermarket at a Funfair!",
@@ -589,8 +821,12 @@
     },
     "AC7": {
       "booth_name": "Flower Fantasy",
-      "tags": "Merch",
-      "invis_tags": "25SH19",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH19"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Create and sell beautiful pipe cleaner flowers, offering both pre-made bouquets and DIY bouquet options with free wrapping.",
@@ -598,8 +834,12 @@
     },
     "AC8": {
       "booth_name": "Shoot the Target",
-      "tags": "Game",
-      "invis_tags": "25SH01",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "25SH01"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Test your aim and earn points by shooting colorful cardboard targets with a Nerf gun\u2014perfect for friendly competition and prizes!",
@@ -607,8 +847,12 @@
     },
     "AC9": {
       "booth_name": "Is 2026 The New 2016?",
-      "tags": "Merch",
-      "invis_tags": "25Sh02",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25Sh02"
+      ],
       "zone": "Red",
       "booth_oneline_description": "",
       "booth_description": "Create your own slime or design a rainbow loom bracelet with ready-made materials and fun accessories.",
@@ -618,8 +862,12 @@
   "l2": {
     "LBCP1": {
       "booth_name": "Corndog Stall",
-      "tags": "Food",
-      "invis_tags": "26SH19",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH19"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "",
       "booth_description": "Freshly battered and fried corndogs made on the spot, crispy outside and juicy inside.",
@@ -627,8 +875,12 @@
     },
     "LBCP2": {
       "booth_name": "Tteokbokki",
-      "tags": "Food",
-      "invis_tags": "26SH15",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH15"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "tteo-tally get some ttekbokki!!",
       "booth_description": "Chewy rice cakes simmered in a rich, spicy-sweet Korean sauce.",
@@ -636,8 +888,12 @@
     },
     "LBCP3": {
       "booth_name": "Each a Cup",
-      "tags": "Drinks",
-      "invis_tags": "26SH02",
+      "tags": [
+        "Drinks"
+      ],
+      "invis_tags": [
+        "26SH02"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "Drink Good, Feel Good",
       "booth_description": "Refreshing bubble tea and drinks with fun toppings for every taste.",
@@ -645,8 +901,10 @@
     },
     "LBCP4": {
       "booth_name": "Ice Cream Cart",
-      "tags": "Food",
-      "invis_tags": "",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [],
       "zone": "Brown",
       "booth_oneline_description": "",
       "booth_description": "Classic cold treats served fresh to cool you down instantly.",
@@ -654,8 +912,12 @@
     },
     "LBCP5": {
       "booth_name": "Crepe",
-      "tags": "Food",
-      "invis_tags": "26SH15",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH15"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "Crepe happens, eat anyways",
       "booth_description": "Thin, soft crepes filled with sweet or savoury delights, made to order.",
@@ -663,8 +925,12 @@
     },
     "LBCP6": {
       "booth_name": "Live Grilled Satay",
-      "tags": "Food",
-      "invis_tags": "26SH17",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH17"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "",
       "booth_description": "Smoky, flame-grilled skewers served with rich peanut sauce.",
@@ -672,8 +938,12 @@
     },
     "LBCP7": {
       "booth_name": "Taiwanese Fried Chicken Chop",
-      "tags": "Food",
-      "invis_tags": "26SH17",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH17"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "",
       "booth_description": "Crispy, oversized chicken cutlet packed with bold seasoning.",
@@ -681,8 +951,12 @@
     },
     "LBCP8910": {
       "booth_name": "Old Chang Kee Food Truck",
-      "tags": "Food",
-      "invis_tags": "26SH11",
+      "tags": [
+        "Food"
+      ],
+      "invis_tags": [
+        "26SH11"
+      ],
       "zone": "Brown",
       "booth_oneline_description": "",
       "booth_description": "Local favourites like curry puffs and snacks served hot and fast.",
@@ -694,7 +968,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Squash",
+      "invis_tags": [
+        "Squash"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Test your speed and accuracy by smashing targets with a squash racket in a fast-paced one-minute challenge!",
@@ -706,7 +982,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Canoeing",
+      "invis_tags": [
+        "Canoeing"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Race your paper boat across the waters to earn points!",
@@ -718,7 +996,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Choir",
+      "invis_tags": [
+        "Choir"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Good at tongue twisters? Challenge youself by staying on beat!",
@@ -730,7 +1010,9 @@
         "CCA",
         "Glam Up"
       ],
-      "invis_tags": "Track",
+      "invis_tags": [
+        "Track"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Tired of dazzling your wrists? Add charms and sparkles to your shoelaces here!",
@@ -742,7 +1024,9 @@
         "CCA",
         "Glam Up"
       ],
-      "invis_tags": "Indian Dance",
+      "invis_tags": [
+        "Indian Dance"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Experience the art of henna with intricate designs, offering customizable patterns and varying levels of complexity.",
@@ -754,7 +1038,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Symphonic Band",
+      "invis_tags": [
+        "Symphonic Band"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Test your music knowledge with a fun game where you guess the song in a recording by Symphonic Band!",
@@ -766,7 +1052,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Softball",
+      "invis_tags": [
+        "Softball"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Show off your throwing precision by launching balls into holes at varying distances for rewards!",
@@ -778,7 +1066,9 @@
         "CCA",
         "Merch"
       ],
-      "invis_tags": "Greenlink",
+      "invis_tags": [
+        "Greenlink"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Explore a vibrant marketplace filled with donated clothes, accessories, K-pop/Anime merch, and collectibles from NJCians!",
@@ -786,8 +1076,10 @@
     },
     "H17": {
       "booth_name": "Ticket Counter",
-      "tags": "Tickets",
-      "invis_tags": "",
+      "tags": [
+        "Tickets"
+      ],
+      "invis_tags": [],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "",
@@ -795,8 +1087,12 @@
     },
     "H18": {
       "booth_name": "Info Counter",
-      "tags": "Info",
-      "invis_tags": "26SH10",
+      "tags": [
+        "Info"
+      ],
+      "invis_tags": [
+        "26SH10"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "Get your info here!",
       "booth_description": "",
@@ -808,7 +1104,9 @@
         "CCA",
         "Merch"
       ],
-      "invis_tags": "Makers",
+      "invis_tags": [
+        "Makers"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Take a peek into Makers Society bread and butter!",
@@ -820,7 +1118,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Strings",
+      "invis_tags": [
+        "Strings"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Want a challenge? Well this game is for you! Try your mighty best to balance ping pong balls on cups with string!",
@@ -832,7 +1132,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Western Dance",
+      "invis_tags": [
+        "Western Dance"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Dance the night away with friends in an interactive Just Dance mini-game, where you can groove to popular hits in a fun, social setting that's perfect for all ages!",
@@ -844,7 +1146,9 @@
         "CCA",
         "Game"
       ],
-      "invis_tags": "Guitar",
+      "invis_tags": [
+        "Guitar"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Test your skills in a high-energy rhythm-based rap battle against an opponent or tackle a challenging single-player mode.",
@@ -868,8 +1172,12 @@
     },
     "H6": {
       "booth_name": "Basketball showdown",
-      "tags": "CCA",
-      "invis_tags": "Basketball",
+      "tags": [
+        "CCA"
+      ],
+      "invis_tags": [
+        "Basketball"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Compete in a thrilling 1v1 basketball match and score points by shooting into a makeshift hoop.",
@@ -881,7 +1189,9 @@
         "CCA",
         "Merch"
       ],
-      "invis_tags": "Malay Dance",
+      "invis_tags": [
+        "Malay Dance"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Create your own batik-designed pencil cases and keychains, or browse our collection of handmade batik merchandise, including customizable pouches and accessories.",
@@ -893,7 +1203,9 @@
         "CCA",
         "Merch"
       ],
-      "invis_tags": "Chinese Dance",
+      "invis_tags": [
+        "Chinese Dance"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Browse our collection of handcrafted hair accessories \u2014 from delicate floral clips to ornate chopstick hairpins! Make a request and we can style your hair with your chosen accessories!",
@@ -901,8 +1213,12 @@
     },
     "H9": {
       "booth_name": "Hot Shots",
-      "tags": "CCA",
-      "invis_tags": "Shooting",
+      "tags": [
+        "CCA"
+      ],
+      "invis_tags": [
+        "Shooting"
+      ],
       "zone": "Purple",
       "booth_oneline_description": "",
       "booth_description": "Test your aim with Nerf guns as you try to shoot darts into holes of varying sizes on a board \u2014 the more precise, the better!",
@@ -910,8 +1226,12 @@
     },
     "LB1": {
       "booth_name": "Info Counter",
-      "tags": "Info",
-      "invis_tags": "26SH10",
+      "tags": [
+        "Info"
+      ],
+      "invis_tags": [
+        "26SH10"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "Get your info here!",
       "booth_description": "",
@@ -919,8 +1239,10 @@
     },
     "LB2": {
       "booth_name": "Ticket Counter",
-      "tags": "Tickets",
-      "invis_tags": "",
+      "tags": [
+        "Tickets"
+      ],
+      "invis_tags": [],
       "zone": "Yellow",
       "booth_oneline_description": "Get your tickets here!",
       "booth_description": "",
@@ -928,8 +1250,10 @@
     },
     "LIB1": {
       "booth_name": "Central Prize Booth",
-      "tags": "Merch",
-      "invis_tags": "",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [],
       "zone": "Yellow",
       "booth_oneline_description": "Redeem your prizes here!",
       "booth_description": "",
@@ -937,8 +1261,12 @@
     },
     "LIB2": {
       "booth_name": "Photo Booth",
-      "tags": "Game",
-      "invis_tags": "26SH04",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "26SH04"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Not enough photostrips? Capture your Funtasia 2026 memories in a photostrip with us!",
@@ -946,7 +1274,7 @@
     },
     "LT1": {
       "booth_name": "Rest Zone",
-      "tags": "",
+      "tags": [],
       "invis_tags": [
         "sit",
         "aircon"
@@ -958,8 +1286,12 @@
     },
     "LT12A": {
       "booth_name": "Build a Doll",
-      "tags": "Merch",
-      "invis_tags": "25SH03",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH03"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Create your own custom peg doll with a variety of crafting supplies and accessories, or choose from pre-made dolls featuring popular characters and NJC-themed merchandise.",
@@ -967,8 +1299,12 @@
     },
     "LT12B": {
       "booth_name": "Strike a Pose!",
-      "tags": "Photos",
-      "invis_tags": "JH304",
+      "tags": [
+        "Photos"
+      ],
+      "invis_tags": [
+        "JH304"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Choose your props, snap a shot against a decorated backdrop, and walk away with a printed photostrip to capture these memories forever!",
@@ -976,8 +1312,12 @@
     },
     "LT1A": {
       "booth_name": "Balloonatics",
-      "tags": "Merch",
-      "invis_tags": "JH201",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "JH201"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Take home adorable balloon sculptures like ducks, bunnies, and minions from our vibrant display!",
@@ -985,8 +1325,12 @@
     },
     "LT1B": {
       "booth_name": "Get Slimed!",
-      "tags": "Merch",
-      "invis_tags": "25Sh18",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25Sh18"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Dive into a world of squishy fun with customizable DIY slime-making sessions, themed slimes, and playful sensory experiences.",
@@ -998,7 +1342,9 @@
         "Food",
         "Drinks"
       ],
-      "invis_tags": "JH205",
+      "invis_tags": [
+        "JH205"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Relive your childhood, one snack at a time! Join us on a trip down memory lane with a massive spread of old-school favourites \u2014 think WangWang, Eyeglass Candy, Mamee, Coco Jelly, and more!",
@@ -1006,7 +1352,9 @@
     },
     "LT5": {
       "booth_name": "CCA Performances @ LT5",
-      "tags": "Performance",
+      "tags": [
+        "Performance"
+      ],
       "invis_tags": [
         "Malay Dance",
         "Chinese Dance",
@@ -1027,8 +1375,12 @@
     },
     "LT5A": {
       "booth_name": "Jang and Fox Postcard",
-      "tags": "Merch",
-      "invis_tags": "26Sh04",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "26Sh04"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Want some cute postcards to gift your friends? Come check us out!",
@@ -1036,8 +1388,12 @@
     },
     "LT5B": {
       "booth_name": "Pipe cleaner flowers and animals",
-      "tags": "Merch",
-      "invis_tags": "25SH04",
+      "tags": [
+        "Merch"
+      ],
+      "invis_tags": [
+        "25SH04"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Join us in creating cute pocket creatures with vibrant pipecleaners!",
@@ -1045,8 +1401,12 @@
     },
     "TA11": {
       "booth_name": "Karaoke & Just Dance",
-      "tags": "Game",
-      "invis_tags": "JH305",
+      "tags": [
+        "Game"
+      ],
+      "invis_tags": [
+        "JH305"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Visit us with your friends to enjoy some karoake or join a game of Just Dance",
@@ -1059,7 +1419,9 @@
         "Merch",
         "Game"
       ],
-      "invis_tags": "JH401",
+      "invis_tags": [
+        "JH401"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Put your word skills to the test by solving a real-life Wordle puzzle in just 6 guesses!",
@@ -1072,7 +1434,9 @@
         "Game",
         "Merch"
       ],
-      "invis_tags": "JH402",
+      "invis_tags": [
+        "JH402"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Challenge your math skills with fast-paced problem-solving games!",
@@ -1084,7 +1448,9 @@
         "Academic",
         "Glam Up"
       ],
-      "invis_tags": "JH404",
+      "invis_tags": [
+        "JH404"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Dive into a splash of fun by painting and spraying personalized designs onto wearable art, turning ordinary clothes into vibrant masterpieces!",
@@ -1097,7 +1463,9 @@
         "Game",
         "Merch"
       ],
-      "invis_tags": "JH405",
+      "invis_tags": [
+        "JH405"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Test your knowledge and aim for glory by tossing a ball into the correct hole after answering a question!",
@@ -1109,7 +1477,9 @@
         "Academic",
         "Game"
       ],
-      "invis_tags": "JH406",
+      "invis_tags": [
+        "JH406"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Guide a ball through a simplified eukaryotic cell board, helping a protein reach its target organelle while avoiding other organelles, suitable for younger children.",
@@ -1121,7 +1491,9 @@
         "Academic",
         "Merch"
       ],
-      "invis_tags": "JH407",
+      "invis_tags": [
+        "JH407"
+      ],
       "zone": "Yellow",
       "booth_oneline_description": "",
       "booth_description": "Create your own unique character with customizable accessories and designs.",

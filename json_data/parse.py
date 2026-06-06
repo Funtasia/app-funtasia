@@ -1,25 +1,26 @@
 import json
 import csv
 
+from pprint import pprint 
+
 with open("Booth Data - Booth Data.csv", "r",encoding="UTF-8") as file:
     data = list(csv.DictReader(file))
-
-print(data)
-
+    pprint(data)
 
 json_data = {}
+
 for i in data:
     del i["sort_helper"]
     booth_id = i.pop("booth_id")
-    level = i.pop("level")
-    cleaned_level = level[0].lower()+level[1]
-    if "," in i["tags"]:
-        i["tags"] = [i.strip() for i in i["tags"].split(",")]
-    if "," in i["invis_tags"]:
-        i["invis_tags"] = [i.strip() for i in i["invis_tags"].split(",")]
-    if cleaned_level not in json_data:
-        json_data[cleaned_level] = {}
-    json_data[cleaned_level][booth_id] = i
+    level = i.pop("level").lower()
+
+    # Empty list if empty string
+    i["tags"]       = i["tags"]       and [tag.strip() for tag in i["tags"].split(",")      ] or []
+    i["invis_tags"] = i["invis_tags"] and [tag.strip() for tag in i["invis_tags"].split(",")] or []
+
+    if level not in json_data:
+        json_data[level] = {}
+    json_data[level][booth_id] = i
 
 with open("funtasia_data.json", "w") as file:
     json.dump(json_data, file, indent=2)
