@@ -9,7 +9,7 @@
 
 # Key files
 
-1.  `src/base/config.js` for main application config
+1.  `src/js/base/config.js` for main application config
 2.  `vite.config.js` for building and deployment related
 
 # About `config.js`
