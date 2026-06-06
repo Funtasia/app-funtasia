@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { MaterialUpdater } from "@/js/helper/materialUtils.js";
 
 export function isPointerOverUI(event) {

@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { DirectoryMarker } from '@/js/marker/directorymarker.js';
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";

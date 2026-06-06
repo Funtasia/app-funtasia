@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
 import { 
   isPointerOverUI, 

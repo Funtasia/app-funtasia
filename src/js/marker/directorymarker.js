@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { LocationMarker } from "@/js/marker/marker.js";
 import { Floor } from "@/js/floor/floor.js";
 

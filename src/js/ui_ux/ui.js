@@ -1,4 +1,3 @@
-import { focusOnFloor } from "@/js/ui_ux/cameraUtils.js";
 import { CONFIG } from "@/js/base/config.js";
 
 /**

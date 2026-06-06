@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { CONFIG } from "@/js/base/config.js";
-import { disposeThreeObject } from "@/js/helper/threeUtils.js";
 
 function getColor(colorName) {
   const documentStyle = getComputedStyle(document.documentElement);
