@@ -47,10 +47,6 @@ export class Icon extends ManagedMarker {
     this.updateVisibilityAndOpacity(); // Apply initial visibility
   }
 
-  static get iconsByLevel() {
-    return ManagedMarker.managedMarkersByLevel;
-  }
-
   // Helper method to sync visibility across instances, optimized for levels
   updateVisibilityAndOpacity() {
     const isVisibleLocal = Icon.visibleState && this.level === Icon.activeLevel;
