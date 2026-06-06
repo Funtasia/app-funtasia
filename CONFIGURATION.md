@@ -50,30 +50,35 @@ The entire pipeline can been seen in [`./json_data`](./json_data/).
 
 3.  `.csv` file is converted to `.json` using `parse.py`. Note that this is the only step in the entire project that uses Python.
 
-4.  The resulting `.json` is manually screened for special characters that are not in UTF-8. Note that the em-dash (—) has code point U+2014.
+4.  The resulting `.json` is manually screened for special characters that are not in UTF-8. Non-UTF-8 characters are encoded in the form \u\<CODEPOINT\>. Important code points: 
+    -   The em-dash (—) has code point U+2014, not U+2010, U+2011, U+2012, U+2013 or U+2015
+    -   Quotation marks (and apostrophes) should preferably use the UTF-8 characters of ' and " (U+0022, U+0027) instead of ‘’ and “” (U+2018, U+2019, U+201C, U+201D).
 
 5.  The `.json` can be promoted to the `funtasia_assets` repo/submodule. Remember to follow the steps for [asset hosting](#asset-hosting).
 
 ## Notes
 -   Ensure booth IDs in the spreadsheet match the object names in .glb files (e.g., a mesh named `BG1` in Blender should correspond to the `booth_id` `BG1` in the spreadsheet).
--   The steps above can be done anywhere, only things to note are `parse.py` and adding the resultant `funtasia_data.json` to the `funtasia_assets` repo/submodule
+-   `booth_oneline_description` is used for the directory entry, while `booth_description` is used for the full description in the bottom sheet. Either missing will use the other as a fallback.
+-   The steps above can be done anywhere, only things to note are `parse.py` and adding the resultant `funtasia_data.json` to the `funtasia_assets` repo/submodule.
 
 # Events data pipeline
 TL;DR: Data source -> Manual input
 
 ## Steps <!--Do i really need to say anything atp???-->
 
-1.  Get data for the events
+1.  Get data for the events.
 
-2.  Manually input the data into the respective json files
+2.  Manually input the data into the respective json files.
 
-3.  Done
+3.  Done!
 
 ## Notes
 
 -   Make sure to add `endTime` for an event if there is a gap between the event and the next, or if it is the last event.
 
 -   To add more kinds of event formats, simply ask your favorite AI assistant (i hope those still exist for free?) to edit `src/js/feature.events.js`.
+
+-   `location` will be used for `location_id` if no `location_id` specified. `location_id` is the ID of the location in the model (i.e. Booth ID in `funtasia_data.json`), while `location` is the name displayed in the events popup.
 
 # See also
 
