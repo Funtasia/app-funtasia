@@ -81,7 +81,7 @@ These must be set in Blender's **Object Properties > Custom Properties** panel b
 ```bash
 npm install
 ```
-- Python3 for [data source pipeline](#3-data-source-funtasia_datajson) (optional)
+- Python3 for [booth data pipeline](./CONFIGURATION.md#booth-data-pipeline) (optional)
 
 This project is tested on `bash` on Linux and `Git Bash` on Windows. Other environements may or may not be supported. However, the [GitHub Pages deployment from GitHub Actions](#via-github-actions-recommended) will run irregardles of your machine, thus it is sort of possible to develop without the requirements (although it will be painful). Another option would be to use a Github Codespace (which typically uses `bash`, which is supported).
 
