@@ -134,6 +134,14 @@ The project is designed to be hosted on static hosting services like **GitHub Pa
 
 # 📝 Development Notes <!--Split contents to their own .md? FEATURES.md?-->
 
+## Contents
+-   [Welcome screen](#welcome-screen-and-info-menu)
+-   [QR system](#qr-system)
+-   [**Icon font**](#icon-font-material-design-icons)
+-   [Building and Deployment](#building-and-deployment-notes)
+-   [404.html](#404html)
+-   [.nojekyll](#nojekyll)
+
 ## Welcome screen and info menu
 -   The welcome screen will appear only on the first visit. This is detected through the lack of the presence of a key in local storage. The info menu/help menu is easily editable through just editing `index.html`.
 
@@ -155,7 +163,21 @@ The system automatically maps manual input to the internal floor IDs:
 | `11-1`/`11-01` | `l1-m1-aesthetics` |
 | `01-1`/`01-01` | `b1-m1-example` |
 
-## Building and Deployment
+## Icon Font (Material Design Icons)
+
+This project uses the [Material Design Icon font](https://fonts.google.com/icons) for icons. There is a stylesheet import at the top of the file which imports the icon font, which looks like 
+```html
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&icon_names=ICON_NAMES&display=block" rel="stylesheet">
+```
+and the icons can be used by 
+```html
+<span class="material-symbols-outlined">ICON_NAME</span>
+```
+Take note that `ICON_NAMES` is a list of all `ICON_NAME`s used throughout the **entire** document (including elements injected dynamically via JS) **SORTED ALPHABETICALLY**. Remember to update the link when adding/removing icons.
+
+## Building and Deployment notes
+
+_For steps to build and deploy, see [above](#-building-and-deployment)._
 
 The project is optimized for performance using `three-minifier` and `vite-plugin-minify` to keep the bundle size small. Also uses `vite-plugin-compression2` to compress files that supported servers and clients can use instead, which reduces file sizes by 50-70%. 
 
