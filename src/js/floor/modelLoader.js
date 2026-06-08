@@ -1,20 +1,17 @@
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-const BASE = ASSETS_BASE_URL;
-
-const loader = new GLTFLoader();
+let loader = null;
 
 /**
  * Fetches and parses a single GLB from jsDelivr, caching the result.
  * On subsequent calls with the same path, returns the cached GLTF instantly.
  * @param {string} relativePath - e.g. "models/njc-l1-v2-31-3.glb"
- * @returns {Promise<import("three/examples/jsm/loaders/GLTFLoader").GLTF>}
  */
-export function loadModel(relativePath) {
+export async function loadModel(relativePath) {
+  const url = `${ASSETS_BASE_URL}/${relativePath}`;
 
-
-  const url = `${BASE}/${relativePath}`;
-  console.log(`[modelLoader] Fetching: ${url}`);
+  if (!loader) {
+    const { GLTFLoader } = await import("three/addons/loaders/GLTFLoader.js");
+    loader = new GLTFLoader();
+  }
 
   return new Promise((resolve, reject) => {
     loader.load(
@@ -23,12 +20,7 @@ export function loadModel(relativePath) {
         console.log(`[modelLoader] Loaded: ${relativePath}`);
         resolve(gltf);
       },
-      (xhr) => {
-        if (xhr.lengthComputable) {
-          const pct = ((xhr.loaded / xhr.total) * 100).toFixed(1);
-          console.log(`[modelLoader] ${relativePath}: ${pct}%`);
-        }
-      },
+      () => {},
       (error) => {
         console.error(`[modelLoader] Error loading ${relativePath}:`, error);
         reject(error);

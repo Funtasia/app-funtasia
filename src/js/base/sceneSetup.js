@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CONFIG } from "@/js/base/config.js";
 
 export function getViewportSize() {
   if (window.visualViewport) {
@@ -14,7 +14,7 @@ export function getViewportSize() {
   };
 }
 
-export function setupScene() {
+export async function setupScene() {
   const container = document.getElementById("canvas-container");
   const scene = new THREE.Scene();
   let bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-base')
@@ -22,10 +22,10 @@ export function setupScene() {
 
   const viewportSize = getViewportSize();
   const camera = new THREE.PerspectiveCamera(
-    60,
+    CONFIG.CAMERA.PROJECTION.fov,
     viewportSize.width / viewportSize.height,
-    0.1,
-    2000,
+    CONFIG.CAMERA.PROJECTION.near,
+    CONFIG.CAMERA.PROJECTION.far,
   );
   camera.position.set(0, 0, 0);
 
@@ -42,6 +42,7 @@ export function setupScene() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
+  const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.touches = {
     ONE: THREE.TOUCH.PAN,
@@ -49,12 +50,12 @@ export function setupScene() {
   };
   controls.target.set(0, 0, 0);
   controls.screenSpacePanning = false;
-  controls.minDistance = 10;
-  controls.maxDistance = 200;
+  controls.minDistance = CONFIG.CAMERA.CONTROLS.minDistance;
+  controls.maxDistance = CONFIG.CAMERA.CONTROLS.maxDistance;
   controls.minPolarAngle = 0;
-  controls.maxPolarAngle = Math.PI / 2.3;
+  controls.maxPolarAngle = CONFIG.CAMERA.CONTROLS.maxPolarAngle;
   controls.enableDamping = true;
-  controls.dampingFactor = 0.1;
+  controls.dampingFactor = CONFIG.CAMERA.CONTROLS.dampingFactor;
 
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444455,1);
   hemiLight.position.set(0, 200, 0);

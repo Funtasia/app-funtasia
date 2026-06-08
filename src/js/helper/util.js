@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { MaterialUpdater } from "@/js/helper/materialUtils.js";
 
 export function isPointerOverUI(event) {
   try {
@@ -50,30 +50,16 @@ export function setFloorOpacity(group, opacity) {
   if (group.userData.currentOpacity === opacity) return;
   group.userData.currentOpacity = opacity;
 
+  const setMaterial = MaterialUpdater.setProperty('material', (c) => isTransparent 
+    ? (c.userData.ghostMaterial || c.material) 
+    : (c.userData.originalMaterial || c.material));
+    
+  const setOpacity = MaterialUpdater.setProperty('opacity', opacity);
+
   group.traverse((child) => {
-    if (child.isMesh || child.isSprite) {
-      // CRITICAL: Do not override opacity for structural/invisible meshes
-      if (child.userData.ROLE === "GREY") return;
-
-      // Cache the original material so we can restore it later
-      if (!child.userData.originalMaterial) {
-        child.userData.originalMaterial = child.material;
-      }
-
-      if (isTransparent) {
-        // If ghosting, use a unique cloned material to avoid affecting other floors
-        if (!child.userData.ghostMaterial) {
-          child.userData.ghostMaterial = child.material.clone();
-          child.userData.ghostMaterial.transparent = true;
-        }
-        child.material = child.userData.ghostMaterial;
-        child.material.opacity = opacity;
-        child.material.depthWrite = false; // Prevents "box" outlines and clipping
-      } else {
-        // Restore the original solid material
-        child.material = child.userData.originalMaterial;
-      }
-      child.material.needsUpdate = true;
+    if ((child.isMesh || child.isSprite) && child.userData.ROLE !== "GREY") {
+      setMaterial(child);
+      setOpacity(child);
     }
   });
 }

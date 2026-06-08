@@ -14,6 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <title>Funtasia 3D Map</title>
+    <meta name="description" content="A 3D Interactive Online Map for Funtasia 2026, with directory listings, event schedules, and more!"/>
+    <meta name="google-site-verification" content="uHdyFPyqcHGpOoILHxhvJm8TfvV44B9oCAYbtT8U_SQ" />
     <link rel="stylesheet" href="/src/css/main.css"/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&icon_names=album,arrow_back,celebration,check,chevron_right,circle,close,directions_run,event,falling,festival,flashlight_off,flashlight_on,hourglass_empty,image,info_i,keyboard,keyboard_double_arrow_up,location_on,logout,map,mic_external_on,music_note,music_note_2,open_in_new,pan_tool_alt,pinch_zoom_out,qr_code_scanner,search,search_off,settings,store,swap_vert,swipe_right_2,theater_comedy,timer_off,touch_app&display=block" rel="stylesheet">
@@ -95,7 +97,7 @@
             <div class="margin-auto text-center flex flex-col h-full justify-center">
               <h2 class="slide-title text-3xl font-extrabold mb-3">Welcome to</h2>
               <div class="text-center align-middle justify-center">
-                <image class="m-auto max-w-[min(80%,650px)]" src="/src/assets/Logo.svg"></image>
+                <img class="m-auto max-w-[min(80%,650px)]" src="/src/assets/Logo.svg" fetchpriority=high alt="Funtasia logo"></img>
               </div>
               <div class="flex flex-row justify-around m-4">
                 <a class="flex items-center gap-2 rounded-full bg-ctp-mauve text-ctp-base px-3 py-1 cursor-pointer" target="_blank" href="https://instagram.com/njc.funtasia">
@@ -309,49 +311,49 @@
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/stair-u.png" class="info-icon-img" alt="Stair Up"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/stair-u.png" class="info-icon-img" alt="Stair Up"/>
                   </div>
                   <span class="info-icon-label">Stairs<br>Up only</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/stair-d.png" class="info-icon-img" alt="Stair Down"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/stair-d.png" class="info-icon-img" alt="Stair Down"/>
                   </div>
                   <span class="info-icon-label">Stairs<br>Down only</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/stair-ud.png" class="info-icon-img" alt="Stair Up & Down"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/stair-ud.png" class="info-icon-img" alt="Stair Up & Down"/>
                   </div>
                   <span class="info-icon-label">Stairs<br>Up &amp; Down</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/lift.png" class="info-icon-img" alt="Lift"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/lift.png" class="info-icon-img" alt="Lift"/>
                   </div>
                   <span class="info-icon-label">Lift</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/mtoilet.png" class="info-icon-img" alt="Male Toilet"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/mtoilet.png" class="info-icon-img" alt="Male Toilet"/>
                   </div>
                   <span class="info-icon-label">Male<br>Toilet</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/ftoilet.png" class="info-icon-img" alt="Female Toilet"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/ftoilet.png" class="info-icon-img" alt="Female Toilet"/>
                   </div>
                   <span class="info-icon-label">Female<br>Toilet</span>
                 </div>
 
                 <div class="info-icon-cell">
                   <div class="info-icon-bubble">
-                    <img src="https://cdn.jsdelivr.net/gh/garethlearnscoding/funtasia_assets@1.0.0/icons/atoilet.png" class="info-icon-img" alt="Accessible Toilet"/>
+                    <img src="%VITE_ASSETS_BASE_URL%/icons/atoilet.png" class="info-icon-img" alt="Accessible Toilet"/>
                   </div>
                   <span class="info-icon-label">Accessible<br>Toilet</span>
                 </div>
@@ -554,9 +556,6 @@
     </script>
 
     <script type="module">
-      import { startScanner, stopScanner, toggleTorch } from '/src/js/helper/qrScanner.js';
-      import { Navigation } from '/src/js/events/navigation.js';
-      import { QRMarker } from '/src/js/marker/qrmarker.js';
       import { showToast, storeAndHideBottomSheet, reopenStoredBottomSheet, clearStoredBottomSheet } from '/src/js/ui_ux/ui.js';
       const closeWelcomeBtn = document.getElementById('close-welcome-btn');
       const welcomeModal = document.getElementById('welcome-modal-wrapper');
@@ -670,12 +669,13 @@
         inputs.forEach(input => input.value = '');
       }
 
-      function handleQRSuccess(decodedText) {
+      async function handleQRSuccess(decodedText) {
+          const { stopScanner } = await import('/src/js/helper/qrScanner.js');
           try {
               const url = new URL(decodedText);
               const qrID = url.searchParams.get('qrID');
               if (qrID) {
-                  stopScanner();
+                  await stopScanner();
                   
                   // Update URL via pushState to avoid page reload
                   const currentUrl = new URL(window.location.href);
@@ -684,6 +684,7 @@
                   
                   // Trigger navigation
                   clearStoredBottomSheet();
+                  const { Navigation } = await import('/src/js/events/navigation.js');
                   Navigation.handleQRID(qrID);
                   
                   // Close modal
@@ -714,37 +715,42 @@
         () => {} // No specific action on close for events modal
       );
 
-      setupModal(openQrBtn, closeQrBtn, qrBackdrop, qrModal,
-        () => { // onOpenCallback for QR modal
-        if (qrScannerView.style.display !== 'none') {
+      setupModal(openQrBtn, closeQrBtn, qrBackdrop, qrModal, 
+        async () => { // onOpenCallback for QR modal
+          if (qrScannerView.style.display !== 'none') {
+            const { startScanner } = await import('/src/js/helper/qrScanner.js');
             startScanner(handleQRSuccess);
-        }
+          }
         },
-        () => { // onCloseCallback for QR modal
-        stopScanner();
-        clearTextInputs();
+        async () => { // onCloseCallback for QR modal
+          const { stopScanner } = await import('/src/js/helper/qrScanner.js');
+          stopScanner();
+          clearTextInputs();
         }
       );
 
       // QR / Text Toggles
-      qrToggleBtn.addEventListener('click', () => {
+      qrToggleBtn.addEventListener('click', async () => {
         qrScannerView.style.display = 'flex';
         textInputView.style.display = 'none';
         setToggleButtonActive(qrToggleBtn, textToggleBtn);
+        const { startScanner } = await import('/src/js/helper/qrScanner.js');
         startScanner(handleQRSuccess);
         clearTextInputs();
       });
 
-      textToggleBtn.addEventListener('click', () => {
+      textToggleBtn.addEventListener('click', async () => {
         qrScannerView.style.display = 'none';
         textInputView.style.display = 'flex';
         setToggleButtonActive(textToggleBtn, qrToggleBtn);
+        const { stopScanner } = await import('/src/js/helper/qrScanner.js');
         stopScanner();
       });
       
       // Flash Toggle Logic
       if (qrFlashBtn) {
-        qrFlashBtn.addEventListener('click', () => {
+        qrFlashBtn.addEventListener('click', async () => {
+          const { toggleTorch } = await import('/src/js/helper/qrScanner.js');
           toggleTorch(qrFlashBtn);
         });
       }
@@ -784,30 +790,21 @@
         }
 
         // Transform first input: leading 0 → "b", leading 1 → "l"
-        const markerID = secondVal.charAt(0) === '0' ? secondVal.slice(1) : secondVal;
-        const firstDigit = firstVal.charAt(0);
-        const restDigits = firstVal.slice(1);
-        const prefix = firstDigit === '0' ? 'b' : firstDigit === '1' ? 'l' : firstDigit;
-        const floorPart = `${prefix}${restDigits}`;
-        let qrID = `${floorPart}-m${markerID}`;
-        console.log(`Manual input qrID: ${qrID}`);
-        
-        // Fallback: If exact match fails, check if there's a marker that counts as a "match" (e.g. l1-m2-tc)
-        const fuzzyMatch = Object.keys(QRMarker.allMarkers).find(id => id.startsWith(qrID + '-'));
-        if (fuzzyMatch) {
-          qrID = fuzzyMatch;
-        }
+        const floor = ({ '0': 'b', '1': 'l' }[firstVal[0]] || firstVal[0]) + firstVal.slice(1);
+        const base = `${floor}-m${secondVal.replace(/^0/, '')}`;
 
-        if (!QRMarker.allMarkers[qrID]) {
-          showToast(`Marker ${qrID} not found.`, 2000);
-          return;
-        }
+        const { QRMarker } = await import('/src/js/marker/qrmarker.js');
+        const qrID = QRMarker.allMarkers[base] ? base : Object.keys(QRMarker.allMarkers).find(k => k.startsWith(`${base}-`));
+
+        if (!qrID) return showToast(`Marker ${base} not found.`, 2000);
 
         clearStoredBottomSheet();
+        const { Navigation } = await import('/src/js/events/navigation.js');
         const success = await Navigation.handleQRID(qrID);
         if (success) {
           qrModal.style.removeProperty('display');
           showFabButtons();
+          const { stopScanner } = await import('/src/js/helper/qrScanner.js');
           stopScanner();
         }
       }

@@ -1,17 +1,14 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { animateCameraTo } from "@/js/ui_ux/animate.js";
 import { zoneColours } from "@/js/floor/modelParser.js";
+import { MaterialUpdater } from "@/js/helper/materialUtils.js";
 
 export function applySelection(target, appState) {
   if (appState.selected === target) return;
 
   if (appState.selected) {
-    // Restore materials on all mesh children
-    appState.selected.traverse((child) => {
-      if (child.isMesh && child.userData.material) {
-        child.material = child.userData.material;
-      }
-    });
+    appState.selected.traverse(MaterialUpdater.setProperty('material', (c) => c.userData.originalMaterial || c.userData.material));
   }
 
   appState.selected = target;
@@ -19,19 +16,16 @@ export function applySelection(target, appState) {
   if (appState.selected) {
     const baseColor = new THREE.Color(zoneColours[appState.selected.userData.ZONE]);
 
-    const wallHighlightColor = baseColor.clone().multiplyScalar(1.4); // Slightly brighter for walls
-    const topHighlightColor = baseColor.clone().multiplyScalar(1.6);  // More pronounced for tops
+    const wallHighlightColor = baseColor.clone().multiplyScalar(1.4); // Values here are twiddled until they look good
+    const topHighlightColor = baseColor.clone().multiplyScalar(1.6);  // Both are multiplied based on same base color, so walls need to be dimmer than top
+    
+    const wallHighlightMaterial = new THREE.MeshBasicMaterial({color: wallHighlightColor});
+    const topHighlightMaterial = new THREE.MeshBasicMaterial({color: topHighlightColor});
 
-    const wallHighlightMaterial = new THREE.MeshBasicMaterial({color: wallHighlightColor,});
-    const topHighlightMaterial = new THREE.MeshBasicMaterial({color: topHighlightColor,});
 
-    // Apply highlight to all mesh children
-    appState.selected.traverse((child) => {
-      if (child.isMesh && child.userData.material) {
-        // Determine if the child mesh represents a wall ('_1') or a top ('_2') face
-        child.material = child.name.endsWith('_1') ? wallHighlightMaterial : topHighlightMaterial;
-      }
-    });
+    appState.selected.traverse(MaterialUpdater.setProperty('material', (c) => 
+      c.name.endsWith('_2') ? topHighlightMaterial : wallHighlightMaterial
+    ));
   }
 }
 
@@ -51,6 +45,40 @@ export function focusOnFloor(appState, preserveView = false) {
   animateCameraTo(appState, newCamPos, target);
 }
 
+/**
+ * Smoothly animates camera to a specific position using cardinal snapping logic.
+ * Consolidates logic used by both object-based and coordinate-based focus.
+ */
+export function focusAt(appState, pos, options = {}) {
+  const { 
+    distance = CONFIG.CAMERA.DEFAULTS.distance, 
+    heightOffset = CONFIG.CAMERA.DEFAULTS.heightOffset, 
+    isSystem = false, 
+    lookAtOffset = new THREE.Vector3(CONFIG.CAMERA.DEFAULTS.lookAtOffset.x, CONFIG.CAMERA.DEFAULTS.lookAtOffset.y, CONFIG.CAMERA.DEFAULTS.lookAtOffset.z),
+    lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor 
+  } = options;
+
+  const target = pos.clone().add(lookAtOffset);
+  const camPos = appState.camera.position.clone();
+  const dir = new THREE.Vector3().subVectors(camPos, appState.controls.target);
+  dir.y = 0;
+  if (dir.lengthSq() < 0.001) dir.set(0, 0, 1);
+  dir.normalize();
+
+  // Snap to cardinal directions
+  if (Math.abs(dir.x) > Math.abs(dir.z)) {
+    dir.set(Math.sign(dir.x), 0, 0);
+  } else {
+    dir.set(0, 0, Math.sign(dir.z));
+  }
+
+  const newCamPos = target.clone()
+    .add(dir.multiplyScalar(distance))
+    .add(new THREE.Vector3(0, heightOffset, 0));
+
+  animateCameraTo(appState, newCamPos, target, isSystem, lerpFactor);
+}
+
 export function focusOnObject(targetObject, appState) {
   if (appState.selected === targetObject) return;
 
@@ -64,34 +92,14 @@ export function focusOnObject(targetObject, appState) {
     const box = new THREE.Box3().setFromObject(targetObject);
     const objectSize = box.getSize(new THREE.Vector3());
 
-    // 2. Get current camera 2D direction
-    const camPos = appState.camera.position.clone();
-    const controlsTarget = appState.controls.target.clone();
-
-    const direction = new THREE.Vector3().subVectors(camPos, controlsTarget);
-    direction.y = 0; // maintain horizontal direction
-    if (direction.lengthSq() < 0.001) {
-      direction.set(0, 0, 1); // fallback direction
-    }
-    direction.normalize();
-
-    // Snap direction to the closest cardinal direction (X or Z axis)
-    if (Math.abs(direction.x) > Math.abs(direction.z)) {
-      direction.set(Math.sign(direction.x), 0, 0);
-    } else {
-      direction.set(0, 0, Math.sign(direction.z));
-    }
-
-    // 3. Compute new camera position
     const baseScale = Math.max(objectSize.length(), 2);
-    const distance = baseScale * (appState.cameraAnim.viewDistanceFactor || 1.2);
-    const heightOffset = baseScale * (appState.cameraAnim.viewHeightFactor || 0.8);
+    const distFactor = appState.cameraAnim.viewDistanceFactor;
+    const heightFactor = appState.cameraAnim.viewHeightFactor;
 
-    const newCamPos = objectCenter.clone()
-      .add(direction.multiplyScalar(distance))
-      .add(new THREE.Vector3(0, heightOffset, 0));
-
-    // 4. Activate animation state
-    animateCameraTo(appState, newCamPos, objectCenter);
+    focusAt(appState, objectCenter, {
+      distance: baseScale * distFactor,
+      heightOffset: baseScale * heightFactor,
+      lookAtOffset: new THREE.Vector3(0, 1, 0)
+    });
   }
 }

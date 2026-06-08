@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { LocationMarker } from "@/js/marker/marker.js";
 import { Floor } from "@/js/floor/floor.js";
+import { disposeThreeObject } from "@/js/helper/threeUtils.js";
 
 export class QRMarker extends LocationMarker {
   // Static class attribute initialized in main.js
@@ -70,14 +71,7 @@ export class QRMarker extends LocationMarker {
   clear() {
     if (this.group) {
       this.scene.remove(this.group);
-
-      this.group.traverse((child) => {
-        if (child.isMesh || child.isLine || child.isLineSegments) {
-          if (child.geometry) child.geometry.dispose();
-          if (child.material) child.material.dispose();
-        }
-      });
-
+      disposeThreeObject(this.group);
       this.group = null;
     }
 

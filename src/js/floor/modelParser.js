@@ -1,37 +1,5 @@
 import * as THREE from "three";
-import { Floor } from "@/js/floor/floor.js";
-import { Icon } from "@/js/marker/icon.js";
-import { QRMarker } from "@/js/marker/qrmarker.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-
-export const textMarkerMap = {
-  l1: {
-    "Canteen": "Canteen",
-    "Amphi": "Amphitheatre",
-    "Atrium": "Atrium",
-    "NJCLOGO": "Plaza"
-  },
-  l2: {
-    "Hall": "Hall",
-    "LT5": "LT5",
-    "LT1": "LT1",
-    "Amphitheatre": "Amphitheatre",
-    "NJCLOGO":"Plaza",
-    "Pasar Malam Food Street": "Pasar Malam Food Street"
-  },
-  b2: {
-    "Gym": "Gymnasium"
-  },
-  b3: {
-    "Field": "Field",
-    "ISH": "ISH",
-    "njcentrance": "Funtasia Entrance",
-    "njcexit":"Funtasia Exit"
-  },
-  hall:{
-    "Stage":"Stage"
-  }
-};
+import { CONFIG } from "@/js/base/config.js";
 
 function getColor(colorName) {
   const documentStyle = getComputedStyle(document.documentElement);
@@ -39,32 +7,50 @@ function getColor(colorName) {
   return Number("0x" + colorString.slice(1))
 }
 
-const miscSchema = {
-  "BASE":      '--color-ctp-surface0',
-  "DRIVE":     '--color-ctp-surface2',
-  "FOOT":      '--color-ctp-flamingo',
-  "GRASS":     '--color-ctp-green-900',
-  "NONOBJECT": '--color-ctp-flamingo-950',
-  "FTOILET":   '--color-ctp-pink',
-  "MTOILET":   '--color-ctp-lavender',
-  "ATOILET":   '--color-ctp-sky',
-  "LIFT":      '--color-ctp-overlay1',
-};
-
-const zoneSchema = {
-  "NONE":   '--color-ctp-overlay2',
-  "GREEN":  '--color-ctp-green-300',
-  "BLUE":   '--color-ctp-blue-600',
-  "ORANGE": '--color-ctp-peach-400',
-  "PURPLE": '--color-ctp-mauve',
-  "YELLOW": '--color-ctp-yellow',
-  "RED":    '--color-ctp-red',
-  "BROWN":  '--color-ctp-flamingo-900',
-};
-
 // Maps for runtime color lookup, initialized with static colors.
 export const miscColours = { "MARKER": 0xffffff, "STAIRCASE": 0xffffff };
 export const zoneColours = {};
+
+/**
+ * Material cache to reuse materials with identical properties
+ */
+class MaterialCache {
+  constructor() {
+    this.cache = new Map();
+  }
+
+  getMaterial(colorVal, isDecoration, isGhost = false) {
+    const key = `${colorVal.toString(16)}-${isDecoration}-${isGhost}`;
+    if (this.cache.has(key)) return this.cache.get(key);
+
+    const material = new THREE.MeshBasicMaterial({
+      color: colorVal,
+      transparent: isGhost,
+      opacity: isGhost ? 0.5 : 1.0,
+      depthWrite: !isGhost,
+      polygonOffset: isDecoration,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    });
+
+    this.cache.set(key, material);
+    return material;
+  }
+
+  clear() {
+    for (const material of this.cache.values()) {
+      material.dispose();
+    }
+    this.cache.clear();
+  }
+
+  getStats() {
+    return {
+      cachedMaterials: this.cache.size,
+      entries: Array.from(this.cache.keys())
+    };
+  }
+}
 
 // Helper to update color maps from schemas.
 function refreshPalette(target, schema) {
@@ -75,8 +61,8 @@ function refreshPalette(target, schema) {
 
 // Re-reads CSS variables and updates the color dictionaries.
 export function updateThemeColors() {
-  refreshPalette(miscColours, miscSchema);
-  refreshPalette(zoneColours, zoneSchema);
+  refreshPalette(miscColours, CONFIG.THEME.MISC_SCHEMA);
+  refreshPalette(zoneColours, CONFIG.THEME.ZONE_SCHEMA);
 }
 
 // Update theme colors immediately on module load
@@ -94,8 +80,8 @@ export function applyThemeToScene(appState) {
       const role = child.userData.ROLE;
       let colorVal;
 
-      if (role === "OBJECT") {
-        colorVal = zoneColours[child.userData.ZONE || "NONE"];
+      if (role === 'OBJECT') {
+        colorVal = zoneColours[child.userData.ZONE] || zoneColours.NONE;
         if (child.name.endsWith("_2")) {
           const c = new THREE.Color(colorVal);
           c.multiplyScalar(1.2);
@@ -125,31 +111,32 @@ export function applyThemeToScene(appState) {
 let skybox = null;
 let maxRadius = 0;
 
-export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = floorId) {
-  const roledict = {
-    "ATOILET": "atoilet",
-    "MTOILET": "mtoilet",
-    "FTOILET": "ftoilet",
-    "LIFT": "lift",
-    "STAIRCASE": "staircase",
-    "DOOR": "door"
-  };
+export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = floorId, childModels = {}) {
+  // Dynamically import markers only when parsing occurs. 
+  // If they are already loaded by main.js, this resolves instantly from cache.
+  const [
+    { Icon },
+    { QRMarker },
+    { TextMarker, BoothIDMarker }
+  ] = await Promise.all([
+    import("@/js/marker/icon.js"),
+    import("@/js/marker/qrmarker.js"),
+    import("@/js/marker/textmarker.js")
+  ]);
+
   const model = gltf.scene;
   model.visible = false;
   scene.add(model);
+  const materialCache = new MaterialCache();
 
   let box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
-  // console.log(`[Parser] Model ${floorId} center:`, center);
   model.position.sub(center);
 
   box = new THREE.Box3().setFromObject(model);
   const sizeVec = box.getSize(new THREE.Vector3());
   const radius = sizeVec.length() * 0.5;
   const isChildModel = dataFloorId !== floorId;
-  // console.log(`[Parser] ── Model: ${floorId} (${isChildModel ? 'CHILD of ' + dataFloorId : 'FLOOR'}) ──`);
-  // console.log(`[Parser]   Bounding box size: W=${sizeVec.x.toFixed(2)}, H=${sizeVec.y.toFixed(2)}, D=${sizeVec.z.toFixed(2)}`);
-  // console.log(`[Parser]   Radius (half-diagonal): ${radius.toFixed(2)}`);
   maxRadius = Math.max(maxRadius, radius);
 
   if (!skybox) {
@@ -163,11 +150,11 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     skybox = new THREE.Mesh(skyGeo, skyMat);
     scene.add(skybox);
   }
-  const radiusfixed = 20;
+  const radiusfixed = CONFIG.CAMERA.PARSER_DEFAULTS.radiusFixed;
   const cameraConfig = isChildModel
     ? {
         // Child models: wider, higher angle to fill viewport
-        initialPosition: new THREE.Vector3(0, radius * 1.4, radius * 2.0),
+        initialPosition: new THREE.Vector3(0, radius * CONFIG.CAMERA.PARSER_DEFAULTS.childInitialYFactor, radius * CONFIG.CAMERA.PARSER_DEFAULTS.childInitialZFactor),
         target: new THREE.Vector3(0, 0, 0),
         minDistance: radius * 0.1,
         maxDistance: radius * 5.0,
@@ -183,7 +170,6 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
         near: radius / 1000,
         far: Math.max(radius * 10000, 2000),
       };
-  // console.log(`[Parser]   Camera Config:`, cameraConfig);
   const objects = [];
   const boothIDMarkers = [];
   const textMarkers = [];
@@ -221,11 +207,11 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     }
 
     // 3. Add TextMarker if the logical node's name appears in textMarkerMap
-    if (child.isMesh && textMarkerMap[floorKey] && logicalNode.name in textMarkerMap[floorKey]) {
+    if (child.isMesh && CONFIG.THEME.TEXT_MARKER_MAP[floorKey] && logicalNode.name in CONFIG.THEME.TEXT_MARKER_MAP[floorKey]) {
       if (!markerNames.has(logicalNode.name)) {
         const pos = child.getWorldPosition(new THREE.Vector3());
         pos.y = 0;
-        const tm = new TextMarker(model, pos, textMarkerMap[floorKey][logicalNode.name], floorId);
+        const tm = new TextMarker(model, pos, CONFIG.THEME.TEXT_MARKER_MAP[floorKey][logicalNode.name], floorId);
         if (tm.group) tm.group.visible = false;
         textMarkers.push(tm);
         markerNames.add(logicalNode.name);
@@ -245,14 +231,12 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
       if (role === "MARKER") {
         const markerId = String(child.userData.MARKERID);
         const pos = child.getWorldPosition(new THREE.Vector3());
-        const entry = { pos, floorId };
-        Floor.allMarkers[markerId] = entry;
-        QRMarker.allMarkers[markerId] = entry;
+        QRMarker.allMarkers[markerId] = { pos, floorId };
       }
 
-      // Collect Icons
-      if (Object.keys(roledict).includes(role)) {
-        let normalisedRole = roledict[role];
+      // Collect Icons by checking against Managed Icon ROLEs
+      let normalisedRole = CONFIG.MODELS.ROLE_MAP[role];
+      if (normalisedRole) {
         if (normalisedRole === "staircase") {
           switch (child.userData?.STAIRCASEDIRECTION) {
             case "U":
@@ -295,17 +279,12 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
         colorVal = baseColor.getHex();
       }
 
-      // Use opaque materials by default to prevent transparency sorting artifacts.
-      // Walkways and grass (FOOT, GRASS, DRIVE) often overlap with the BASE.
-      // We use polygonOffset to "nudge" them slightly forward in the depth buffer.
-      const isDecoration = ["FOOT", "GRASS", "DRIVE"].includes(role);
-      child.material = new THREE.MeshBasicMaterial({ 
-        color: colorVal, 
-        transparent: false,
-        polygonOffset: isDecoration,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -1
-      });
+      const isDecoration = CONFIG.MODELS.DECORATIVE_ROLES.includes(role);
+      child.material = materialCache.getMaterial(colorVal, isDecoration);
+      
+      child.userData.ghostMaterial = materialCache.getMaterial(colorVal, isDecoration, true);
+      child.userData.originalMaterial = child.material;
+
       if (isInteractive) child.userData.material = child.material;
     }
 
@@ -323,7 +302,7 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     
     // Detect if this object belongs to a parent model (e.g. Canteen, ISH)
     let parentModelName = null;
-    const levelChildren = Floor.childModels[dataFloorId] || {};
+    const levelChildren = childModels[dataFloorId] || {};
     let p = logicalNode.parent;
     while (p && p !== model) {
       if (levelChildren[p.name]) {
@@ -366,8 +345,8 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
       }
     }
 
-    if (Floor.childModels && Floor.childModels[dataFloorId] && Floor.childModels[dataFloorId][logicalNode.name]) {
-      logicalNode.userData.child = Floor.childModels[dataFloorId][logicalNode.name];
+    if (childModels && childModels[dataFloorId] && childModels[dataFloorId][logicalNode.name]) {
+      logicalNode.userData.child = childModels[dataFloorId][logicalNode.name];
     }
 
     if (!objects.includes(logicalNode)) {
@@ -375,5 +354,5 @@ export function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId = flo
     }
   });
   
-  return { model, interactiveObjects: objects, cameraConfig, textMarkers, boothIDMarkers };
+  return { model, interactiveObjects: objects, cameraConfig, textMarkers, boothIDMarkers, materialCache };
 }

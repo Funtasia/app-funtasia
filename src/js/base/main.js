@@ -1,42 +1,16 @@
 import * as THREE from "three";
-import { AppState } from "@/js/base/appState.js";
-import { switchEventCategory } from "@/js/feature/events.js";
+import { appState } from "@/js/base/appState.js";
+import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
-import { SettingsController } from "@/js/base/settings.js";
 import { setupEventListeners } from "@/js/events/event.js";
-import { Navigation } from "@/js/events/navigation.js";
-import { fetchDirectoryData, initDirectory } from "@/js/feature/directory.js";
 import { Floor } from "@/js/floor/floor.js";
 import { applyThemeToScene } from "@/js/floor/modelParser.js";
-import { Icon } from "@/js/marker/icon.js";
-import { Marker } from "@/js/marker/marker.js"; 
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-import { QRMarker } from "@/js/marker/qrmarker.js";
 import { startAnimationLoop, animateCameraTo } from "@/js/ui_ux/animate.js";
-import { hideBottomSheet, setupUI, setUISheetData } from "@/js/ui_ux/ui.js";
-
-const { scene, camera, renderer, controls } = setupScene();
-
-// Register all floors with their relative CDN paths (no static imports needed).
-// Models are fetched lazily from jsDelivr on first switchFloor() call.
-const floorDefs = {
-  l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
-  l1: `models/${VERSION}/njc-l1-${VERSION}.glb`,
-  b1: `models/${VERSION}/njc-b1-${VERSION}.glb`,
-  b2: `models/${VERSION}/njc-b2-${VERSION}.glb`,
-  b3: `models/${VERSION}/njc-b3-${VERSION}.glb`,
-};
-
-const childModelDefs = {
-  canteen:   { floorId: "l1", nodeName: "Canteen",   path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb` },
-  sanctuary: { floorId: "l1", nodeName: "Sanctuary", path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
-  hall:      { floorId: "l2", nodeName: "CCA Booths @ Hall",      path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb` },
-  ish:       { floorId: "b3", nodeName: "ISH",       path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb` },
-};
+import * as UI from "@/js/ui_ux/ui.js";
 
 // Instantiate Floor objects — they self-register into Floor.floors
-Object.entries(floorDefs).forEach(([id, path]) => new Floor(id, path));
-Object.entries(childModelDefs).forEach(([id, config]) => {
+Object.entries(CONFIG.MODELS.FLOORS).forEach(([id, path]) => new Floor(id, path));
+Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
   const floor = new Floor(id, config.path);
   floor.parentFloorId = config.floorId;
   
@@ -48,37 +22,96 @@ Object.entries(childModelDefs).forEach(([id, config]) => {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-const appState = new AppState(  );
-appState.scene = scene;
-appState.camera = camera;
-appState.renderer = renderer;
-appState.controls = controls;
 appState.raycaster = raycaster;
 appState.mouse = mouse;
+// Bind UI functions and Floor registry to appState to reduce imports in other modules
+appState.floors = Floor.floors;
+appState.ui = {
+  hideSheet: UI.hideBottomSheet,
+  showSheet: UI.showBottomSheet,
+  setSheetData: UI.setUISheetData,
+  clearStoredSheet: UI.clearStoredBottomSheet,
+  updateFloor: UI.updateFloorUI,
+  showToast: UI.showToast,
+  hideToast: UI.hideToast,
+  /**
+   * Delegates to global UI handlers but ensures child-floor exit button 
+   * state is preserved. This fixes cases where closing a modal (like 
+   * the Directory) would hide the 'Exit Area' button.
+   */
+  showFabButtons: () => {
+    if (typeof window.showFabButtons === 'function') window.showFabButtons();
+    UI.updateExitButtonVisibility(appState.isChildFloor);
+  },
+  hideFabButtons: () => {
+    if (typeof window.hideFabButtons === 'function') window.hideFabButtons();
+    UI.updateExitButtonVisibility(false);
+  },
+  setClearDirectoryMarkerVisible: (visible) => 
+    window.setClearDirectoryMarkerVisible && window.setClearDirectoryMarkerVisible(visible)
+};
 
-Marker.appState = appState;
+// Marker and Floor appState binding moved inside initApp to support dynamic marker imports
 Floor.appState = appState;
-
-Navigation.init(appState);
-
-setupEventListeners(appState);
 
 // Initializing the application
 async function initApp() {
+  const { scene, camera, renderer, controls } = await setupScene();
+  
+  appState.scene = scene;
+  appState.camera = camera;
+  appState.renderer = renderer;
+  appState.controls = controls;
+  appState.raycaster = raycaster;
+
+  // Dynamically import heavy feature modules to improve TBT (Total Blocking Time)
+  const [
+    { Navigation },
+    { SettingsController },
+    { directory },
+    { events },
+    { Marker },
+    { ManagedMarker },
+    { Icon },
+    { TextMarker, BoothIDMarker }
+  ] = await Promise.all([
+    import("@/js/events/navigation.js"),
+    import("@/js/base/settings.js"),
+    import("@/js/feature/directory.js"),
+    import("@/js/feature/events.js"),
+    import("@/js/marker/marker.js"),
+    import("@/js/marker/managedmarker.js"),
+    import("@/js/marker/icon.js"),
+    import("@/js/marker/textmarker.js")
+  ]);
+
+  appState.directory = directory;
+  appState.events = events;
+  appState.navigation = Navigation;
+  appState.ManagedMarker = ManagedMarker;
+  
+  // Bind appState to markers now that they are loaded
+  Marker.appState = appState;
+
+  // Initialize systems that depend on the dynamic modules
+  appState.navigation.init(appState);
+  appState.cleanupEventListeners = setupEventListeners(appState);
+
   // 1. Fetch raw data
-  const rawData = await fetchDirectoryData();
+  const rawData = await directory.fetchDirectoryData();
 
   // Register the fetched directory data with the UI module
-  setUISheetData(rawData);
+  appState.ui.setSheetData(rawData);
 
   // No pre-loading — floors are fetched on-demand in Navigation.switchFloor()
   // 2. Set up UI
-  setupUI(Floor.floors, appState);
+  UI.setupUI(Floor.floors, appState);
 
   // 3. Make raw data accessible globally for parsing later (handled via switchFloor param injection down the line)
   appState.rawData = rawData;
   
-  initDirectory(appState);
+  appState.directory.init();
+  appState.events.init();
 
   // Initialize modular Settings menu
   SettingsController.init('settings-content-area');
@@ -86,10 +119,6 @@ async function initApp() {
   const visualsSection = SettingsController.addSection('Visual Preferences');
   const mapElements = SettingsController.addSection('Map elements');
   
-  // Initialize settings from local storage
-  window.ghostLayersEnabled = localStorage.getItem('funtasia-ghost-layers') !== 'false';  // default true
-  appState.rotationLocked = localStorage.getItem('funtasia-rotation-lock') !== 'false';   // default true
-  appState.autoFocusEnabled = localStorage.getItem('funtasia-autofocus') !== 'false';     // default true
   Icon.state(localStorage.getItem('funtasia-show-icons') !== 'false'); // default true
   TextMarker.state(localStorage.getItem('funtasia-show-text-markers') !== 'false'); // default true
   BoothIDMarker.state(localStorage.getItem('funtasia-show-booth-markers') !== 'false'); // default true
@@ -103,7 +132,7 @@ async function initApp() {
         localStorage.setItem('funtasia-show-icons', state);
         Icon.state(state); 
       },
-      Icon.iconsVisible
+      Icon.visibleState
     );
     SettingsController.addToggle(
       mapElements,
@@ -113,7 +142,7 @@ async function initApp() {
         localStorage.setItem('funtasia-show-text-markers', state);
         TextMarker.state(state);
       },
-      TextMarker.textMarkersVisible
+      TextMarker.visibleState
     );
     SettingsController.addToggle(
       mapElements,
@@ -123,18 +152,14 @@ async function initApp() {
         localStorage.setItem('funtasia-show-booth-markers', state);
         BoothIDMarker.state(state);
       },
-      BoothIDMarker.boothIDsVisible
+      BoothIDMarker.visibleState
     );
     SettingsController.addToggle(
       visualsSection,
       'Ghost Layers',
       'View lower levels as translucent layers',
-      (state) => {
-          localStorage.setItem('funtasia-ghost-layers', state);
-          window.ghostLayersEnabled = state;
-          if (window.updateFloorVisibilities) window.updateFloorVisibilities();
-      },
-      window.ghostLayersEnabled
+      (state) => appState.ghostLayersEnabled = state,
+      appState.ghostLayersEnabled
     );
     SettingsController.addToggle(
       visualsSection,
@@ -162,14 +187,12 @@ async function initApp() {
       'Rotation Lock',
       'Lock the rotation of the 3D model',
       (isLocked) => {
-        localStorage.setItem('funtasia-rotation-lock', isLocked);
         appState.rotationLocked = isLocked;
-        controls.enableRotate = !isLocked;
-        controls.touches.TWO = isLocked ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
         
         // Lerp camera to front of the model when locked
         if (isLocked && appState.currentFloor && appState.currentFloor.cameraConfig) {
           const config = appState.currentFloor.cameraConfig;
+          // Reset to canonical front view instead of snapping from current angle
           animateCameraTo(appState, config.initialPosition, config.target, true);
         }
       },
@@ -180,10 +203,7 @@ async function initApp() {
       controlsSection,
       'Camera Auto-Focus',
       'Smoothly animate the camera when selecting a location',
-      (enabled) => {
-        localStorage.setItem('funtasia-autofocus', enabled)
-        appState.autoFocusEnabled = enabled;
-      },
+      (enabled) => appState.autoFocusEnabled = enabled,
       appState.autoFocusEnabled
     );
   }
@@ -199,50 +219,25 @@ async function initApp() {
   handleURLQR();
 
   startAnimationLoop(appState);
+
+  // window.switchEventCategory is no longer needed as event listeners are managed internally by Events.js
+
+  // Clear Directory Marker Button Logic
+  const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');
+  if (clearDirMarkerBtn) {
+    clearDirMarkerBtn.addEventListener('click', async () => {
+        if (appState.activeDirectoryMarker) {
+            appState.activeDirectoryMarker.clear();
+            appState.activeDirectoryMarker = null;
+            appState.activeDirectoryBoothId = null;
+            appState.activeDirectoryLevel = null;
+            appState.activeMarkers = appState.activeMarkers.filter(m => m !== null);
+        }
+
+        appState.ui.hideSheet();
+        appState.ui.setClearDirectoryMarkerVisible(false);
+    });
+  }
 }
 
 initApp();
-// Optional Console func
-window.printCurrentFloorInfo = function () {
-  const currentFloorId = appState.currentFloor ? appState.currentFloor.id : "None";
-  console.log(`=== Info for Current Floor: ${currentFloorId} ===`);
-};
-
-window.printAllMarkers = function () {
-  console.log(QRMarker.allMarkers);
-};
-
-// Events toggle buttons logic
-const ccaToggleBtn = document.getElementById('events-cca-toggle-btn');
-const dunklistToggleBtn = document.getElementById('events-dunklist-toggle-btn');
-const pabuskingToggleBtn = document.getElementById('events-pabusking-toggle-btn');
-
-ccaToggleBtn.addEventListener('click', () => switchEventCategory('cca'));
-dunklistToggleBtn.addEventListener('click', () => switchEventCategory('dunklist'));
-pabuskingToggleBtn.addEventListener('click', () => switchEventCategory('pabusking'));
-
-window.switchEventCategory = switchEventCategory
-
-// Clear Directory Marker Button Logic
-const clearDirMarkerBtn = document.getElementById('clear-directory-marker-btn');
-if (clearDirMarkerBtn) {
-  clearDirMarkerBtn.addEventListener('click', async () => {
-      // We need to clear the active directory marker from the global app state
-      // Since appState isn't globally exposed on window, we can dispatch an event or import it
-      // Let's import the global appState reference or just find the module
-      const appState = Navigation.appState;
-      if (appState && appState.activeDirectoryMarker) {
-          appState.activeDirectoryMarker.clear();
-          appState.activeDirectoryMarker = null;
-          appState.activeDirectoryBoothId = null;
-          appState.activeDirectoryLevel = null;
-          appState.activeMarkers = appState.activeMarkers.filter(m => m !== null);
-      }
-      clearDirMarkerBtn.style.display = 'none';
-
-      // Also close the bottom sheet if it happens to be open
-      hideBottomSheet();
-
-      window.setClearDirectoryMarkerVisible(false);
-  });
-}

@@ -1,5 +1,4 @@
-import * as THREE from "three";
-import { LocationMarker, Marker } from "./marker.js";
+import { LocationMarker } from "@/js/marker/marker.js";
 import { Floor } from "@/js/floor/floor.js";
 
 export class DirectoryMarker extends LocationMarker {

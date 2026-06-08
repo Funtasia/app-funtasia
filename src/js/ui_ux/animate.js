@@ -2,12 +2,10 @@
 Function: animate() -> Main animation loop
 */
 
-import { Icon } from "@/js/marker/icon.js";
+import { CONFIG } from "@/js/base/config.js";
 import { Floor } from "@/js/floor/floor.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
-import { Navigation, floorOrder } from "@/js/events/navigation.js";
 
-export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = 0.05) {
+export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
   appState.cameraAnim.cameraTarget.copy(cameraTarget);
   appState.cameraAnim.isSystemAction = isSystemAction;
@@ -34,7 +32,7 @@ export function startAnimationLoop(appState) {
         return;
       }
 
-      const lerpFactor = appState.cameraAnim.lerpFactor || 0.05;
+      const lerpFactor = appState.cameraAnim.lerpFactor || CONFIG.CAMERA.ANIMATION.lerpFactor;
       
       appState.camera.position.lerp(appState.cameraAnim.cameraTarget, lerpFactor);
       appState.controls.target.lerp(appState.cameraAnim.controlsTarget, lerpFactor);
@@ -56,47 +54,47 @@ export function startAnimationLoop(appState) {
     /*
     Animate floor transitions (Ghost Layers sliding)
     */
-    const activeFloorId = Navigation.appState?.currentFloor?.id;
     Object.values(Floor.floors).forEach((floor) => {
-      if (floor.sceneModel && floor.sceneModel.visible) {
-        const dist = floor.targetY - floor.sceneModel.position.y;
-        if (Math.abs(dist) > 0.01) {
-          floor.sceneModel.position.y += dist * 0.1;
-        } else {
-          // Hide floors that are ABOVE the current active floor once they finish flying out
-          const floorIdx = floorOrder.indexOf(floor.id);
-          const targetIdx = floorOrder.indexOf(activeFloorId);
-          if (floorIdx > targetIdx && floorIdx !== -1 && targetIdx !== -1) {
-            floor.sceneModel.visible = false;
-          }
+      if (!floor._isAnimating || !floor.sceneModel?.visible) return;
+      
+      const dist = floor.targetY - floor.sceneModel.position.y;
+      if (Math.abs(dist) > 0.01) {
+        floor.sceneModel.position.y += dist * 0.1;
+      } else {
+        floor._isAnimating = false;
+        // Hide floors that are ABOVE the current active floor once they finish flying out
+        const floorIdx = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(floor.id);
+        const targetIdx = floor._targetIndex;
+        if (floorIdx > targetIdx && floorIdx !== -1 && targetIdx !== -1) {
+          floor.sceneModel.visible = false;
         }
       }
     });    
 
     const time = performance.now();
+    
     /*
-    Animate markers
+    Animate markers (Location markers + Managed markers)
     */
+    const animatedMarkers = new Set();
+    
     if (appState.activeMarkers) {
-      appState.activeMarkers.forEach(m => m.animate(time, appState.camera));
+      appState.activeMarkers.forEach(m => {
+        if (m && m.animate) {
+          m.animate(time, appState.camera);
+          animatedMarkers.add(m);
+        }
+      });
     }
 
-    /*
-    Animate icons
-    */
-    Object.values(Icon.iconsByLevel).forEach(levelIcons => {
-      levelIcons.forEach(icon => icon.animate(time, appState.camera));
-    });
-
-    // Animate text markers
-    Object.values(TextMarker.textMarkersByLevel).forEach(levelMarkers => {
-      levelMarkers.forEach(marker => marker.animate(time, appState.camera));
-    });
-
-    // Animate booth ID markers
-    Object.values(BoothIDMarker.boothMarkersByLevel).forEach(levelMarkers => {
-      levelMarkers.forEach(marker => marker.animate(time, appState.camera));
-    });
+    if (appState.ManagedMarker?.allManagedMarkers) {
+      appState.ManagedMarker.allManagedMarkers.forEach(marker => {
+        if (marker && marker.animate && !animatedMarkers.has(marker)) {
+          marker.animate(time, appState.camera);
+          animatedMarkers.add(marker);
+        }
+      });
+    }
 
     appState.renderer.render(appState.scene, appState.camera);
   }

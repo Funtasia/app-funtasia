@@ -1,7 +1,7 @@
 import * as THREE from "three";
+import { CONFIG } from "@/js/base/config.js";
 import { loadModel } from "@/js/floor/modelLoader.js";
 import { parseModel } from "@/js/floor/modelParser.js";
-import { TextMarker, BoothIDMarker } from "@/js/marker/textmarker.js";
 
 export class Floor {
   // Static class attributes initialized in main.js
@@ -16,9 +16,6 @@ export class Floor {
   
   // Static reference to the currently active floor instance
   static currentFloor = null;
-
-  // Dictionary of all markers across all floors { id: { pos, floorId } }
-  static allMarkers = {};
 
   // Adds floor object to Floor class attribute: dictionary 'floors'
   static registerFloor(floor) {
@@ -36,6 +33,10 @@ export class Floor {
     this.interactiveObjects = [];
     this.textMarkers = [];
     this.boothIDMarkers = [];
+
+    this._isAnimating = false;
+    this._targetIndex = -1;
+    this._materialCache = null;
     
     // Initialize userData so markers can observe state without importing Floor
     if (this.sceneModel) this.sceneModel.userData.currentOpacity = 1.0;
@@ -72,18 +73,35 @@ export class Floor {
 
     const gltf = await loadModel(this.modelPath);
     const parsingId = this.parentFloorId || this.id;
-    const result = parseModel(gltf, this.id, appState.scene, funtasiaData, parsingId);
+    const result = await parseModel(gltf, this.id, appState.scene, funtasiaData, parsingId, Floor.childModels);
     this.attachParsedData(result.model, result.interactiveObjects, result.cameraConfig, result.textMarkers, result.boothIDMarkers);
     
+    this._materialCache = result.materialCache;
     this._loading = false;
     window.dispatchEvent(new CustomEvent("floorReady", { detail: { floorId: this.id } }));
-    console.log(`[Floor] Parsed ${this.id}: ${result.interactiveObjects.length} interactive meshes.`);
+  }
+
+  /**
+   * Marks this floor as animating and caches the target floor index
+   * @param {string} activeFloorId - The ID of the target floor
+   */
+  startYAnimation(activeFloorId) {
+    this._isAnimating = true;
+    this._targetIndex = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(activeFloorId);
+  }
+
+  unload() {
+    if (this._materialCache) {
+      this._materialCache.clear();
+      this._materialCache = null;
+    }
+    this.sceneModel = null;
   }
 
   /**
    * Called to show this floor and apply its specific camera constraints.
    */
-  activate(camera, controls) {
+  async activate(camera, controls) {
     if (!this.isLoaded()) {
       console.warn(`Attempted to activate unloaded floor: ${this.id}`);
       return;
@@ -92,15 +110,15 @@ export class Floor {
     this.sceneModel.visible = true;
     
     // Notify TextMarker system of the active level to sync visibility
+    const { TextMarker, BoothIDMarker } = await import("@/js/marker/textmarker.js");
     TextMarker.setLevel(this.id);
     BoothIDMarker.setLevel(this.id);
 
     // Apply specific camera config
     if (this.cameraConfig) {
-      // console.log(`[Floor] Applying camera config for ${this.id}:`, this.cameraConfig);
 
       const isMainLevelTransition = !this.parentFloorId && Floor.currentFloor && !Floor.currentFloor.parentFloorId;
-      const shouldPreserveRotation = window.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;
+      const shouldPreserveRotation = Floor.appState.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;
 
       if (shouldPreserveRotation) {
         // Calculate current vector from target to camera to preserve orientation and zoom

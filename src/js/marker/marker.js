@@ -1,11 +1,8 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { Text, preloadFont } from "troika-three-text";
+import { CONFIG } from "@/js/base/config.js";
 
-const BASE = ASSETS_BASE_URL;
-const googleMapIconUrl = `${BASE}/icons/google-map-icon.glb`;
-
-export const FONT_URL = "https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/ttf/JetBrainsMono-Regular.ttf";
+export const FONT_URL = CONFIG.MARKERS.URLS.FONT;
 preloadFont({ font: FONT_URL }, () => {});
 
 export class Marker {
@@ -14,7 +11,8 @@ export class Marker {
 
   constructor(parent, position, level) {
     this.appState = Marker.appState;
-    this.parent = parent || Marker.scene || (this.appState ? this.appState.scene : null);
+    // Markers should be children of their floor models to follow animations.
+    this.parent = parent || (this.appState ? this.appState.scene : null);
     
     this.position = position ? position.clone() : new THREE.Vector3();
     this.level = level;
@@ -22,13 +20,18 @@ export class Marker {
     this.group = new THREE.Group();
     
     if (this.parent && this.parent.type !== 'Scene') {
-      // Convert world position to local position. 
-      // To prevent the marker from being "offset" by current floor animations,
-      // we add the parent's current Y displacement back into the result.
-      // This effectively calculates the position relative to the "rest" floor height.
+      // To ensure the marker follows the floor geometry correctly, we must calculate 
+      // the local position relative to the floor's "rest" state (y=0). 
+      // Otherwise, the current animation offset gets baked into the marker's height.
+      const currentParentY = this.parent.position.y;
+      this.parent.position.y = 0;
+      this.parent.updateMatrixWorld(true);
+
       const localPos = this.parent.worldToLocal(this.position.clone());
-      localPos.y += this.parent.position.y; 
       this.group.position.copy(localPos);
+
+      // Restore the animating position so the transition remains smooth
+      this.parent.position.y = currentParentY;
       this.parent.updateMatrixWorld(true);
     } else {
       this.group.position.copy(this.position);
@@ -36,20 +39,24 @@ export class Marker {
 
     this.indicator = null; // To be populated by subclasses
 
-    if (this.parent) {
-      this.parent.add(this.group);
+    // Ensure parent is valid before adding
+    const actualParent = this.parent || Marker.scene || (this.appState ? this.appState.scene : null);
+    if (actualParent) {
+      actualParent.add(this.group);
     }
   }
 
   /**
    * Synchronizes the marker's visibility and opacity with its parent floor.
    * This is modular and can be called by any subclass (TextMarker, Icon, etc.)
+   * @param {boolean} isVisible - Optional local visibility override from subclass
    */
-  updateSyncState() {
-    if (!this.group || !this.parent || this.parent.type === 'Scene') return;
+  updateSyncState(isVisible = true) {
+    // If this.parent is floor.sceneModel, this is correct.
+    if (!this.group || !this.parent || this.parent.type === 'Scene' || !this.parent.userData) return;
 
     const targetOpacity = this.parent.userData.currentOpacity ?? 1.0;
-    this.group.visible = targetOpacity > 0.01;
+    this.group.visible = isVisible && targetOpacity > 0.01;
     
     // Only apply opacity if the group is currently visible (either by its own rules or parent's)
     if (this.group.visible) {
@@ -89,7 +96,7 @@ export class LocationMarker extends Marker {
     
     // Use the existing group created by super()
     this.scene = this.parent;
-    this.markerHeight = 0.8;
+    this.markerHeight = CONFIG.MARKERS.LOCATION.height;
 
     // ----- materials -----
     const activeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true });
@@ -114,27 +121,30 @@ export class LocationMarker extends Marker {
     // ----- 3D Model -----
     // Stored on the instance so animate() can reference it after the async load
     this._markerModel = null;
-    const loader = new GLTFLoader();
-    loader.load(googleMapIconUrl, (gltf) => {
-      this._markerModel = gltf.scene;
 
-      this._markerModel.traverse((child) => {
-        if (child.isMesh) {
-          child.material = activeMaterial;
-          const edges = new THREE.EdgesGeometry(child.geometry, 60);
-          const outline = new THREE.LineSegments(edges, outlineMaterialActive);
-          child.add(outline);
+    import("three/addons/loaders/GLTFLoader.js").then(({ GLTFLoader }) => {
+      const loader = new GLTFLoader();
+      loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
+        this._markerModel = gltf.scene;
+  
+        this._markerModel.traverse((child) => {
+          if (child.isMesh) {
+            child.material = activeMaterial;
+            const edges = new THREE.EdgesGeometry(child.geometry, 60);
+            const outline = new THREE.LineSegments(edges, outlineMaterialActive);
+            child.add(outline);
+          }
+        });
+  
+        const scale = 10;
+        this._markerModel.scale.set(scale, scale, scale);
+        this._markerModel.position.y = this.markerHeight;
+        
+        // Safety check: if the marker was cleared before the model finished loading
+        if (this.group) {
+          this.group.add(this._markerModel);
         }
       });
-
-      const scale = 10;
-      this._markerModel.scale.set(scale, scale, scale);
-      this._markerModel.position.y = this.markerHeight;
-      
-      // Safety check: if the marker was cleared before the model finished loading
-      if (this.group) {
-        this.group.add(this._markerModel);
-      }
     });
 
     // ----- text label group -----
@@ -168,7 +178,7 @@ export class LocationMarker extends Marker {
 
       this._textLabelGroup.add(textBgMesh);
       this._textLabelGroup.add(textMesh);
-      this._textLabelGroup.position.y = this.markerHeight + 0.4;
+      this._textLabelGroup.position.y = this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset;
       this.group.add(this._textLabelGroup);
     }
   }
@@ -185,9 +195,9 @@ export class LocationMarker extends Marker {
     // Modular sync: No Floor import needed!
     this.updateSyncState();
 
-    const t = time * 0.003;
+    const t = time * CONFIG.MARKERS.PHYSICS.bobSpeed;
     // Calculate shared bobbing offset for cohesive animation
-    const bobOffset = Math.sin(t * 0.5) * 0.05;
+    const bobOffset = Math.sin(t * CONFIG.MARKERS.PHYSICS.bobFreq) * CONFIG.MARKERS.PHYSICS.bobAmp;
 
     // Floating bob + horizontal look-at on the GLB model
     if (this._markerModel) {
@@ -206,7 +216,7 @@ export class LocationMarker extends Marker {
     // Billboarding — keep the text label facing the camera + apply bobbing
     if (this._textLabelGroup && camera) {
       this._textLabelGroup.quaternion.copy(camera.quaternion);
-      this._textLabelGroup.position.y = (this.markerHeight + 0.4) + bobOffset;
+      this._textLabelGroup.position.y = (this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset) + bobOffset;
     }
   }
 }
