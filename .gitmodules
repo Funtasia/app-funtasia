@@ -1,0 +1,3 @@
+[submodule "assets-funtasia"]
+	path = assets-funtasia
+	url = https://github.com/Funtasia/assets-funtasia.git
