@@ -90,7 +90,7 @@ This project is tested on `bash` on Linux and `Git Bash` on Windows. Other envir
 ## Cloning the repo
 ```bash
 # --recursive to include funtasia_assets submodule
-git clone --recursive https://github.com/ffgtfgh53/funtasia_app.git
+git clone --recursive https://github.com/Funtasia/app-funtasia.git
 ```
 
 ## Local Development

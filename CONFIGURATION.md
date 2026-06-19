@@ -36,7 +36,7 @@ As said in `README.md`, this project uses the `Catppuccin` color scheme mainly b
 Consequently, this means that all color schemes need to be defined in terms of Catppuccin variables, to allow for usage between both light (latte) and dark (mocha) color schemes. This is why most of the theming is done with reference to Catppuccin CSS variables instead of fixed colors.
 
 # Asset Hosting
-This project pulls its data (3d models, icons, json data) from the [`funtasia_assets`](https://github.com/garethlearnscoding/funtasia_assets/tree/main) repository/submodule. Therefore, to update the data, you will need to fork the `funtasia_assets` repo and update the data accordingly. To use this data, update `ASSETS_BASE_URL` in `vite.config.js` to the jsDelivr link [pointing to your repo](https://www.jsdelivr.com/?docs=gh). For a dev environment, you can also use a link that points to your local copy of the `funtasia_assets` repo/submodule.
+This project pulls its data (3d models, icons, json data) from the [`funtasia_assets`](https://github.com/Funtasia/assets-funtasia/tree/main) repository/submodule. Therefore, to update the data, you will need to fork the `funtasia_assets` repo and update the data accordingly. To use this data, update `ASSETS_BASE_URL` in `vite.config.js` to the jsDelivr link [pointing to your repo](https://www.jsdelivr.com/?docs=gh). For a dev environment, you can also use a link that points to your local copy of the `funtasia_assets` repo/submodule.
 
 # Booth data pipeline
 TL;DR: Google sheets -> `.csv` -> `.json` -> promoted to `funtasia_assets` repo
