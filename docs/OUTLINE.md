@@ -53,7 +53,7 @@ These must be set in Blender's **Object Properties > Custom Properties** panel b
 
 # 🎨 3D Pipeline 
 
-**TODO!** I myself do not have knowledge of the 3D modelling process, that is for another time.
+Check out [pipeline-funtasia](https://github.com/Funtasia/pipeline-funtasia) (currently a WIP)
 
 # 🏗 Building and Deployment
 
