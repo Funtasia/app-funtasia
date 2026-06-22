@@ -65,9 +65,6 @@ export default defineConfig( ({ mode }) => {
                 return 'vendor-three-other';
               } 
               if (id.includes('html5-qrcode')) {
-                if (id.includes('zxing-js')) {
-                  return 'vendor-html5-qrcode-xzing-js';
-                }
                 return 'vendor-html5-qrcode';
               }
               return 'vendor-other';
