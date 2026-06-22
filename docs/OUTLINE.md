@@ -117,7 +117,6 @@ The project is designed to be hosted on static hosting services like **GitHub Pa
 -   [**Icon font**](#icon-font-material-design-icons)
 -   [Building and Deployment](#building-and-deployment-notes)
 -   [404.html](#404html)
--   [.nojekyll](#nojekyll)
 
 ## Welcome screen and info menu
 -   The welcome screen will appear only on the first visit. This is detected through the lack of the presence of a key in local storage. The info menu/help menu is easily editable through just editing `index.html`.
@@ -163,10 +162,6 @@ There are also many dynamic imports and manual chunk splitting in order to split
 ## 404.html
 
 404.html is a [special file](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-custom-404-page-for-your-github-pages-site) for GitHub Pages which is shown in place of the generic 404 page. One thing to note is the "Back to Map" button, where you MUST properly specify where to link to (is your root `/` or `/funtasia_app/`?).
-
-## .nojekyll
-
-Just a empty file that tells Github that we are not using Jekyll for Pages, and the static files should be served as-is. It is technically not needed if you are using Github Actions. [[reference]](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-custom-404-page-for-your-github-pages-site)
 
 # See also
 -   [Configuration](./CONFIGURATION.md)
