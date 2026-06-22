@@ -83,4 +83,5 @@ TL;DR: Data source -> Manual input
 
 # See also
 
-- [**README.md**](./README.md)
+- [Outline](./OUTLINE.md)
+- [Development tips](./DEVELOPMENT.md)

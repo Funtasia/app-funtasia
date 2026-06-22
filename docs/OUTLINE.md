@@ -165,3 +165,4 @@ There are also many dynamic imports and manual chunk splitting in order to split
 
 # See also
 -   [Configuration](./CONFIGURATION.md)
+-   [Development tips](./DEVELOPMENT.md)
