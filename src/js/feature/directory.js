@@ -123,7 +123,7 @@ class Directory {
     }
 
     _determineTargetFloor(level, boothName, boothNum) {
-        const children = appState.floors[level]?.constructor.childModels[level] || {};
+        const children = appState.floor.floors[level]?.constructor.childModels[level] || {};
         if (children[boothName]) return children[boothName];
         for (const [nodeName, childId] of Object.entries(children)) {
             if (boothNum.toLowerCase().startsWith(childId.toLowerCase()) ||
@@ -166,7 +166,7 @@ class Directory {
             appState.activeDirectoryMarker = marker;
             appState.activeMarkers.push(marker);
 
-            const targetObject = appState.floors[targetFloorId]?.interactiveObjects
+            const targetObject = appState.floor.floors[targetFloorId]?.interactiveObjects
                 ?.find(obj => obj.userData.boothId === boothNum);
             targetObject
                 ? appState.navigation.focusOnObject(targetObject)

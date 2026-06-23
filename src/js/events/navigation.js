@@ -76,7 +76,7 @@ export class Navigation {
   static _applyFloorState(floor, visible, opacity, targetY, activeFloorId) {
       if (!floor.sceneModel) return;
       floor.sceneModel.visible = visible;
-      floor.targetY        = targetY;
+      floor.targetY = targetY;
       floor.currentOpacity = opacity;
       setFloorOpacity(floor.sceneModel, opacity);
       if (Math.abs(targetY - floor.sceneModel.position.y) > 0.01) floor.startYAnimation?.(activeFloorId);
@@ -84,13 +84,13 @@ export class Navigation {
 
   static applyGhostLayers(activeFloorId) {
       const { appState }  = Navigation;
-      const activeFloor   = appState.floors[activeFloorId];
+      const activeFloor   = appState.floor.floors[activeFloorId];
       const refFloorId    = activeFloor?.parentFloorId ?? activeFloorId;
       const isViewingChild = !!activeFloor?.parentFloorId;
       const targetIdx     = CONFIG.NAVIGATION.FLOOR_ORDER.indexOf(refFloorId);
 
       CONFIG.NAVIGATION.FLOOR_ORDER.forEach((id, index) => {
-          const floor = appState.floors[id];
+          const floor = appState.floor.floors[id];
           if (!floor) return;
 
           if (id === refFloorId) {
@@ -118,7 +118,7 @@ export class Navigation {
       });
 
       // Ensure all other child models are hidden
-      Object.entries(appState.floors).forEach(([id, f]) => {
+      Object.entries(appState.floor.floors).forEach(([id, f]) => {
           if (!f.parentFloorId) return;
           if (id === activeFloorId) {
               Navigation._applyFloorState(f, true, 1.0, 0, activeFloorId);
@@ -165,7 +165,7 @@ export class Navigation {
   static async _loadFloor(targetFloor, floorId) {
       if (targetFloor.isLoaded()) return;
       const { appState } = Navigation;
-      const isPreloaded  = appState.loadedAssets.has(targetFloor.modelPath);
+      const isPreloaded  = appState.assets.loadedAssets.has(targetFloor.modelPath);
       if (!isPreloaded) appState.ui.showToast(`Loading ${floorId.toUpperCase()}…`, CONFIG.UI.LOAD_TOAST_DURATION);
 
       try {
@@ -185,8 +185,8 @@ export class Navigation {
   // ── Floor Switch ──────────────────────────────────────────────────────────
 
   static async switchFloor(floorId) {
-      const { appState }  = Navigation;
-      const targetFloor   = appState.floors[floorId];
+      const { appState } = Navigation;
+      const targetFloor = appState.floor.floors[floorId];
       if (!targetFloor)   { console.warn(`Floor ${floorId} not found`); return; }
 
       appState.isChildFloor = !!targetFloor.parentFloorId;
@@ -205,7 +205,7 @@ export class Navigation {
           }
 
           if (appState.currentFloor && !appState.currentFloor.parentFloorId) {
-              appState.previousMainFloorId    = appState.currentFloor.id;
+              appState.previousMainFloorId = appState.currentFloor.id;
               appState.previousSelectedObject = savedSelection;
           }
 
@@ -214,7 +214,7 @@ export class Navigation {
           targetFloor.activate(appState.camera, appState.controls);
 
           appState.interactiveObjects = targetFloor.interactiveObjects;
-          appState.currentFloor       = targetFloor;
+          appState.currentFloor = targetFloor;
           Icon.setLevel(floorId);
           TextMarker.setLevel(floorId);
           BoothIDMarker.setLevel(floorId);
@@ -236,7 +236,7 @@ export class Navigation {
       }
 
       const funtasiaData  = appState.directory.getDirectoryData();
-      const targetFloor   = appState.floors[floorId];
+      const targetFloor   = appState.floor.floors[floorId];
       let targetLocation  = null;
       let targetFloorId   = null;
 

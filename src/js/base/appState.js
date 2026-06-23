@@ -1,33 +1,43 @@
-// src/js/base/appState.js
-// Central application state object.
+/**
+ * Facade class for distributed application state management.
+ */
 import * as THREE from "three";
-import { CONFIG } from "@/js/base/config.js";
+import { CONFIG } from "@/js/base/config";
+import { SettingsStore } from "@/js/base/settingsStore";
+import { AssetManager } from "@/js/base/assetManager";
+import { CameraState } from "@/js/base/cameraState";
+import { FloorState } from "@/js/floor/floorState";
+import { MarkerState } from "@/js/marker/markerState";
 
-class AppState {
+export class AppState {
   constructor() {
-    // Core Three.js objects
+    // Core Three.js objects (scene graph, renderer, controls, etc.)
     this.scene = null;
-    this.camera = null;
     this.renderer = null;
     this.controls = null;
     this.raycaster = null;
     this.mouse = null;
 
-    // Feature Managers
+    // Feature managers (directory, events, navigation, UI bridge)
     this.directory = null;
     this.events = null;
     this.navigation = null;
     this.ui = {};
-    this.floors = {};
 
-    // Application State
-    this._currentFloor = null;
+    // Delegated state containers
+    this.settings = new SettingsStore();
+    this.assets = new AssetManager();
+    this.camera = new CameraState();
+    this.floor = new FloorState();
+    this.marker = new MarkerState();
+
+    // Miscellaneous runtime state kept here for now
     this.interactiveObjects = [];
     this.selected = null;
-    this._rotationLocked = localStorage.getItem('funtasia-rotation-lock') !== 'false';
-    this._autoFocusEnabled = localStorage.getItem('funtasia-autofocus') !== 'false';
-    this._ghostLayersEnabled = localStorage.getItem('funtasia-ghost-layers') !== 'false';
-    this.isChildFloor = false;
+    this.lastScannedInfo = null;
+    this.pointerStartTime = 0;
+    this.isBottomSheetOpen = false;
+    this.rawData = null;
 
     this.cameraAnim = {
       active: false,
@@ -38,75 +48,63 @@ class AppState {
       viewDistanceFactor: CONFIG.CAMERA.ANIMATION.viewDistanceFactor,
       viewHeightFactor: CONFIG.CAMERA.ANIMATION.viewHeightFactor,
     };
-
-    this.activeMarkers = [];
-    this.activeDirectoryMarker = null;
-    this.activeDirectoryBoothId = null;
-    this.activeDirectoryLevel = null;
-    this.activeDirectoryActualFloor = null;
-    this.lastScannedInfo = null;
-    this.pointerStartTime = 0;
-    this.isBottomSheetOpen = false;
-
-    // Initialize assets from localStorage
-    try {
-      const preloaded = JSON.parse(localStorage.getItem('funtasia_preloaded_assets') || '[]');
-      this.loadedAssets = new Set(preloaded);
-    } catch (e) {
-      this.loadedAssets = new Set();
-    }
-
-    this.rawData = null;
   }
 
-  get rotationLocked() { return this._rotationLocked; }
+  // ---------------------------------------------------------------------
+  // Settings delegation (rotation lock, autofocus, ghost‑layers)
+  // ---------------------------------------------------------------------
+  get rotationLocked() { return this.settings.rotationLocked; }
   set rotationLocked(val) {
-    this._rotationLocked = val;
-    localStorage.setItem('funtasia-rotation-lock', val);
+    this.settings.rotationLocked = val;
+    // Keep existing side‑effects on controls
     if (this.controls) {
       this.controls.enableRotate = !val;
       this.controls.touches.TWO = val ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
     }
   }
 
-  get autoFocusEnabled() { return this._autoFocusEnabled; }
-  set autoFocusEnabled(val) {
-    this._autoFocusEnabled = val;
-    localStorage.setItem('funtasia-autofocus', val);
-  }
+  get autoFocusEnabled() { return this.settings.autoFocusEnabled; }
+  set autoFocusEnabled(val) { this.settings.autoFocusEnabled = val; }
 
-  get ghostLayersEnabled() { return this._ghostLayersEnabled; }
+  get ghostLayersEnabled() { return this.settings.ghostLayersEnabled; }
   set ghostLayersEnabled(val) {
-    this._ghostLayersEnabled = val;
-    localStorage.setItem('funtasia-ghost-layers', val);
-    // Trigger UI visibility refresh if the bridge is set
+    this.settings.ghostLayersEnabled = val;
     if (this.ui.updateFloorVisibilities) this.ui.updateFloorVisibilities();
   }
 
-  get currentFloor() {
-    return this._currentFloor;
-  }
-
+  // ---------------------------------------------------------------------
+  // Floor delegation
+  // ---------------------------------------------------------------------
+  get currentFloor() { return this.floor.currentFloor; }
   set currentFloor(floor) {
-    this._currentFloor = floor;
-    
-    // Automatically trigger UI updates if the UI bridge is set
+    this.floor.currentFloor = floor;
     if (this.ui.updateFloor && floor) {
       this.ui.updateFloor(floor.parentFloorId || floor.id);
     }
   }
 
-  /**
-   * Helper to track assets and potentially persist to localStorage
-   */
-  recordAssetLoaded(path) {
-    const isNew = !this.loadedAssets.has(path);
-    this.loadedAssets.add(path);
-    if (isNew) {
-    const loadedArray = Array.from(this.loadedAssets);
-    localStorage.setItem('funtasia_preloaded_assets', JSON.stringify(loadedArray));
-    }
-  }
+  // ---------------------------------------------------------------------
+  // Marker delegation
+  // ---------------------------------------------------------------------
+  get activeMarkers() { return this.marker.activeMarkers; }
+  set activeMarkers(v) { this.marker.activeMarkers = v; }
+
+  get activeDirectoryMarker() { return this.marker.activeDirectoryMarker; }
+  set activeDirectoryMarker(v) { this.marker.activeDirectoryMarker = v; }
+
+  get activeDirectoryBoothId() { return this.marker.activeDirectoryBoothId; }
+  set activeDirectoryBoothId(v) { this.marker.activeDirectoryBoothId = v; }
+
+  get activeDirectoryLevel() { return this.marker.activeDirectoryLevel; }
+  set activeDirectoryLevel(v) { this.marker.activeDirectoryLevel = v; }
+
+  get activeDirectoryActualFloor() { return this.marker.activeDirectoryActualFloor; }
+  set activeDirectoryActualFloor(v) { this.marker.activeDirectoryActualFloor = v; }
+
+  // ---------------------------------------------------------------------
+  // Asset delegation
+  // ---------------------------------------------------------------------
+  recordAssetLoaded(path) { return this.assets.recordAssetLoaded(path); }
 }
 
 export const appState = new AppState();

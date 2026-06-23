@@ -25,7 +25,7 @@ const mouse = new THREE.Vector2();
 appState.raycaster = raycaster;
 appState.mouse = mouse;
 // Bind UI functions and Floor registry to appState to reduce imports in other modules
-appState.floors = Floor.floors;
+appState.floor.floors = Floor.floors;
 appState.ui = {
   hideSheet: UI.hideBottomSheet,
   showSheet: UI.showBottomSheet,
