@@ -1,0 +1,44 @@
+@layer info {
+    /* ── Info Modal — Icon Grid ──────────────────── */
+    .info-icon-grid {
+        @apply px-2 pb-2 gap-3 grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .info-icon-cell {
+        @apply flex flex-col items-center gap-2 p-3 rounded-2xl bg-ctp-mantle text-center;
+    }
+    .info-icon-bubble {
+        @apply w-12 h-12 flex items-center justify-center rounded-xl shrink-0;
+    }
+    .info-icon-img {
+        @apply w-[36px] h-[36px] object-contain;
+    }
+    .info-icon-label {
+        @apply text-ctp-subtext1 font-medium leading-tight;
+        font-size: 11px;
+    }
+
+    /* ── Info Modal — UI Button List ─────────────── */
+    .info-btn-list {
+        @apply flex flex-col gap-3 px-2 pb-2;
+    }
+    .info-btn-row {
+        @apply items-center p-3 rounded-2xl bg-ctp-mantle grid gap-3.5;
+        grid-template-columns: 52px 1fr;
+    }
+    .info-btn-preview {
+        @apply w-11 h-11 flex items-center justify-center rounded-xl bg-ctp-surface0 text-ctp-text shrink-0;
+        border: 1px solid color-mix(in srgb, var(--color-outline-variant) 18%, transparent);
+    }
+    .info-btn-desc {
+        @apply flex flex-col gap-0.5;
+    }
+    .info-btn-title {
+        @apply font-headline font-bold text-ctp-text;
+        font-size: 13px;
+    }
+    .info-btn-caption {
+        @apply text-ctp-subtext1 leading-relaxed;
+        font-size: 11px;
+    }
+}
