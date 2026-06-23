@@ -1,0 +1,47 @@
+@layer qr {
+    #qr-scanner-view {
+        @apply w-full flex flex-col items-center;
+    }
+    
+    #qr-scanner-view p {
+        @apply uppercase text-ctp-text mb-3;
+        font-size: 11px; 
+        font-weight: 700; 
+        letter-spacing: 0.1em; 
+    }
+    
+    .qr-scanner-container {
+        @apply w-[220px] h-[220px] rounded-2xl flex items-center justify-center bg-ctp-surface0 mb-6 overflow-hidden relative;
+        border: 2px dashed color-mix(in srgb, var(--color-ctp-mauve) 50%, transparent); 
+    }
+    
+    .qr-scanner-container video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 16px !important;
+    }
+    
+    .qr-flash-btn {
+        @apply w-full max-w-[300px] p-3.5 rounded-[12px] bg-ctp-mauve-950 text-ctp-base flex justify-center items-center gap-2 cursor-pointer;
+        font-weight: 700; 
+        font-size: 14px; 
+        transition: background 0.2s;
+    }
+    
+    .qr-code-input {
+        @apply w-[72px] h-[56px] text-center rounded-[10px] bg-ctp-surface0 text-ctp-mauve;
+        font-size: 24px; 
+        font-weight: 700; 
+        border: 2px solid var(--color-ctp-mauve-950); 
+        outline: none;
+    }
+    
+    #qr-go-btn {
+        @apply w-full max-w-[300px] p-3.5 rounded-[12px] bg-ctp-surface0 text-ctp-mauve flex justify-center items-center gap-2 cursor-pointer;
+        font-weight: 700; 
+        font-size: 14px; 
+        border: 1px solid var(--color-ctp-mauve-950); 
+        transition: background 0.2s;
+    }
+}
