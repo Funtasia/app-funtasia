@@ -1,10 +1,12 @@
+import { CONFIG } from "@/js/base/config";
+
 /**
  * Manages application settings persisted to localStorage.
  */
 export class SettingsStore {
   constructor() {
     /** @type {boolean} */ this._rotationLocked     = this._read('funtasia-rotation-lock', true);
-    /** @type {boolean} */ this._autoFocusEnabled   = this._read('funtasia-autofocus',     true);
+    /** @type {boolean} */ this._autoFocusEnabled   = this._read('funtasia-autofocus',     CONFIG.NOANIMATION ? false : true);
     /** @type {boolean} */ this._ghostLayersEnabled = this._read('funtasia-ghost-layers',  true);
 
     /** @type {string}  */ this._theme              = this._readTheme(); // "mocha" | "latte"

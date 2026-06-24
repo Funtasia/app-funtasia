@@ -59,7 +59,7 @@ export function startAnimationLoop(appState) {
       
       const dist = floor.targetY - floor.sceneModel.position.y;
       if (Math.abs(dist) > 0.01) {
-        floor.sceneModel.position.y += dist * 0.1;
+        floor.sceneModel.position.y += dist * CONFIG.CAMERA.ANIMATION.floorLerpFactor;
       } else {
         floor._isAnimating = false;
         // Hide floors that are ABOVE the current active floor once they finish flying out

@@ -4,6 +4,9 @@
  * Consolidates all static constants, theme schemas, and model-specific defaults.
  */
 
+// For accessibility purposes
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Define functional roles that don't necessarily have a 1:1 color mapping in MISC_SCHEMA
 // Basically roles that have a special behavior
 // Refer to README.MD under Special Role Behaviors
@@ -11,6 +14,7 @@ const FUNCTIONAL_ROLES = ["OBJECT", "MARKER", "GREY"];
 
 // Note that idk what some constants do
 export const CONFIG = {
+  NOANIMATION: prefersReducedMotion,
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LOCATIONS - Locations of resources
@@ -98,7 +102,8 @@ export const CONFIG = {
     ANIMATION: {
       viewDistanceFactor: 1.2,
       viewHeightFactor: 0.8,
-      lerpFactor: 0.05
+      lerpFactor: prefersReducedMotion? 1 : 0.05,
+      floorLerpFactor: prefersReducedMotion ? 1 : 0.1
     },
     PARSER_DEFAULTS: {
       radiusFixed: 20,
@@ -115,7 +120,7 @@ export const CONFIG = {
     PHYSICS: {
       bobSpeed: 0.003,
       bobFreq: 0.5,
-      bobAmp: 0.05
+      bobAmp: prefersReducedMotion? 0 : 0.05
     },
     LOCATION: {
       height: 0.8,

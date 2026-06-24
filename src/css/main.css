@@ -13,6 +13,14 @@
   scrollbar-color: var(--color-ctp-subtext1) var(--color-ctp-surface0);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  /* For accessibility */
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
 html,
 body {
   width: 100%;
