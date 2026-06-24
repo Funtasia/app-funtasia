@@ -118,7 +118,7 @@ export class Floor {
     if (this.cameraConfig) {
 
       const isMainLevelTransition = !this.parentFloorId && Floor.currentFloor && !Floor.currentFloor.parentFloorId;
-      const shouldPreserveRotation = Floor.appState.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.rotationLocked;
+      const shouldPreserveRotation = Floor.appState.settings.ghostLayersEnabled && isMainLevelTransition && !Floor.appState.settings.rotationLocked;
 
       if (shouldPreserveRotation) {
         // Calculate current vector from target to camera to preserve orientation and zoom
@@ -139,8 +139,8 @@ export class Floor {
       controls.update();
     }
     
-    controls.enableRotate = !Floor.appState.rotationLocked;
-    controls.touches.TWO = Floor.appState.rotationLocked ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
+    controls.enableRotate = !Floor.appState.settings.rotationLocked;
+    controls.touches.TWO = Floor.appState.settings.rotationLocked ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
   }
 
   /**

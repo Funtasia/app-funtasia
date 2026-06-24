@@ -42,28 +42,6 @@ export class AppState {
   }
 
   // ---------------------------------------------------------------------
-  // Settings delegation (rotation lock, autofocus, ghost‑layers)
-  // ---------------------------------------------------------------------
-  get rotationLocked() { return this.settings.rotationLocked; }
-  set rotationLocked(val) {
-    this.settings.rotationLocked = val;
-    // Keep existing side‑effects on controls
-    if (this.controls) {
-      this.controls.enableRotate = !val;
-      this.controls.touches.TWO = val ? THREE.TOUCH.DOLLY_PAN : THREE.TOUCH.DOLLY_ROTATE;
-    }
-  }
-
-  get autoFocusEnabled() { return this.settings.autoFocusEnabled; }
-  set autoFocusEnabled(val) { this.settings.autoFocusEnabled = val; }
-
-  get ghostLayersEnabled() { return this.settings.ghostLayersEnabled; }
-  set ghostLayersEnabled(val) {
-    this.settings.ghostLayersEnabled = val;
-    if (this.ui.updateFloorVisibilities) this.ui.updateFloorVisibilities();
-  }
-
-  // ---------------------------------------------------------------------
   // Floor delegation
   // ---------------------------------------------------------------------
   get currentFloor() { return this.floor.currentFloor; }

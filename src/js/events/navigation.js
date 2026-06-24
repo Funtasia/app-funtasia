@@ -97,7 +97,7 @@ export class Navigation {
               floor.sceneModel && (floor.sceneModel.renderOrder = 10);
               Navigation._applyFloorState(floor, !isViewingChild, 1.0, 0, activeFloorId);
 
-          } else if (!isViewingChild && index < targetIdx && appState.ghostLayersEnabled) {
+          } else if (!isViewingChild && index < targetIdx && appState.settings.ghostLayersEnabled) {
               if (!floor.isLoaded()) {
                   if (!floor._loading) {
                       floor.load(appState, appState.rawData).then(() => {

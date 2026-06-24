@@ -4,8 +4,7 @@ import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
 import { setupEventListeners } from "@/js/events/event.js";
 import { Floor } from "@/js/floor/floor.js";
-import { applyThemeToScene } from "@/js/floor/modelParser.js";
-import { startAnimationLoop, animateCameraTo } from "@/js/ui_ux/animate.js";
+import { startAnimationLoop } from "@/js/ui_ux/animate.js";
 import * as UI from "@/js/ui_ux/ui.js";
 
 // Instantiate Floor objects — they self-register into Floor.floors
@@ -67,7 +66,7 @@ async function initApp() {
   // Dynamically import heavy feature modules to improve TBT (Total Blocking Time)
   const [
     { Navigation },
-    { SettingsController },
+    { setupSettings },
     { directory },
     { events },
     { Marker },
@@ -114,99 +113,7 @@ async function initApp() {
   appState.events.init();
 
   // Initialize modular Settings menu
-  SettingsController.init('settings-content-area');
-  const controlsSection = SettingsController.addSection('Controls');
-  const visualsSection = SettingsController.addSection('Visual Preferences');
-  const mapElements = SettingsController.addSection('Map elements');
-  
-  Icon.state(localStorage.getItem('funtasia-show-icons') !== 'false'); // default true
-  TextMarker.state(localStorage.getItem('funtasia-show-text-markers') !== 'false'); // default true
-  BoothIDMarker.state(localStorage.getItem('funtasia-show-booth-markers') !== 'false'); // default true
-
-  if (visualsSection) {
-    SettingsController.addToggle(
-      mapElements,
-      'Show POI Icons',
-      'Toggle icons on the map',
-      (state) => {
-        localStorage.setItem('funtasia-show-icons', state);
-        Icon.state(state); 
-      },
-      Icon.visibleState
-    );
-    SettingsController.addToggle(
-      mapElements,
-      'Location Labels',
-      'Toggle text labels for major areas (Hall, Canteen, etc.)',
-      (state) => {
-        localStorage.setItem('funtasia-show-text-markers', state);
-        TextMarker.state(state);
-      },
-      TextMarker.visibleState
-    );
-    SettingsController.addToggle(
-      mapElements,
-      'Booth Labels',
-      'Toggle text labels for individual booths',
-      (state) => {
-        localStorage.setItem('funtasia-show-booth-markers', state);
-        BoothIDMarker.state(state);
-      },
-      BoothIDMarker.visibleState
-    );
-    SettingsController.addToggle(
-      visualsSection,
-      'Ghost Layers',
-      'View lower levels as translucent layers',
-      (state) => appState.ghostLayersEnabled = state,
-      appState.ghostLayersEnabled
-    );
-    SettingsController.addToggle(
-      visualsSection,
-      'Dark Mode',
-      'Toggle dark mode',
-      (isDark) => {
-          const root = document.documentElement;
-          if (isDark) {
-            root.classList.add('mocha');
-            root.classList.remove('latte');
-            localStorage.setItem('funtasia-theme', 'mocha');
-          } else {
-            root.classList.add('latte');
-            root.classList.remove('mocha');
-            localStorage.setItem('funtasia-theme', 'latte');
-          };
-          applyThemeToScene(appState); // update scene
-        },
-        document.documentElement.classList.contains('mocha') // Check if current mode is mocha
-    );
-  }
-  if (controlsSection) {
-    SettingsController.addToggle(
-      controlsSection,
-      'Rotation Lock',
-      'Lock the rotation of the 3D model',
-      (isLocked) => {
-        appState.rotationLocked = isLocked;
-        
-        // Lerp camera to front of the model when locked
-        if (isLocked && appState.currentFloor && appState.currentFloor.cameraConfig) {
-          const config = appState.currentFloor.cameraConfig;
-          // Reset to canonical front view instead of snapping from current angle
-          animateCameraTo(appState, config.initialPosition, config.target, true);
-        }
-      },
-      appState.rotationLocked
-    );
-
-    SettingsController.addToggle(
-      controlsSection,
-      'Camera Auto-Focus',
-      'Smoothly animate the camera when selecting a location',
-      (enabled) => appState.autoFocusEnabled = enabled,
-      appState.autoFocusEnabled
-    );
-  }
+  await setupSettings();
 
   const handleURLQR = () => {
     Navigation.handleURLQR();

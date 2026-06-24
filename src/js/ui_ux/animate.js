@@ -27,7 +27,7 @@ export function startAnimationLoop(appState) {
     */
     if (appState.cameraAnim && appState.cameraAnim.active) {
       // If auto-focus is disabled and this wasn't triggered by a system action (like Rotation Lock), cancel it
-      if (appState.autoFocusEnabled === false && !appState.cameraAnim.isSystemAction) {
+      if (appState.settings.autoFocusEnabled === false && !appState.cameraAnim.isSystemAction) {
         appState.cameraAnim.active = false;
         return;
       }
