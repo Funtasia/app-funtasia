@@ -27,7 +27,7 @@ export class AppState {
     // Delegated state containers
     this.settings = new SettingsStore();
     this.assets = new AssetManager();
-    this.camera = new CameraState();
+    this.cameraAnim = new CameraState();
     this.floor = new FloorState();
     this.marker = new MarkerState();
 
@@ -39,15 +39,6 @@ export class AppState {
     this.isBottomSheetOpen = false;
     this.rawData = null;
 
-    this.cameraAnim = {
-      active: false,
-      cameraTarget: new THREE.Vector3(),
-      controlsTarget: new THREE.Vector3(),
-      lerpFactor: CONFIG.CAMERA.ANIMATION.lerpFactor,
-      isSystemAction: false,
-      viewDistanceFactor: CONFIG.CAMERA.ANIMATION.viewDistanceFactor,
-      viewHeightFactor: CONFIG.CAMERA.ANIMATION.viewHeightFactor,
-    };
   }
 
   // ---------------------------------------------------------------------
