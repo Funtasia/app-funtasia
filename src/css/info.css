@@ -2,7 +2,7 @@
     /* ── Info Modal — Icon Grid ──────────────────── */
     .info-icon-grid {
         @apply px-2 pb-2 gap-3 grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     }
     .info-icon-cell {
         @apply flex flex-col items-center gap-2 p-3 rounded-2xl bg-ctp-mantle text-center;
