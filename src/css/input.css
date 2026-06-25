@@ -47,3 +47,9 @@
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  @theme {
+    --animate-spin: none;
+  }
+}
