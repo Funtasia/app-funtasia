@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
@@ -84,6 +85,15 @@ async function initApp() {
   appState.ManagedMarker = ManagedMarker;
 
   Marker.appState = appState;
+
+  const css2DRenderer = new CSS2DRenderer();
+  css2DRenderer.setSize(window.innerWidth, window.innerHeight);
+  css2DRenderer.domElement.style.position = 'absolute';
+  css2DRenderer.domElement.style.top = '0px';
+  css2DRenderer.domElement.style.left = '0px';
+  css2DRenderer.domElement.style.pointerEvents = 'none'; // allow click-through to WebGL
+  document.body.appendChild(css2DRenderer.domElement);
+  appState.css2DRenderer = css2DRenderer;
 
   // Initialize systems that depend on the dynamic modules
   appState.navigation.init(appState);

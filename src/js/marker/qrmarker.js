@@ -59,23 +59,21 @@ export class QRMarker extends LocationMarker {
       }
     });
 
-    // Remove the text label once greyed out
-    if (this._textLabelGroup) {
-      this.group.remove(this._textLabelGroup);
-      this._textLabelGroup = null;
+    // Hide the CSS2D label instead of removing it
+    if (this._label) {
+      this._label.element.style.display = 'none';
     }
 
     this.isGrey = true;
   }
 
   clear() {
-    if (this.group) {
-      this.scene.remove(this.group);
-      disposeThreeObject(this.group);
-      this.group = null;
+    if (this._label) {
+      this.group.remove(this._label);
+      this._label.element.remove();
+      this._label = null;
     }
-
-    if (this.greyMaterial) this.greyMaterial.dispose();
-    if (this.outlineMaterialGrey) this.outlineMaterialGrey.dispose();
+    // ... rest of clear (remove group, dispose materials) ...
+    super.clear();
   }
 }

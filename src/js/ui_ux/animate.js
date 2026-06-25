@@ -97,6 +97,7 @@ export function startAnimationLoop(appState) {
     }
 
     appState.renderer.render(appState.scene, appState.camera);
+    appState.css2DRenderer.render(appState.scene, appState.camera)
   }
 
   animate();
