@@ -812,6 +812,32 @@
       if (continueBtn) {
         continueBtn.addEventListener('click', handleManualQRInput);
       }
+
+      // Adding translate=no for all icons
+      document.querySelectorAll('.material-symbols-outlined').forEach(element => {
+        element.setAttribute('translate', 'no');
+      });
+
+      const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) { // Element node
+              if (node.classList && node.classList.contains('material-symbols-outlined')) {
+                node.setAttribute('translate', 'no');
+              }
+              // Also check children
+              node.querySelectorAll?.('.material-symbols-outlined').forEach(el => {
+                el.setAttribute('translate', 'no');
+              });
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
     </script>
     <script type="module" src="/src/js/base/main.js"></script>
   </body>
