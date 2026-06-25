@@ -217,7 +217,7 @@ class Directory {
                 </div>
                 <p class="modal-item-subtitle mt-0.5 opacity-80 line-clamp-2">${boothDesc}</p>
             </div>
-            <span class="modal-item-chevron">chevron_right</span>`;
+            <span class="modal-item-chevron material-symbols-outlined text-ctp-subtext1 text-[18px]">chevron_right</span>`;
         return el;
     }
 
@@ -295,7 +295,7 @@ class Directory {
                     const pill = document.createElement("span");
                     pill.className = "tag-pill";
                     pill.dataset.value = tag;
-                    pill.innerHTML = `${tag}<span class="remove-btn material-symbols-outlined" onclick="event.stopPropagation();window.toggleTagSelection('${tag.replace(/'/g, "\\'")}');">close</span>`;
+                    pill.innerHTML = `${tag}<span class="remove-btn material-symbols-outlined" style="font-size: 14px;" onclick="event.stopPropagation();window.toggleTagSelection('${tag.replace(/'/g, "\\'")}');">close</span>`;
                     tagContainer.appendChild(pill);
                 });
             }

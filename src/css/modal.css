@@ -62,12 +62,6 @@
     .modal-search-wrapper {
         @apply relative flex items-center rounded-2xl;
     }
-    .modal-search-icon-wrapper {
-        @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
-    }
-    .modal-search-icon {
-        @apply material-symbols-outlined text-ctp-subtext1 text-[20px];
-    }
     /* Input field per §5 — surface-container-highest bg, no border, primary bottom accent on focus */
     .modal-search-input {
         @apply block w-full pl-10 pr-3 py-3.5 border-none text-sm font-medium text-ctp-text outline-none bg-ctp-mantle;
@@ -103,9 +97,6 @@
     }
     .modal-item-subtitle {
         @apply text-ctp-subtext1 text-xs leading-relaxed;
-    }
-    .modal-item-chevron {
-        @apply material-symbols-outlined text-ctp-subtext1 text-[18px];
     }
     .modal-footer-fade {
         @apply absolute bottom-0 left-0 right-0 h-12 pointer-events-none;

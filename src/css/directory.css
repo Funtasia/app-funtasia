@@ -103,7 +103,7 @@
         border: 1px solid color-mix(in srgb, var(--pill-color, var(--color-ctp-mauve)) 30%, transparent);
     }
     .tag-pill .remove-btn {
-        @apply material-symbols-outlined text-[14px] cursor-pointer hover:bg-ctp-text/10 rounded-full transition-colors;
+        @apply text-[14px] cursor-pointer hover:bg-ctp-text/10 rounded-full transition-colors;
         font-variation-settings: 'opsz' 20, 'wght' 600;
     }
 }
