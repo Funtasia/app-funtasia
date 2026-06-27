@@ -28,7 +28,7 @@ export default defineConfig( ({ mode }) => {
     assetsInclude: ['**/*.glb'],
     server: {
       port:5317,
-      allowedHosts: ["chunky-toaster.seagull-hippocampus.ts.net","broken-toaster.seagull-hippocampus.ts.net"], // for dev testing, raw IP addresses work
+      allowedHosts: ["chunky-toaster.seagull-hippocampus.ts.net","broken-toaster.seagull-hippocampus.ts.net"], // for dev testing - using tailscale funnel, raw IP addresses work
       host:true, // whether to host only on localhost (false) or on all addresses (true)
     },
     build: {
