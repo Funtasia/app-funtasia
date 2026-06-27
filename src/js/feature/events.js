@@ -101,7 +101,7 @@ class Events {
         DOM.eventsListContainer.style.cssText += ';position:relative;z-index:0';
 
         try {
-            const res = await fetch(`${ASSETS_BASE_URL}/json_data/events/${category}_events.json`);
+            const res = await fetch(`${ASSETS_BASE_URL}/json/${category}_events.json`);
             if (!res.ok) throw new Error('Failed to load events for ' + category);
             const data_arr = await res.json();
 

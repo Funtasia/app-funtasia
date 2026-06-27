@@ -24,7 +24,7 @@ class Directory {
 
     async fetchDirectoryData() {
         try {
-            const rawData = await fetch(`${ASSETS_BASE_URL}/json_data/funtasia_data.json`).then(r => r.json());
+            const rawData = await fetch(`${ASSETS_BASE_URL}/json/funtasia_data.json`).then(r => r.json());
             const normalized = {};
             for (const [level, items] of Object.entries(rawData)) {
                 if (Array.isArray(items)) {

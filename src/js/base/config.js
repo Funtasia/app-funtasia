@@ -12,7 +12,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 // Refer to README.MD under Special Role Behaviors
 const FUNCTIONAL_ROLES = ["OBJECT", "MARKER", "GREY"];
 
-// Note that idk what some constants do
+// Note that idk what some constants do: lmao
 export const CONFIG = {
   NOANIMATION: prefersReducedMotion,
 
@@ -27,18 +27,18 @@ export const CONFIG = {
 
     // Path of the model files relative to ASSETS_BASE_URL
     FLOORS: {
-      l2: `njc-l2.glb`,
-      l1: `njc-l1.glb`,
-      b1: `njc-b1.glb`,
-      b2: `njc-b2.glb`,
-      b3: `njc-b3.glb`,
+      l2: `model/njc-l2.glb`,
+      l1: `model/njc-l1.glb`,
+      b1: `model/njc-b1.glb`,
+      b2: `model/njc-b2.glb`,
+      b3: `model/njc-b3.glb`,
     },
     // Same as above, but for child models
     CHILDREN: {
-      canteen:   { floorId: "l1", nodeName: "Canteen",    path: `njc-l1-canteen.glb`   },
-      sanctuary: { floorId: "l1", nodeName: "Sanctuary",  path: `njc-l1-sanctuary.glb` },
-      hall:      { floorId: "l2", nodeName: "Hall",       path: `njc-l2-hall.glb`      },
-      ish:       { floorId: "b3", nodeName: "ISH",        path: `njc-b3-ish.glb`       },
+      canteen:   { floorId: "l1", nodeName: "Canteen",    path: `model/njc-l1-canteen.glb`   },
+      sanctuary: { floorId: "l1", nodeName: "Sanctuary",  path: `model/njc-l1-sanctuary.glb` },
+      hall:      { floorId: "l2", nodeName: "Hall",       path: `model/njc-l2-hall.glb`      },
+      ish:       { floorId: "b3", nodeName: "ISH",        path: `model/njc-b3-ish.glb`       },
     },
     // uh idk man
     ROLE_MAP: {
@@ -114,7 +114,7 @@ export const CONFIG = {
 
   MARKERS: {
     URLS: {
-      GOOGLE_MAP_ICON: `google-map-icon.glb`,
+      GOOGLE_MAP_ICON: `icon/google-map-icon.glb`,
       FONT: "https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/ttf/JetBrainsMono-Regular.ttf"
     },
     PHYSICS: {
