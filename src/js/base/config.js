@@ -27,18 +27,18 @@ export const CONFIG = {
 
     // Path of the model files relative to ASSETS_BASE_URL
     FLOORS: {
-      l2: `models/${VERSION}/njc-l2-${VERSION}.glb`,
-      l1: `models/${VERSION}/njc-l1-${VERSION}.glb`,
-      b1: `models/${VERSION}/njc-b1-${VERSION}.glb`,
-      b2: `models/${VERSION}/njc-b2-${VERSION}.glb`,
-      b3: `models/${VERSION}/njc-b3-${VERSION}.glb`,
+      l2: `njc-l2.glb`,
+      l1: `njc-l1.glb`,
+      b1: `njc-b1.glb`,
+      b2: `njc-b2.glb`,
+      b3: `njc-b3.glb`,
     },
     // Same as above, but for child models
     CHILDREN: {
-      canteen:   { floorId: "l1", nodeName: "Canteen",    path: `models/${VERSION}/njc-l1-canteen-${VERSION}.glb`   },
-      sanctuary: { floorId: "l1", nodeName: "Sanctuary",  path: `models/${VERSION}/njc-l1-sanctuary-${VERSION}.glb` },
-      hall:      { floorId: "l2", nodeName: "Hall",       path: `models/${VERSION}/njc-l2-hall-${VERSION}.glb`      },
-      ish:       { floorId: "b3", nodeName: "ISH",        path: `models/${VERSION}/njc-b3-ish-${VERSION}.glb`       },
+      canteen:   { floorId: "l1", nodeName: "Canteen",    path: `njc-l1-canteen.glb`   },
+      sanctuary: { floorId: "l1", nodeName: "Sanctuary",  path: `njc-l1-sanctuary.glb` },
+      hall:      { floorId: "l2", nodeName: "Hall",       path: `njc-l2-hall.glb`      },
+      ish:       { floorId: "b3", nodeName: "ISH",        path: `njc-b3-ish.glb`       },
     },
     // uh idk man
     ROLE_MAP: {
@@ -114,7 +114,7 @@ export const CONFIG = {
 
   MARKERS: {
     URLS: {
-      GOOGLE_MAP_ICON: `${ASSETS_BASE_URL}/icons/google-map-icon.glb`,
+      GOOGLE_MAP_ICON: `google-map-icon.glb`,
       FONT: "https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@2.304/fonts/ttf/JetBrainsMono-Regular.ttf"
     },
     PHYSICS: {
