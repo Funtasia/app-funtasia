@@ -46,7 +46,7 @@ jobs:
           echo "Latest tag: $TAG"
           
           if grep -q "^TAG=" .env.production; then
-            sed -i "s|^TAG=.*|VITE_ASSETS_BASE_URL=$TAG|" .env.production
+            sed -i "s|^TAG=.*|TAG=$TAG|" .env.production
           else
             echo "TAG=$TAG" >> .env.production
           fi
