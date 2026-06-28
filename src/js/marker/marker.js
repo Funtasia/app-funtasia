@@ -6,6 +6,11 @@ export class Marker {
   static appState = null;
   static scene = null;
 
+  /**
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {string} level - The floor/level the marker belongs to.
+   */
   constructor(parent, position, level) {
     this.appState = Marker.appState;
     // Markers should be children of their floor models to follow animations.

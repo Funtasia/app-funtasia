@@ -10,6 +10,13 @@ import { disposeThreeObject } from "@/js/helper/threeUtils.js";
  * Uses CSS2DRenderer for translatable labels.
  */
 export class BaseTextMarker extends ManagedMarker {
+  /**
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {string} innerHTML 
+   * @param {string} level - The floor/level the marker belongs to.
+   * @param {Object} options 
+   */
   constructor(parent, position, innerHTML, level, options) {
     super(parent, position, level);
     this.innerHTML = innerHTML;
@@ -83,6 +90,12 @@ export class BaseTextMarker extends ManagedMarker {
 }
 
 export class TextMarker extends BaseTextMarker {
+  /**
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {string} text 
+   * @param {string} level - The floor/level the marker belongs to.
+   */
   constructor(parent, position, text, level) {
     super(parent, position, text, level, { markerHeight: 0.5 });
     this.updateVisibilityAndOpacity();
@@ -105,15 +118,21 @@ export class TextMarker extends BaseTextMarker {
 }
 
 export class BoothIDMarker extends BaseTextMarker {
+  /**
+   * 
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {String[]} tags Array of the tags
+   * @param {string} level - The floor/level the marker belongs to.
+   * @param {*} customOptions 
+   */
   constructor(parent, position, tags, level, customOptions = {}) {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-mauve') || "#cba6f7";
-    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-base') || "#1e1e2e";
     
-    const icons = `<span class="material-symbols-outlined" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}</span>`;
+    const icons = `<span class="material-symbols-outlined text-black" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}</span>`;
 
     super(parent, position, icons, level, {
       markerHeight: CONFIG.MARKERS.BOOTH.height,
-      textColor: textColor,
       bgColor: bgColor,
       bgPadding: '2px 10px',
       borderRadius: '8px',
