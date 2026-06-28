@@ -33,8 +33,10 @@ jobs:
 
       - name: Get latest assets tag
         run: |
+          source .env.production
+
           TAG=$(
-            git ls-remote --tags --refs https://github.com/Funtasia/assets-funtasia.git \
+            git ls-remote --tags --refs https://github.com/$REPO.git \
             | awk '{print $2}' \
             | sed 's|refs/tags/||' \
             | sort -V \
@@ -43,10 +45,10 @@ jobs:
 
           echo "Latest tag: $TAG"
           
-          if grep -q "^VITE_ASSETS_BASE_URL=" .env.production; then
-            sed -i "s|^VITE_ASSETS_BASE_URL=.*|VITE_ASSETS_BASE_URL=https://cdn.jsdelivr.net/gh/Funtasia/assets-funtasia@$TAG|" .env.production
+          if grep -q "^TAG=" .env.production; then
+            sed -i "s|^TAG=.*|VITE_ASSETS_BASE_URL=$TAG|" .env.production
           else
-            echo "VITE_ASSETS_BASE_URL=https://cdn.jsdelivr.net/gh/Funtasia/assets-funtasia@$TAG" >> .env.production
+            echo "TAG=$TAG" >> .env.production
           fi
 
           cat .env.production 
