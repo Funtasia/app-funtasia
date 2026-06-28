@@ -10,25 +10,25 @@ import { disposeThreeObject } from "@/js/helper/threeUtils.js";
  * Uses CSS2DRenderer for translatable labels.
  */
 export class BaseTextMarker extends ManagedMarker {
-  constructor(parent, position, text, level, options) {
+  constructor(parent, position, innerHTML, level, options) {
     super(parent, position, level);
-    this.text = text;
+    this.innerHTML = innerHTML;
 
     const defaultOptions = {
       markerHeight: 0.4,
       fontSize: '14px',
       textColor: '#000000',
-      bgColor: '#ffffff',
+      bgColor: 'rgb(255 255 255 / 0.75)',
       bgOpacity: 0.9,
       bgPadding: '4px 12px',
-      borderRadius: '12px',
+      borderRadius: '4px',
       fontWeight: 'normal',
     };
     this.options = { ...defaultOptions, ...options };
 
     // Create the label div
     const div = document.createElement('div');
-    div.textContent = this.text;
+    div.innerHTML = this.innerHTML
     div.style.cssText = `
       background: ${this.options.bgColor};
       opacity: ${this.options.bgOpacity};
@@ -36,13 +36,13 @@ export class BaseTextMarker extends ManagedMarker {
       border-radius: ${this.options.borderRadius};
       color: ${this.options.textColor};
       font-size: ${this.options.fontSize};
-      font-family: sans-serif;
       font-weight: ${this.options.fontWeight};
       pointer-events: none;
       user-select: none;
       white-space: nowrap;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition-duration: 0ms !important;
     `;
+    div.className = `map-marker `
 
     this._label = new CSS2DObject(div);
     this._label.position.y = this.options.markerHeight;
@@ -65,7 +65,7 @@ export class BaseTextMarker extends ManagedMarker {
    * Update the text content (for translations).
    */
   setText(newText) {
-    this.text = newText;
+    this.innerHTML = newText;
     if (this._label) {
       this._label.element.textContent = newText;
     }
@@ -84,15 +84,7 @@ export class BaseTextMarker extends ManagedMarker {
 
 export class TextMarker extends BaseTextMarker {
   constructor(parent, position, text, level) {
-    super(parent, position, text, level, {
-      markerHeight: 0.5,
-      fontSize: '14px',
-      textColor: '#000000',
-      bgColor: '#ffffff',
-      bgOpacity: 0.9,
-      bgPadding: '4px 12px',
-      borderRadius: '12px',
-    });
+    super(parent, position, text, level, { markerHeight: 0.5 });
     this.updateVisibilityAndOpacity();
   }
 
@@ -113,16 +105,16 @@ export class TextMarker extends BaseTextMarker {
 }
 
 export class BoothIDMarker extends BaseTextMarker {
-  constructor(parent, position, text, level, customOptions = {}) {
+  constructor(parent, position, tags, level, customOptions = {}) {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-mauve') || "#cba6f7";
     const textColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-base') || "#1e1e2e";
     
-    super(parent, position, text, level, {
+    const icons = `<span class="material-symbols-outlined" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}</span>`;
+
+    super(parent, position, icons, level, {
       markerHeight: CONFIG.MARKERS.BOOTH.height,
-      fontSize: CONFIG.MARKERS.BOOTH.fontSize + 'px',
       textColor: textColor,
       bgColor: bgColor,
-      bgOpacity: 0.85,
       bgPadding: '2px 10px',
       borderRadius: '8px',
       fontWeight: 'bold',

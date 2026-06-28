@@ -128,8 +128,8 @@ export const CONFIG = {
     },
     // For text markers for each booth
     BOOTH: {
-      zoomThreshold: 7.6,  // When to start showing the markers
-      fontSize: 0.0267,
+      zoomThreshold: 14,  // When to start showing the markers
+      fontSize: '30px',
       height: 0.2,         // Vertical offset of marker from base
       bgPlaneHeight: 0.08  // Height of the text box
     },
@@ -255,6 +255,20 @@ export const CONFIG = {
         "njcentrance": "Funtasia Entrance", 
         "njcexit":"Funtasia Exit" 
       }
+    },
+    TAG_TO_ICON_MAP: {
+      Game:        "sports_and_outdoors",
+      Performance: "theater_comedy",
+      Academic:    "school",
+      Food:        "yakitori",
+      Drinks:      "water_full",
+      Merch:       "shopping_bag",
+      Photos:      "ar_on_you",
+      Info:        "info",
+      Tickets:     "confirmation_number",
+      CCA:         "CCA",
+      "First Aid": "medical_services",
+      "Glam Up":   "health_and_beauty"
     }
   }
 };
