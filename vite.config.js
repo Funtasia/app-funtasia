@@ -18,7 +18,6 @@ export default defineConfig( ({ mode }) => {
     ],
     define: {
       ASSETS_BASE_URL: JSON.stringify(viteEnv.VITE_ASSETS_BASE_URL),
-      VERSION: JSON.stringify(viteEnv.VITE_MODEL_VERSION),
     },
     resolve: {
       alias: {
