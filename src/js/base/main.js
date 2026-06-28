@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
@@ -20,8 +19,6 @@ Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
 });
 
 // Bind raycaster, mouse, floor registry, and UI bridge to appState
-appState.raycaster = new THREE.Raycaster();
-appState.mouse = new THREE.Vector2();
 appState.floor.floors = Floor.floors;
 appState.ui = {
   hideSheet:                  UI.hideBottomSheet,
@@ -86,14 +83,9 @@ async function initApp() {
 
   Marker.appState = appState;
 
-  const css2DRenderer = new CSS2DRenderer();
-  css2DRenderer.setSize(window.innerWidth, window.innerHeight);
-  css2DRenderer.domElement.style.position = 'absolute';
-  css2DRenderer.domElement.style.top = '0px';
-  css2DRenderer.domElement.style.left = '0px';
-  css2DRenderer.domElement.style.pointerEvents = 'none'; // allow click-through to WebGL
-  document.body.appendChild(css2DRenderer.domElement);
-  appState.css2DRenderer = css2DRenderer;
+  appState.css2DRenderer.setSize(window.innerWidth, window.innerHeight);
+  Object.assign(appState.css2DRenderer.domElement.style, {position: 'absolute', top: '0px', left: '0px', pointerEvents: 'none'});
+  document.body.appendChild(appState.css2DRenderer.domElement);
 
   // Initialize systems that depend on the dynamic modules
   appState.navigation.init(appState);
