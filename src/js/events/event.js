@@ -7,6 +7,7 @@ import {
 } from "@/js/helper/util.js";
 import { focusOnObject, applySelection } from "@/js/ui_ux/cameraUtils.js";
 import { showBottomSheet } from "@/js/ui_ux/ui.js";
+import { AppState } from "@/js/base/appState";
 
 /**
  * Registry for tracking and removing event listeners.
@@ -67,15 +68,19 @@ const Handlers = {
       showBottomSheet(target.userData.boothId, target.userData.child, target.userData.boothDescription, target.name);
     }
   },
-  onWindowResize: (camera, renderer, composer) => {
+  onWindowResize: (camera, renderer, composer, css2DRenderer) => {
     const w = window.innerWidth, h = window.innerHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
     if (composer) composer.setSize(w, h);
+    css2DRenderer.setSize(w, h);
   }
 };
 
+/**
+ * @param {AppState} appState 
+ */
 export function setupEventListeners(appState) {
   const registry = createEventRegistry();
   
@@ -98,7 +103,7 @@ export function setupEventListeners(appState) {
   });
   
   // Handle Window Resize via central Handlers
-  const onResize = () => Handlers.onWindowResize(appState.camera, appState.renderer, appState.composer);
+  const onResize = () => Handlers.onWindowResize(appState.camera, appState.renderer, appState.composer, appState.css2DRenderer);
   registry.add(window, "resize", onResize);
 
   return () => registry.cleanup();
