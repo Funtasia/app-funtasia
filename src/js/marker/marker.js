@@ -82,11 +82,7 @@ export class Marker {
   }
 
   clear() {
-    if (this.scene) {
-      this.scene.remove(this.group);
-    }
-    // Subclasses should dispose of their own resources
-    this.group = null;
+    this.scene?.remove(this.group);
   }
 }
 
@@ -202,16 +198,22 @@ export class LocationMarker extends Marker {
   }
 
   clear() {
-    if (this._label) {
-      this.group.remove(this._label);
-      this._label.element.remove();
-      this._label = null;
-    }
-    // Clean up GLTF model if needed
-    if (this._markerModel) {
-      this.group.remove(this._markerModel);
-      // Optionally dispose geometries/materials
-    }
+    try {
+          if (this._label) {
+            this.group.remove(this._label);
+            this._label.element.remove();
+            this._label = null;
+          }
+          // Clean up GLTF model if needed
+          if (this._markerModel) {
+            this.group.remove(this._markerModel);
+            // Optionally dispose geometries/materials
+          }
+      
+    } catch (e) {
+      console.log(this);
+      console.log(this.group)
+    };
     super.clear();
   }
 }
