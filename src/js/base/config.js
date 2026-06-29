@@ -100,7 +100,7 @@ export const CONFIG = {
       dampingFactor: 0.08
     },
     ANIMATION: {
-      viewDistanceFactor: 1.2,
+      viewDistanceFactor: 1,
       viewHeightFactor: 0.8,
       lerpFactor: prefersReducedMotion? 1 : 0.05,
       floorLerpFactor: prefersReducedMotion ? 1 : 0.1
@@ -128,7 +128,7 @@ export const CONFIG = {
     },
     // For text markers for each booth
     BOOTH: {
-      zoomThreshold: 14,  // When to start showing the markers
+      zoomThreshold: 300,  // When to start showing the markers
       fontSize: '30px',
       height: 0.2,         // Vertical offset of marker from base
       bgPlaneHeight: 0.08  // Height of the text box
