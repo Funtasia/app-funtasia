@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
@@ -63,8 +62,6 @@ async function initApp() {
     { events },
     { Marker },
     { ManagedMarker },
-    { Icon },
-    { TextMarker, BoothIDMarker }
   ] = await Promise.all([
     import("@/js/events/navigation.js"),
     import("@/js/base/settings.js"),
@@ -72,8 +69,6 @@ async function initApp() {
     import("@/js/feature/events.js"),
     import("@/js/marker/marker.js"),
     import("@/js/marker/managedmarker.js"),
-    import("@/js/marker/icon.js"),
-    import("@/js/marker/textmarker.js")
   ]);
 
   appState.directory    = directory;
