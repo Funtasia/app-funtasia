@@ -822,7 +822,7 @@
         mutations.forEach(mutation => {
           mutation.addedNodes.forEach(node => {
             if (node.nodeType === 1) { // Element node
-              if (node.classList && node.classList.contains('material-symbols-outlined')) {
+              if (node.classList?.contains('material-symbols-outlined')) {
                 node.setAttribute('translate', 'no');
               }
               // Also check children
