@@ -338,7 +338,6 @@ export async function parseModel(gltf, floorId, scene, funtasiaData, dataFloorId
 
           const boothZone = child.userData.ZONE || "NONE";
           const markerBgColor = zoneColours[boothZone];
-          console.log(markerBgColor + '')
 
           const bim = new BoothIDMarker(model, pos, entry["tags"], floorId, { bgColor: markerBgColor });
           boothIDMarkers.push(bim);

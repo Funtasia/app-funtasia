@@ -3,7 +3,6 @@ import * as THREE from "three";
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { CONFIG } from "@/js/base/config.js";
 import { ManagedMarker } from "@/js/marker/managedmarker.js";
-import { disposeThreeObject } from "@/js/helper/threeUtils.js";
 
 /**
  * BaseTextMarker: Provides common functionality for text-based markers.
@@ -35,7 +34,7 @@ export class BaseTextMarker extends ManagedMarker {
 
     // Create the label div
     const div = document.createElement('div');
-    div.innerHTML = this.innerHTML
+    div.innerHTML = this.innerHTML;
     div.style.cssText = `
       background: ${this.options.bgColor};
       opacity: ${this.options.bgOpacity};
@@ -49,7 +48,7 @@ export class BaseTextMarker extends ManagedMarker {
       white-space: nowrap;
       transition-duration: 0ms !important;
     `;
-    div.className = `map-marker `
+    div.className = 'map-marker';
 
     this._label = new CSS2DObject(div);
     this._label.position.y = this.options.markerHeight;
@@ -57,25 +56,10 @@ export class BaseTextMarker extends ManagedMarker {
   }
 
   /**
-   * Updates the marker each frame: optionally applies bobbing.
-   * No manual billboarding needed.
+   * Calls this.updateVisibilityAndOpacity()
    */
   animate(time, camera) {
-    if (!this.group || !camera || !this.group.visible) return;
-
-    // Optionally add a subtle bob:
-    // const bob = Math.sin(time * 0.002) * 0.02;
-    // this._label.position.y = this.options.markerHeight + bob;
-  }
-
-  /**
-   * Update the text content (for translations).
-   */
-  setText(newText) {
-    this.innerHTML = newText;
-    if (this._label) {
-      this._label.element.textContent = newText;
-    }
+    this.updateVisibilityAndOpacity()
   }
 
   clear() {
@@ -84,36 +68,26 @@ export class BaseTextMarker extends ManagedMarker {
       this._label.element.remove();
       this._label = null;
     }
-    disposeThreeObject(this.group);
     super.clear();
   }
 }
+
 
 export class TextMarker extends BaseTextMarker {
   /**
    * @param {THREE.Object3D} parent - Parent object to add the marker group to.
    * @param {THREE.Vector3} position - World position of the marker.
-   * @param {string} text 
+   * @param {string} text - The text to be displayed on the marker
    * @param {string} level - The floor/level the marker belongs to.
    */
   constructor(parent, position, text, level) {
     super(parent, position, text, level, { markerHeight: 0.5 });
-    this.updateVisibilityAndOpacity();
-  }
-
-  animate(time, camera) {
-    this.updateVisibilityAndOpacity(); // handles visibility based on active level
-    super.animate(time, camera);
   }
 
   updateVisibilityAndOpacity() {
     if (!this.group) return;
     const isVisibleLocal = TextMarker.visibleState && this.level === TextMarker.activeLevel;
     this.updateSyncState(isVisibleLocal);
-  }
-
-  clear() {
-    super.clear();
   }
 }
 
@@ -129,9 +103,12 @@ export class BoothIDMarker extends BaseTextMarker {
   constructor(parent, position, tags, level, customOptions = {}) {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-mauve') || "#cba6f7";
     
-    const icons = `<span class="material-symbols-outlined text-black" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}</span>`;
+    const iconHTML = `
+      <span class="material-symbols-outlined text-black" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">
+        ${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}
+      </span>`;
 
-    super(parent, position, icons, level, {
+    super(parent, position, iconHTML, level, {
       markerHeight: CONFIG.MARKERS.BOOTH.height,
       bgColor: bgColor,
       bgPadding: '2px 10px',
@@ -148,21 +125,14 @@ export class BoothIDMarker extends BaseTextMarker {
     const worldPos = new THREE.Vector3();
     this.group.getWorldPosition(worldPos);
     this.distance = camera.position.distanceTo(worldPos);
-    this.zoomThreshold = CONFIG.MARKERS.BOOTH.zoomThreshold;
 
     this.updateVisibilityAndOpacity();
-
-    if (this.group.visible) super.animate(time, camera);
   }
 
   updateVisibilityAndOpacity() {
     if (!this.group) return;
-    const isWithinZoom = this.distance !== undefined ? this.distance < this.zoomThreshold : true;
+    const isWithinZoom = this.distance !== undefined ? this.distance < CONFIG.MARKERS.BOOTH.zoomThreshold : true;
     const isVisibleLocal = BoothIDMarker.visibleState && this.level === BoothIDMarker.activeLevel && isWithinZoom;
     this.updateSyncState(isVisibleLocal);
-  }
-
-  clear() {
-    super.clear();
   }
 }
