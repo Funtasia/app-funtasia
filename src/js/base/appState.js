@@ -2,7 +2,7 @@
  * Facade class for distributed application state management.
  */
 import * as THREE from "three";
-import { CONFIG } from "@/js/base/config";
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { SettingsStore } from "@/js/base/settingsStore";
 import { AssetManager } from "@/js/base/assetManager";
 import { CameraState } from "@/js/base/cameraState";
@@ -12,11 +12,28 @@ import { MarkerState } from "@/js/marker/markerState";
 export class AppState {
   constructor() {
     // Core Three.js objects (scene graph, renderer, controls, etc.)
+
+    /** @type {THREE.Scene<THREE.Object3DEventMap>} */ 
     this.scene = null;
+
+    /** @type {THREE.PerspectiveCamera} */
+    this.camera = null;
+
+    /** @type {THREE.WebGLRenderer} */ 
     this.renderer = null;
+
+    /** @type {import('three/addons/controls/OrbitControls.js').OrbitControls} */
     this.controls = null;
-    this.raycaster = null;
-    this.mouse = null;
+
+    /** @type {THREE.Raycaster} */
+    this.raycaster = new THREE.Raycaster();
+
+    /** @type {THREE.Vector2} */
+    this.mouse = new THREE.Vector2();
+
+    /** @type {CSS2DRenderer} */
+    this.css2DRenderer = new CSS2DRenderer();
+
 
     // Feature managers (directory, events, navigation, UI bridge)
     this.directory = null;

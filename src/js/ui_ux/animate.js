@@ -4,6 +4,7 @@ Function: animate() -> Main animation loop
 
 import { CONFIG } from "@/js/base/config.js";
 import { Floor } from "@/js/floor/floor.js";
+import { BoothIDMarker } from "@/js/marker/textmarker.js";
 
 export function animateCameraTo(appState, cameraTarget, controlsTarget, isSystemAction = false, lerpFactor = CONFIG.CAMERA.ANIMATION.lerpFactor) {
   appState.cameraAnim.controlsTarget.copy(controlsTarget);
@@ -96,7 +97,10 @@ export function startAnimationLoop(appState) {
       });
     }
 
+    BoothIDMarker.updateClusters(appState.camera, appState.renderer.domElement.clientWidth, appState.renderer.domElement.clientHeight)
+
     appState.renderer.render(appState.scene, appState.camera);
+    appState.css2DRenderer.render(appState.scene, appState.camera)
   }
 
   animate();

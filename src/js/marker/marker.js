@@ -1,14 +1,16 @@
 import * as THREE from "three";
-import { Text, preloadFont } from "troika-three-text";
+import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { CONFIG } from "@/js/base/config.js";
-
-export const FONT_URL = CONFIG.MARKERS.URLS.FONT;
-preloadFont({ font: FONT_URL }, () => {});
 
 export class Marker {
   static appState = null;
   static scene = null;
 
+  /**
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {string} level - The floor/level the marker belongs to.
+   */
   constructor(parent, position, level) {
     this.appState = Marker.appState;
     // Markers should be children of their floor models to follow animations.
@@ -39,7 +41,6 @@ export class Marker {
 
     this.indicator = null; // To be populated by subclasses
 
-    // Ensure parent is valid before adding
     const actualParent = this.parent || Marker.scene || (this.appState ? this.appState.scene : null);
     if (actualParent) {
       actualParent.add(this.group);
@@ -47,7 +48,8 @@ export class Marker {
   }
 
   /**
-   * Synchronizes the marker's visibility and opacity with its parent floor.
+   * Synchronizes visibility and opacity with the parent floor.
+   * Now also handles CSS2D labels.
    * This is modular and can be called by any subclass (TextMarker, Icon, etc.)
    * @param {boolean} isVisible - Optional local visibility override from subclass
    */
@@ -56,30 +58,31 @@ export class Marker {
     if (!this.group || !this.parent || this.parent.type === 'Scene' || !this.parent.userData) return;
 
     const targetOpacity = this.parent.userData.currentOpacity ?? 1.0;
-    this.group.visible = isVisible && targetOpacity > 0.01;
-    
-    // Only apply opacity if the group is currently visible (either by its own rules or parent's)
-    if (this.group.visible) {
-      if (this._materials) {
-        this._materials.forEach(m => {
-          // Maintain slight transparency for backgrounds if they had it originally
-          const baseOpacity = (m.opacity < 1 && m.opacity > 0) ? m.opacity : 1.0;
-          m.opacity = targetOpacity * baseOpacity;
-        });
-      }
-      if (this._textMesh) {
-        this._textMesh.fillOpacity = targetOpacity;
+    const finalVisible = isVisible && targetOpacity > 0.01;
+    this.group.visible = finalVisible;
+
+    // Apply opacity to 3D materials
+    if (this._materials) {
+      this._materials.forEach(m => {
+        const baseOpacity = (m.opacity < 1 && m.opacity > 0) ? m.opacity : 1.0;
+        m.opacity = targetOpacity * baseOpacity;
+      });
+    }
+
+    // Apply opacity/visibility to CSS2D label
+    if (this._label && this._label.element) {
+      const el = this._label.element;
+      if (finalVisible) {
+        el.style.display = 'block';
+        el.style.opacity = targetOpacity;
+      } else {
+        el.style.display = 'none';
       }
     }
   }
 
   clear() {
-    if (this.scene) {
-      this.scene.remove(this.group);
-    }
-    
-    // Subclasses should handle disposing geometries and materials of `this.indicator`
-    this.group = null;
+    this.scene?.remove(this.group);
   }
 }
 
@@ -92,18 +95,16 @@ export class LocationMarker extends Marker {
    * @param {boolean} showRing - Whether to show the base ring.
    */
   constructor(parent, position, level, text = false, showRing = true) {
-    super(parent, position, level); // Base class handles positioning and parenting
-    
-    // Use the existing group created by super()
+    super(parent, position, level);
+
     this.scene = this.parent;
     this.markerHeight = CONFIG.MARKERS.LOCATION.height;
 
-    // ----- materials -----
     const activeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true });
     const outlineMaterialActive = new THREE.LineBasicMaterial({ color: 0x550000, transparent: true });
     this._materials = [activeMaterial, outlineMaterialActive];
 
-    // ----- ring -----
+    // Ring (unchanged)
     if (showRing) {
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.11, 0.14, 32),
@@ -118,15 +119,12 @@ export class LocationMarker extends Marker {
       this.group.add(ring);
     }
 
-    // ----- 3D Model -----
-    // Stored on the instance so animate() can reference it after the async load
+    // GLB model (unchanged)
     this._markerModel = null;
-
     import("three/addons/loaders/GLTFLoader.js").then(({ GLTFLoader }) => {
       const loader = new GLTFLoader();
       loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
         this._markerModel = gltf.scene;
-  
         this._markerModel.traverse((child) => {
           if (child.isMesh) {
             child.material = activeMaterial;
@@ -135,88 +133,87 @@ export class LocationMarker extends Marker {
             child.add(outline);
           }
         });
-  
         const scale = 10;
         this._markerModel.scale.set(scale, scale, scale);
         this._markerModel.position.y = this.markerHeight;
-        
-        // Safety check: if the marker was cleared before the model finished loading
         if (this.group) {
           this.group.add(this._markerModel);
         }
       });
     });
 
-    // ----- text label group -----
-    this._textLabelGroup = null;
+    // ----- CSS2D label (replaces Troika Text) -----
+    this._label = null;
     if (text) {
-      this._textLabelGroup = new THREE.Group();
-
-      const textMesh = new Text();
-      textMesh.text = "You are here!";
-      textMesh.fontSize = 0.15;
-      textMesh.font = FONT_URL;
-      textMesh.color = 0xff0000;
-      textMesh.anchorX = 'center';
-      textMesh.anchorY = 'middle';
-      textMesh.sync();
-      this._textMesh = textMesh;
-
-      // Padded background behind the text
-      // Fixed size for "You are here!" at 0.15 fontSize
-      const bgWidth  = 1.2;
-      const bgHeight = 0.25;
-      const textBgMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.9
-      });
-      this._materials.push(textBgMaterial);
-      const textBgMesh = new THREE.Mesh(new THREE.PlaneGeometry(bgWidth, bgHeight), textBgMaterial);
-      textBgMesh.position.z = -0.01;
-
-      this._textLabelGroup.add(textBgMesh);
-      this._textLabelGroup.add(textMesh);
-      this._textLabelGroup.position.y = this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset;
-      this.group.add(this._textLabelGroup);
+      const div = document.createElement('div');
+      div.textContent = 'You are here!'; // Can be replaced by translation function
+      div.style.cssText = `
+        background: rgba(255,255,255,0.9);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-family: sans-serif;
+        font-size: 14px;
+        color: #ff0000;
+        font-weight: bold;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
+      `;
+      this._label = new CSS2DObject(div);
+      this._label.position.y = this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset;
+      this.group.add(this._label);
     }
   }
 
   /**
-   * Updates the marker each frame: floats the GLB model and billboards the text label.
-   * Safe to call before the GLB has finished loading — _markerModel is null until then.
-   * @param {number} time - Elapsed time in milliseconds (e.g. from requestAnimationFrame).
-   * @param {THREE.Camera} camera - The active camera.
+   * Updates the marker each frame: floats the GLB model and bobs the label.
+   * No manual billboarding needed for CSS2D.
    */
   animate(time, camera) {
     if (!this.group) return;
 
-    // Modular sync: No Floor import needed!
     this.updateSyncState();
 
     const t = time * CONFIG.MARKERS.PHYSICS.bobSpeed;
-    // Calculate shared bobbing offset for cohesive animation
     const bobOffset = Math.sin(t * CONFIG.MARKERS.PHYSICS.bobFreq) * CONFIG.MARKERS.PHYSICS.bobAmp;
 
-    // Floating bob + horizontal look-at on the GLB model
+    // Bob the GLB model
     if (this._markerModel) {
       this._markerModel.position.y = this.markerHeight + bobOffset;
-
       if (camera) {
         const targetPos = new THREE.Vector3();
         camera.getWorldPosition(targetPos);
         const modelPos = new THREE.Vector3();
         this._markerModel.getWorldPosition(modelPos);
-        targetPos.y = modelPos.y; // keep horizontal — no vertical tilt
+        targetPos.y = modelPos.y;
         this._markerModel.lookAt(targetPos);
       }
     }
 
-    // Billboarding — keep the text label facing the camera + apply bobbing
-    if (this._textLabelGroup && camera) {
-      this._textLabelGroup.quaternion.copy(camera.quaternion);
-      this._textLabelGroup.position.y = (this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset) + bobOffset;
+    // Bob the CSS2D label
+    if (this._label) {
+      this._label.position.y = (this.markerHeight + CONFIG.MARKERS.LOCATION.textOffset) + bobOffset;
     }
+  }
+
+  clear() {
+    try {
+          if (this._label) {
+            this.group.remove(this._label);
+            this._label.element.remove();
+            this._label = null;
+          }
+          // Clean up GLTF model if needed
+          if (this._markerModel) {
+            this.group.remove(this._markerModel);
+            // Optionally dispose geometries/materials
+          }
+      
+    } catch (e) {
+      console.log(this);
+      console.log(this.group)
+    };
+    super.clear();
   }
 }

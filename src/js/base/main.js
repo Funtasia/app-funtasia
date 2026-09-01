@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { appState } from "@/js/base/appState.js";
 import { CONFIG } from "@/js/base/config.js";
 import { setupScene } from "@/js/base/sceneSetup.js";
@@ -19,8 +18,6 @@ Object.entries(CONFIG.MODELS.CHILDREN).forEach(([id, config]) => {
 });
 
 // Bind raycaster, mouse, floor registry, and UI bridge to appState
-appState.raycaster = new THREE.Raycaster();
-appState.mouse = new THREE.Vector2();
 appState.floor.floors = Floor.floors;
 appState.ui = {
   hideSheet:                  UI.hideBottomSheet,
@@ -65,8 +62,6 @@ async function initApp() {
     { events },
     { Marker },
     { ManagedMarker },
-    { Icon },
-    { TextMarker, BoothIDMarker }
   ] = await Promise.all([
     import("@/js/events/navigation.js"),
     import("@/js/base/settings.js"),
@@ -74,8 +69,6 @@ async function initApp() {
     import("@/js/feature/events.js"),
     import("@/js/marker/marker.js"),
     import("@/js/marker/managedmarker.js"),
-    import("@/js/marker/icon.js"),
-    import("@/js/marker/textmarker.js")
   ]);
 
   appState.directory    = directory;
@@ -84,6 +77,10 @@ async function initApp() {
   appState.ManagedMarker = ManagedMarker;
 
   Marker.appState = appState;
+
+  appState.css2DRenderer.setSize(window.innerWidth, window.innerHeight);
+  Object.assign(appState.css2DRenderer.domElement.style, {position: 'absolute', top: '0px', left: '0px', pointerEvents: 'none'});
+  document.body.appendChild(appState.css2DRenderer.domElement);
 
   // Initialize systems that depend on the dynamic modules
   appState.navigation.init(appState);

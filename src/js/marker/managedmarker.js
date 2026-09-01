@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { Marker } from "@/js/marker/marker.js";
 
 /**
@@ -12,6 +13,11 @@ export class ManagedMarker extends Marker {
   static activeLevel = null;
   static visibleState = true; // Global visibility toggle for this type of marker
 
+  /**
+   * @param {THREE.Object3D} parent - Parent object to add the marker group to.
+   * @param {THREE.Vector3} position - World position of the marker.
+   * @param {string} level - The floor/level the marker belongs to.
+   */
   constructor(parent, position, level) {
     super(parent, position, level);
 
