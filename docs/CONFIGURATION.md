@@ -36,12 +36,12 @@ As said in `README.md`, this project uses the `Catppuccin` color scheme mainly b
 Consequently, this means that all color schemes need to be defined in terms of Catppuccin variables, to allow for usage between both light (latte) and dark (mocha) color schemes. This is why most of the theming is done with reference to Catppuccin CSS variables instead of fixed colors.
 
 # Asset Hosting
-This project pulls its data (3d models, icons, json data) from the [`funtasia_assets`](https://github.com/Funtasia/assets-funtasia/tree/main) repository/submodule. Therefore, to update the data, you will need to fork the `funtasia_assets` repo and update the data accordingly. To use this data, update `ASSETS_BASE_URL` in `vite.config.js` to the jsDelivr link [pointing to your repo](https://www.jsdelivr.com/?docs=gh). For a dev environment, you can also use a link that points to your local copy of the `funtasia_assets` repo/submodule.
+This project pulls its data (3d models, icons, json data) from the [`assets-funtasia`](https://github.com/Funtasia/assets-funtasia/tree/main) repository/submodule. Therefore, to update the data, you will need to fork the `assets-funtasia` repo and update the data accordingly. To use this data, update `ASSETS_BASE_URL` in `vite.config.js` to the jsDelivr link [pointing to your repo](https://www.jsdelivr.com/?docs=gh). For a dev environment, you can also use a link that points to your local copy of the `assets-funtasia` repo/submodule.
 
 # Booth data pipeline
-TL;DR: Google sheets -> `.csv` -> `.json` -> promoted to `funtasia_assets` repo
+TL;DR: Google sheets -> `.csv` -> `.json` -> promoted to `assets-funtasia` repo
 
-The entire pipeline can been seen in [`./json_data`](./json_data/).
+The entire pipeline can been seen in [`pipeline-funtasia`](https://github.com/Funtasia/pipeline-funtasia/blob/main/pipeline/pipelines/data/parse.py).
 
 ## Steps
 
@@ -55,12 +55,12 @@ The entire pipeline can been seen in [`./json_data`](./json_data/).
     -   The em-dash (—) has code point U+2014, not U+2010, U+2011, U+2012, U+2013 or U+2015
     -   Quotation marks (and apostrophes) should preferably use the UTF-8 characters of ' and " (U+0022, U+0027) instead of ‘’ and “” (U+2018, U+2019, U+201C, U+201D).
 
-5.  The `.json` can be promoted to the `funtasia_assets` repo/submodule. Remember to follow the steps for [asset hosting](#asset-hosting).
+5.  The `.json` can be promoted to the `assets-funtasia` repo/submodule. Remember to follow the steps for [asset hosting](#asset-hosting).
 
 ## Notes
 -   Ensure booth IDs in the spreadsheet match the object names in .glb files (e.g., a mesh named `BG1` in Blender should correspond to the `booth_id` `BG1` in the spreadsheet).
 -   `booth_oneline_description` is used for the directory entry, while `booth_description` is used for the full description in the bottom sheet. Either missing will use the other as a fallback.
--   The steps above can be done anywhere, only things to note are `parse.py` and adding the resultant `funtasia_data.json` to the `funtasia_assets` repo/submodule.
+-   The steps above can be done anywhere, only things to note are `parse.py` and adding the resultant `funtasia_data.json` to the `assets-funtasia` repo/submodule.
 
 # Events data pipeline
 TL;DR: Data source -> Manual input

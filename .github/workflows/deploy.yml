@@ -31,6 +31,28 @@ jobs:
         with:
           node-version: 'lts/*'
 
+      - name: Get latest assets tag
+        run: |
+          source .env.production
+
+          TAG=$(
+            git ls-remote --tags --refs https://github.com/$REPO.git \
+            | awk '{print $2}' \
+            | sed 's|refs/tags/||' \
+            | sort -V \
+            | tail -n1
+          )
+
+          echo "Latest tag: $TAG"
+          
+          if grep -q "^TAG=" .env.production; then
+            sed -i "s|^TAG=.*|TAG=$TAG|" .env.production
+          else
+            echo "TAG=$TAG" >> .env.production
+          fi
+
+          cat .env.production 
+
       - name: Install dependencies
         run: npm i
 
