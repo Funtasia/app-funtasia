@@ -1,8 +1,6 @@
 /**
  * Facade class for distributed application state management.
  */
-import * as THREE from "three";
-import { CONFIG } from "@/js/base/config";
 import { SettingsStore } from "@/js/base/settingsStore";
 import { AssetManager } from "@/js/base/assetManager";
 import { CameraState } from "@/js/base/cameraState";
