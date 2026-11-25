@@ -75,23 +75,22 @@ export function startAnimationLoop(appState) {
     
     /*
     Animate markers (Location markers + Managed markers)
+    activeMarkers and allManagedMarkers are mutually exclusive
+    TODO: Merge LocationMarker and ManagedMarker someday
     */
-    const animatedMarkers = new Set();
     
     if (appState.activeMarkers) {
-      appState.activeMarkers.forEach(m => {
-        if (m && m.animate) {
-          m.animate(time, appState.camera);
-          animatedMarkers.add(m);
+      appState.activeMarkers.forEach(marker => {
+        if (marker && marker.animate) {
+          marker.animate(time, appState.camera);
         }
       });
     }
 
     if (appState.ManagedMarker?.allManagedMarkers) {
       appState.ManagedMarker.allManagedMarkers.forEach(marker => {
-        if (marker && marker.animate && !animatedMarkers.has(marker)) {
+        if (marker && marker.animate) {
           marker.animate(time, appState.camera);
-          animatedMarkers.add(marker);
         }
       });
     }
