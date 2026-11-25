@@ -124,7 +124,7 @@ export class LocationMarker extends Marker {
 
     import("three/addons/loaders/GLTFLoader.js").then(({ GLTFLoader }) => {
       const loader = new GLTFLoader();
-      loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
+      loader.load(`${ASSETS_BASE_URL}/${CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON}`, (gltf) => {
         this._markerModel = gltf.scene;
   
         this._markerModel.traverse((child) => {
