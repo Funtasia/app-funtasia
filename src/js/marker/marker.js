@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { Text, preloadFont } from "troika-three-text";
 import { CONFIG } from "@/js/base/config.js";
 
 export class Marker {
@@ -87,6 +89,14 @@ export class Marker {
 }
 
 export class LocationMarker extends Marker {
+  static _modelPromise = null;
+
+  static loadModel() {
+    return this._modelPromise ??= new GLTFLoader()
+      .loadAsync(`${ASSETS_BASE_URL}/${CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON}`)
+      .then((gltf) => gltf.scene);
+  }
+
   /**
    * @param {THREE.Object3D} parent - Parent object to add the marker group to.
    * @param {THREE.Vector3} position - World position of the marker.
@@ -119,12 +129,12 @@ export class LocationMarker extends Marker {
       this.group.add(ring);
     }
 
-    // GLB model (unchanged)
-    this._markerModel = null;
-    import("three/addons/loaders/GLTFLoader.js").then(({ GLTFLoader }) => {
-      const loader = new GLTFLoader();
-      loader.load(CONFIG.MARKERS.URLS.GOOGLE_MAP_ICON, (gltf) => {
-        this._markerModel = gltf.scene;
+    // ----- 3D Model -----
+    // Stored on the instance so animate() can reference it after the async load
+    LocationMarker.loadModel()
+      .then((model) => {
+        this._markerModel = model
+  
         this._markerModel.traverse((child) => {
           if (child.isMesh) {
             child.material = activeMaterial;
@@ -136,10 +146,9 @@ export class LocationMarker extends Marker {
         const scale = 10;
         this._markerModel.scale.set(scale, scale, scale);
         this._markerModel.position.y = this.markerHeight;
-        if (this.group) {
-          this.group.add(this._markerModel);
-        }
-      });
+        
+        // Safety check: if the marker was cleared before the model finished loading
+        this.group?.add(this._markerModel);
     });
 
     // ----- CSS2D label (replaces Troika Text) -----
