@@ -12,9 +12,9 @@ export class BaseTextMarker extends ManagedMarker {
   /**
    * @param {THREE.Object3D} parent - Parent object to add the marker group to.
    * @param {THREE.Vector3} position - World position of the marker.
-   * @param {string} innerHTML 
+   * @param {string} innerHTML - The label HTML.
    * @param {string} level - The floor/level the marker belongs to.
-   * @param {Object} options 
+   * @param {Object} options - Label styling options.
    */
   constructor(parent, position, innerHTML, level, options) {
     super(parent, position, level);
@@ -45,6 +45,7 @@ export class BaseTextMarker extends ManagedMarker {
       font-weight: ${this.options.fontWeight};
       pointer-events: auto;
       user-select: none;
+      white-select: none;
       white-space: nowrap;
       transition-duration: 0ms !important;
     `;
@@ -59,7 +60,7 @@ export class BaseTextMarker extends ManagedMarker {
    * Calls this.updateVisibilityAndOpacity()
    */
   animate(time, camera) {
-    this.updateVisibilityAndOpacity()
+    this.updateVisibilityAndOpacity();
   }
 
   clear() {
@@ -68,6 +69,8 @@ export class BaseTextMarker extends ManagedMarker {
       this._label.element.remove();
       this._label = null;
     }
+
+    this.parent?.remove(this.group);
     super.clear();
   }
 }
@@ -77,7 +80,7 @@ export class TextMarker extends BaseTextMarker {
   /**
    * @param {THREE.Object3D} parent - Parent object to add the marker group to.
    * @param {THREE.Vector3} position - World position of the marker.
-   * @param {string} text - The text to be displayed on the marker
+   * @param {string} text - The text to be displayed on the marker.
    * @param {string} level - The floor/level the marker belongs to.
    */
   constructor(parent, position, text, level) {
@@ -86,7 +89,11 @@ export class TextMarker extends BaseTextMarker {
 
   updateVisibilityAndOpacity() {
     if (!this.group) return;
-    const isVisibleLocal = TextMarker.visibleState && this.level === TextMarker.activeLevel;
+
+    const isVisibleLocal =
+      TextMarker.visibleState &&
+      this.level === TextMarker.activeLevel;
+
     this.updateSyncState(isVisibleLocal);
   }
 }
@@ -94,10 +101,9 @@ export class TextMarker extends BaseTextMarker {
 export class BoothIDMarker extends BaseTextMarker {
   // ---- static clustering properties ----
   static _clusterMarkers = [];
-  static _lastCameraPos = new THREE.Vector3();
   static _lastUpdateTime = 0;
   static _updateThrottle = 250;               // ms
-  static clusterThresholdPixels = 29;         // screen‑space distance
+  static clusterThresholdPixels = 30;         // screen‑space distance
   static _lastActiveLevel = null;
   static _lastGroupHash = '';
 
@@ -105,13 +111,16 @@ export class BoothIDMarker extends BaseTextMarker {
    * 
    * @param {THREE.Object3D} parent - Parent object to add the marker group to.
    * @param {THREE.Vector3} position - World position of the marker.
-   * @param {String[]} tags Array of the tags
+   * @param {string[]} tags - Array of the booth tags.
    * @param {string} level - The floor/level the marker belongs to.
-   * @param {*} customOptions 
+   * @param {Object} customOptions - Optional label overrides.
    */
   constructor(parent, position, tags, level, customOptions = {}) {
-    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-ctp-mauve') || "#cba6f7";
-    
+    const bgColor =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-ctp-mauve') ||
+      "#cba6f7";
+
     const iconHTML = `
       <span class="material-symbols-outlined text-black" style="font-size: ${CONFIG.MARKERS.BOOTH.fontSize}">
         ${CONFIG.THEME.TAG_TO_ICON_MAP[tags[0]] || tags[0]}
@@ -138,181 +147,302 @@ export class BoothIDMarker extends BaseTextMarker {
       this._lastActiveLevel = this.activeLevel;
       this._lastUpdateTime = 0;
       this._lastGroupHash = '';
+    } else if (now - this._lastUpdateTime < this._updateThrottle) {
+      return;
     }
-
-    // Only update if camera moved significantly
-    const distMoved = this._lastCameraPos.distanceTo(camera.position);
-    if (distMoved < 0.3 && (now - this._lastUpdateTime) < this._updateThrottle) return;
-    this._lastCameraPos.copy(camera.position);
     this._lastUpdateTime = now;
 
-    // Gather all BoothIDMarkers on the active level and visible
-    const markers = ManagedMarker.allManagedMarkers.filter(m =>
-      m instanceof BoothIDMarker &&
-      m.level === this.activeLevel &&
-      this.visibleState
+    const levelMarkers = ManagedMarker.allManagedMarkers.filter(marker =>
+      marker instanceof BoothIDMarker &&
+      marker.level === this.activeLevel
     );
 
-    // If no markers, clear any existing clusters
-    if (markers.length === 0) {
-      this._clearClusterMarkers();
-      return;
-    }
-
-    // Compute world positions of the visual centers (group + height)
-    const markerData = markers.map(m => {
-      const baseWorld = new THREE.Vector3();
-      m.group.getWorldPosition(baseWorld);
-      const height = m.options.markerHeight || 0.5;
-      const visualWorld = baseWorld.clone().add(new THREE.Vector3(0, height, 0));
-      const ndc = visualWorld.clone().project(camera);
-      const screenX = (ndc.x + 1) / 2 * screenWidth;
-      const screenY = (1 - ndc.y) / 2 * screenHeight;
-      return { marker: m, visualWorld, screenX, screenY };
+    levelMarkers.forEach(marker => {
+      marker._isClustered = false;
     });
 
-    // Group by screen distance
-    const groups = [];
-    const used = new Array(markerData.length).fill(false);
-    for (let i = 0; i < markerData.length; i++) {
-      if (used[i]) continue;
-      const group = [i];
-      used[i] = true;
-      for (let j = i + 1; j < markerData.length; j++) {
-        if (used[j]) continue;
-        const dx = markerData[i].screenX - markerData[j].screenX;
-        const dy = markerData[i].screenY - markerData[j].screenY;
-        if (Math.hypot(dx, dy) < this.clusterThresholdPixels) {
-          group.push(j);
-          used[j] = true;
-        }
-      }
-      groups.push(group);
-    }
-
-    // Compute a hash of the grouping to detect changes
-    const groupHash = groups.map(g => g.sort().join(',')).join('|');
-    if (groupHash === this._lastGroupHash) {
-      // No change in grouping – just update existing cluster positions (optional)
-      // For simplicity we skip updating positions, but they might drift if camera moves
-      // We'll just return to avoid flicker
+    if (
+      !this.visibleState ||
+      levelMarkers.length === 0
+    ) {
+      this._clearClusterMarkers();
+      levelMarkers.forEach(marker => {
+        marker.updateVisibilityAndOpacity();
+      });
       return;
     }
-    this._lastGroupHash = groupHash;
 
-    // Clear old cluster markers
-    this._clearClusterMarkers();
-    markers.forEach(m => { m._isClustered = false; });
+    camera.updateMatrixWorld(true);
 
-    const clusterHeight = 0.5;
+    const cameraPosition = new THREE.Vector3();
+    camera.getWorldPosition(cameraPosition);
 
-    for (const group of groups) {
-      if (group.length <= 1) continue;
+    const markerData = [];
 
-      // Average visual world positions (including label height)
-      const avgVisual = new THREE.Vector3();
-      for (const idx of group) {
-        avgVisual.add(markerData[idx].visualWorld);
+    for (const marker of levelMarkers) {
+      if (!marker.group) continue;
+
+      const baseWorld = new THREE.Vector3();
+      marker.group.getWorldPosition(baseWorld);
+
+      const distance = cameraPosition.distanceTo(baseWorld);
+      if (distance >= CONFIG.MARKERS.BOOTH.zoomThreshold) continue;
+
+      const visualWorld = baseWorld.clone();
+      visualWorld.y += marker.options.markerHeight || 0.5;
+
+      const projected = visualWorld.clone().project(camera);
+
+      // offscreen
+      if (
+        projected.z < -1 ||
+        projected.z > 1 ||
+        projected.x < -1 ||
+        projected.x > 1 ||
+        projected.y < -1 ||
+        projected.y > 1
+      ) continue;
+
+      const screenX = (projected.x + 1) / 2 * screenWidth;
+      const screenY = (1 - projected.y) / 2 * screenHeight;
+
+      markerData.push({
+        marker,
+        visualWorld,
+        screenX,
+        screenY
+      });
+    }
+
+    // Stable sorting makes cluster assignment deterministic.
+    markerData.sort((a, b) =>
+      a.screenX - b.screenX ||
+      a.screenY - b.screenY ||
+      a.marker.group.uuid.localeCompare(b.marker.group.uuid)
+    );
+
+    const groups = [];
+
+    for (const data of markerData) {
+      let nearestGroup = null;
+      let nearestDistance = this.clusterThresholdPixels;
+
+      for (const group of groups) {
+        let distance = Math.hypot(
+          data.screenX - group.centerX,
+          data.screenY - group.centerY
+        );
+
+        // artificially increase distance between single
+        // groups to lower chances for 2-element groups
+        if (group.members.length == 1) {
+          distance *= 1.5
+        }
+
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestGroup = group;
+        }
       }
-      avgVisual.divideScalar(group.length);
 
-      // Compute base world by subtracting clusterHeight (since label is at +height)
-      const avgBase = avgVisual.clone().add(new THREE.Vector3(0, -clusterHeight, 0));
+      if (nearestGroup) {
+        nearestGroup.members.push(data);
 
-      const parent = markerData[group[0]].marker.parent;
+        const count = nearestGroup.members.length;
+        nearestGroup.centerX +=
+          (data.screenX - nearestGroup.centerX) / count;
+        nearestGroup.centerY +=
+          (data.screenY - nearestGroup.centerY) / count;
+      } else {
+        groups.push({
+          members: [data],
+          centerX: data.screenX,
+          centerY: data.screenY
+        });
+      }
+    }
+
+    const clusterGroups = groups.filter(
+      group => group.members.length > 1
+    );
+
+    const groupHash = clusterGroups
+      .map(group =>
+        group.members
+          .map(data => data.marker.group.uuid)
+          .sort()
+          .join(',')
+      )
+      .sort()
+      .join('|');
+
+    if (groupHash !== this._lastGroupHash) {
+      this._clearClusterMarkers();
+      this._lastGroupHash = groupHash;
+
+      for (const group of clusterGroups) {
+        const firstMarker = group.members[0].marker;
+        const clusterHeight = 0.5;
+
+        const clusterMarker = new BaseTextMarker(
+          firstMarker.parent,
+          new THREE.Vector3(),
+          String(group.members.length),
+          firstMarker.level,
+          {
+            markerHeight: clusterHeight,
+            bgColor: 'rgba(255, 200, 0, 0.9)',
+            textColor: '#000',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            bgPadding: '6px 12px',
+            borderRadius: '50%'
+          }
+        );
+
+        clusterMarker._clusterMemberIds =
+          group.members
+            .map(data => data.marker.group.uuid)
+            .sort();
+
+        const element = clusterMarker._label.element;
+        element.style.pointerEvents = 'auto';
+        element.style.cursor = 'pointer';
+        element.style.border = '2px solid #000';
+
+        element.addEventListener('click', event => {
+          event.stopPropagation();
+          event.preventDefault();
+
+          const appState =
+            this.appState ||
+            window.appState;
+
+          if (!appState) return;
+
+          import('@/js/ui_ux/cameraUtils.js').then(({ focusAt }) => {
+            focusAt(appState, clusterMarker._clusterCenter, {
+              distance: 2,
+              heightOffset: 1,
+              isSystem: true
+            });
+          });
+        });
+
+        this._clusterMarkers.push(clusterMarker);
+      }
+    }
+
+    const clusterByMembers = new Map(
+      this._clusterMarkers.map(marker => [
+        marker._clusterMemberIds.join(','),
+        marker
+      ])
+    );
+
+    for (const group of clusterGroups) {
+      const memberIds = group.members
+        .map(data => data.marker.group.uuid)
+        .sort();
+
+      const clusterMarker = clusterByMembers.get(memberIds.join(','));
+      if (!clusterMarker) continue;
+
+      const visualCenter = new THREE.Vector3();
+
+      for (const data of group.members) {
+        visualCenter.add(data.visualWorld);
+        data.marker._isClustered = true;
+      }
+
+      visualCenter.divideScalar(group.members.length);
+      clusterMarker._clusterCenter = visualCenter;
+
+      const parent = clusterMarker.parent;
+
       if (!parent) continue;
 
-      // Compute local position using same logic as Marker constructor
+      const baseWorld = visualCenter.clone();
+      baseWorld.y -= clusterMarker.options.markerHeight;
+
       const currentParentY = parent.position.y;
       parent.position.y = 0;
       parent.updateMatrixWorld(true);
-      const localPos = parent.worldToLocal(avgBase.clone());
-      parent.position.y = currentParentY;
-      parent.updateMatrixWorld(true);
 
-      // Create a new BaseTextMarker with a dummy position (we'll set localPos manually)
-      const count = group.length;
-      const clusterMarker = new BaseTextMarker(
-        parent,
-        new THREE.Vector3(0, 0, 0), // dummy, we'll overwrite
-        String(count),
-        markerData[group[0]].marker.level,
-        {
-          markerHeight: clusterHeight,
-          bgColor: 'rgba(255, 200, 0, 0.9)',
-          textColor: '#000',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          bgPadding: '6px 12px',
-          borderRadius: '50%',
-        }
+      clusterMarker.group.position.copy(
+        parent.worldToLocal(baseWorld)
       );
 
-      // Override the group position with our computed local position
-      clusterMarker.group.position.copy(localPos);
+      parent.position.y = currentParentY;
+      parent.updateMatrixWorld(true);
+    }
 
-      // Enable clicks
-      const el = clusterMarker._label.element;
-      el.style.pointerEvents = 'auto';
-      el.style.cursor = 'pointer';
-      el.style.border = '2px solid #000';
+    levelMarkers.forEach(marker => {
+      marker.updateVisibilityAndOpacity();
+    });
 
-      // Store visual center for zoom
-      clusterMarker._clusterCenter = avgVisual.clone();
+    this._clusterMarkers.forEach(marker => {
+      const opacity =
+        marker.parent?.userData?.currentOpacity ?? 1.0;
 
-      // Click handler
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const appState = this.appState || window.appState;
-        if (!appState) return;
-        import('@/js/ui_ux/cameraUtils.js').then(({ focusAt }) => {
-          focusAt(appState, avgVisual, {
-            distance: 2,
-            heightOffset: 1,
-            isSystem: true,
-            // lookAtOffset: new THREE.Vector3(0, 0, 0),
-          });
-        });
-      });
+      marker.group.visible = opacity > 0.01;
 
-      this._clusterMarkers.push(clusterMarker);
+      if (marker._label?.element) {
+        marker._label.element.style.display =
+          marker.group.visible ? 'block' : 'none';
+        marker._label.element.style.opacity = opacity;
+      }
+    });
+  }
 
-      for (const idx of group) {
-        markerData[idx].marker._isClustered = true;
+  static _clearClusterMarkers() {
+    for (const clusterMarker of this._clusterMarkers) {
+      clusterMarker.clear();
+
+      ManagedMarker.allManagedMarkers =
+        ManagedMarker.allManagedMarkers.filter(
+          marker => marker !== clusterMarker
+        );
+
+      const levelMarkers =
+        ManagedMarker.managedMarkersByLevel[clusterMarker.level];
+
+      if (levelMarkers) {
+        ManagedMarker.managedMarkersByLevel[clusterMarker.level] =
+          levelMarkers.filter(
+            marker => marker !== clusterMarker
+          );
       }
     }
 
-    markers.forEach(m => m.updateVisibilityAndOpacity());
-  }
-
-  // ---- helper to clear cluster markers ----
-  static _clearClusterMarkers() {
-    for (const cm of this._clusterMarkers) {
-      cm.clear();   // removes from parent and cleans up label
-    }
     this._clusterMarkers = [];
-  }  
+  }
 
   animate(time, camera) {
     if (!this.group || !camera) return;
 
-    // Zoom-based visibility
-    const worldPos = new THREE.Vector3();
-    this.group.getWorldPosition(worldPos);
-    this.distance = camera.position.distanceTo(worldPos);
+    const worldPosition = new THREE.Vector3();
+    this.group.getWorldPosition(worldPosition);
+
+    this.distance =
+      camera.position.distanceTo(worldPosition);
 
     this.updateVisibilityAndOpacity();
   }
 
   updateVisibilityAndOpacity() {
     if (!this.group) return;
-    const isWithinZoom = this.distance !== undefined ? this.distance < CONFIG.MARKERS.BOOTH.zoomThreshold : true;
+
+    const isWithinZoom =
+      this.distance !== undefined
+        ? this.distance < CONFIG.MARKERS.BOOTH.zoomThreshold
+        : true;
+
     const isVisibleLocal =
       BoothIDMarker.visibleState &&
       this.level === BoothIDMarker.activeLevel &&
       isWithinZoom &&
-      !this._isClustered;   // ← hide if clustered
+      !this._isClustered;
 
     this.updateSyncState(isVisibleLocal);
   }
