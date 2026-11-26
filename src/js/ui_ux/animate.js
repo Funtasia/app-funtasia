@@ -96,10 +96,14 @@ export function startAnimationLoop(appState) {
       });
     }
 
-    BoothIDMarker.updateClusters(appState.camera, appState.renderer.domElement.clientWidth, appState.renderer.domElement.clientHeight)
+    BoothIDMarker.updateClusters(
+      appState.camera, 
+      appState.renderer.domElement.clientWidth, 
+      appState.renderer.domElement.clientHeight
+    );
 
-    appState.renderer.render(appState.scene, appState.camera);
-    appState.css2DRenderer.render(appState.scene, appState.camera)
+    appState.renderer.renderAsync(appState.scene, appState.camera);
+    appState.css2DRenderer.render(appState.scene, appState.camera);
   }
 
   animate();

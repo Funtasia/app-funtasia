@@ -29,7 +29,9 @@ export async function setupScene() {
   );
   camera.position.set(0, 0, 0);
 
-  const renderer = new THREE.WebGLRenderer({
+  // WebGPURenderer falls back to WebGL when WebGPU unavailable
+  const { WebGPURenderer } = await import('three/webgpu');
+  const renderer = new WebGPURenderer({
     antialias: true,
     powerPreference: "high-performance",
   });
