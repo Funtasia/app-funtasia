@@ -266,9 +266,10 @@ export const CONFIG = {
       Photos:      "ar_on_you",
       Info:        "info",
       Tickets:     "confirmation_number",
-      CCA:         "CCA",
+      CCA:         "activity_zone",
+      undefined: "question_mark",
       "First Aid": "medical_services",
-      "Glam Up":   "health_and_beauty"
+      "Glam Up":   "health_and_beauty",
     }
   }
 };
